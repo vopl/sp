@@ -1,0 +1,4 @@
+rr = ((t-1)*sin(((20*%pi*t+20*%pi)*ts)/t)+(t+1)*sin(((20*%pi*t-20*%pi)*ts)/t))/(40*%pi*t^2-40*%pi);
+ri = ((t-1)*cos(((20*%pi*t+20*%pi)*ts)/t)+(t+1)*cos(((20*%pi*t-20*%pi)*ts)/t)-2*t)/(40*%pi*t^2-40*%pi);
+ir = -((t-1)*cos(((20*%pi*t+20*%pi)*ts)/t)+(-t-1)*cos(((20*%pi*t-20*%pi)*ts)/t)+2)/(40*%pi*t^2-40*%pi);
+ii = ((t-1)*sin(((20*%pi*t+20*%pi)*ts)/t)+(-t-1)*sin(((20*%pi*t-20*%pi)*ts)/t))/(40*%pi*t^2-40*%pi);
