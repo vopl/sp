@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     {
         sp::TVComplex response;
 
-        sp::convolve<sp::Window_hann2, 10>(0.456, signal, response);
+        sp::convolve<sp::Window_hann, 10>(0.456, signal, response);
 
         for(size_t index(0); index<sp::g_periodSteps; ++index)
         {
@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
 
             sp::real rr,ri,ir,ii;
 
-            sp::Window_hann2::kernel<10>(sp::g_periodGrid[index]/(sp::g_periodGrid[250]),rr,ri,ir,ii);
+            sp::Window_hann::kernel<10>(sp::g_periodGrid[index]/(sp::g_periodGrid[250]),rr,ri,ir,ii);
             cout << rr << " " << ri <<" " << ir <<" "<< ii <<endl;
 
 
@@ -125,8 +125,15 @@ int main(int argc, char *argv[])
     {
         sp::ResponseModel rm;
 
-        sp::TVComplex response;
-        sp::convolve<sp::Window_rect, 10>(0.456, signal, response);
+        sp::TVComplex response1;
+        sp::convolve<sp::Window_hann, 10>(0.456, signal, response1);
+
+        sp::TVComplex response2;
+        sp::convolve<sp::Window_hann2, 10>(0.456, signal, response2);
+
+        sp::TVComplex response = response1;
+        response.insert(response.end(), response2.begin(), response2.end());
+
 
         sp::TVReal logPeriodGrid(sp::g_periodGrid.size());
         for(size_t i(0); i<sp::g_periodSteps; ++i)
@@ -141,9 +148,10 @@ int main(int argc, char *argv[])
         for(int iters(1); iters<200; iters++)
         {
             sp::TVComplex spectr(response.size());
-            //spectr = response;
+            spectr = response;
+            //spectr[spectr.size()/2] = sp::complex(1,0);
 
-            int res = rm.solve_v(1e-30,
+            int res = rm.solve_v(1e-5,
                         response.size(),
                         &logPeriodGrid[0],
                     &response[0],

@@ -140,7 +140,7 @@ namespace sp
             return;
         }
 
-        Window_rect::kernel<10>(t, rr, ri, ir, ii);
+        Window_hann2::kernel<10>(t, rr, ri, ir, ii);
     }
 
 
@@ -215,7 +215,7 @@ namespace sp
         int nDiv2 = n/2;
 
         int mDiv2 = m/2;
-        for(int i(0); i<nDiv2; i++)
+        for(int i(0); i<nDiv2/2; i++)
         {
             logt = params->_logt[i];
             re = im = 0;
@@ -226,13 +226,16 @@ namespace sp
                 real sr = p[j*2+0];
                 real si = p[j*2+1];
 
-                params->_rm->evalVRaw(exp(logt-slogt), rr, ri, ir, ii);
+                {
+                    //params->_rm->evalVRaw(exp(logt-slogt), rr, ri, ir, ii);
+                    Window_hann::kernel<10>(exp(logt-slogt), rr, ri, ir, ii);
 
-                //assert(std::isfinite(rr) && std::isfinite(ri));
-                //assert(std::isfinite(ir) && std::isfinite(ii));
+                    //assert(std::isfinite(rr) && std::isfinite(ri));
+                    //assert(std::isfinite(ir) && std::isfinite(ii));
 
-                re += sr*rr - si*ri;
-                im += sr*ir - si*ii;
+                    re += sr*rr - si*ri;
+                    im += sr*ir - si*ii;
+                }
             }
 
             //assert(std::isfinite(re) && std::isfinite(im));
@@ -240,12 +243,39 @@ namespace sp
             hx[i*2+0] = re;
             hx[i*2+1] = im;
 
+            re = im = 0;
+            for(int j(0); j<mDiv2; j++)
+            {
+                real slogt = params->_logt[j];
+                real sr = p[j*2+0];
+                real si = p[j*2+1];
+
+                {
+                    //params->_rm->evalVRaw(exp(logt-slogt), rr, ri, ir, ii);
+                    Window_hann2::kernel<10>(exp(logt-slogt), rr, ri, ir, ii);
+
+                    //assert(std::isfinite(rr) && std::isfinite(ri));
+                    //assert(std::isfinite(ir) && std::isfinite(ii));
+
+                    re += sr*rr - si*ri;
+                    im += sr*ir - si*ii;
+                }
+            }
+
+            //assert(std::isfinite(re) && std::isfinite(im));
+
+            hx[nDiv2/2*2 + i*2+0] = re;
+            hx[nDiv2/2*2 + i*2+1] = im;
+
         }
 
-        for(int i(0); i<nDiv2; i++)
+        if(params->_ev)
         {
-            hx[i*2+0] -= params->_ev[i].re();
-            hx[i*2+1] -= params->_ev[i].im();
+            for(int i(0); i<nDiv2; i++)
+            {
+                hx[i*2+0] -= params->_ev[i].re();
+                hx[i*2+1] -= params->_ev[i].im();
+            }
         }
     }
 
@@ -255,29 +285,33 @@ namespace sp
         SFuncOptParams *params = (SFuncOptParams *)_SFuncOptParams;
 
         real logt;
-        real rr,  ri,  ir,  ii;
-        int nDiv2 = n/2;
+        real rr1,  ri1,  ir1,  ii1;
+        real rr2,  ri2,  ir2,  ii2;
 
-        int mDiv2 = m/2;
-        for(int i(0); i<nDiv2; i++)
+        for(int i(0); i<n/2; i++)
         {
-            logt = params->_logt[i];
+            logt = params->_logt[i/2];
 
-            for(int j(0); j<mDiv2; j++)
+            for(int j(0); j<m/2; j++)
             {
                 real slogt = params->_logt[j];
                 real sr = p[j*2+0];
                 real si = p[j*2+1];
 
-                //assert(!"вычисления переделать на таблицу");
-                params->_rm->evalVRaw(exp(logt-slogt), rr, ri, ir, ii);
-                //params->_rm->evalVRaw_tabled(logt-slogt, rr, ri, ir, ii);
+                Window_hann::kernel<10>(exp(logt-slogt), rr1, ri1, ir1, ii1);
+                Window_hann2::kernel<10>(exp(logt-slogt), rr2, ri2, ir2, ii2);
 
-                jx[(i*2+0)*m+j*2+0] = rr;
-                jx[(i*2+0)*m+j*2+1] = -ri;
+                {
+                    auto v = complex(sr, si) * complex(rr1, ii1);
 
-                jx[(i*2+1)*m+j*2+0] = ir;
-                jx[(i*2+1)*m+j*2+1] = -ii;
+                    jx[(i*m)+j*2+0] = v.re();
+                    jx[(i*m)+j*2+1] = -v.im();
+
+                    v = complex(sr, si) * complex(rr2, ii2);
+
+                    jx[n/2*m + (i*m)+j*2+0] = v.re();
+                    jx[n/2*m + (i*m)+j*2+1] = -v.im();
+                }
             }
         }
     }
@@ -312,19 +346,24 @@ namespace sp
         assert(sizeof(double) == sizeof(complex)/2);//хак Complex[n] используется как double[n*2]
 
 
-//         TVReal err(size*2);
-//         params._ev = NULL;
-//         dlevmar_chkjac(
-//             evalFuncOpt,
-//             jacoFuncOpt,
-//             (real *)sv,
-//             size*2,
-//             size*2,
-//             &params,
-//             &err.front());
-//         real errVal = std::accumulate(err.begin(), err.end(), 0.0)/err.size();
-//         std::cout<<"dlevmar_chkjac: "<<errVal<<std::endl;
-//         exit(0);
+        if(1)
+        {
+            TVReal err(size);
+            params._ev = NULL;
+            dlevmar_chkjac(
+                        evalFuncOpt,
+                        jacoFuncOpt,
+                        (real *)sv,
+                        size*2/2,
+                        size*2,
+                        &params,
+                        &err.front());
+            real errVal = std::accumulate(err.begin(), err.end(), 0.0)/err.size();
+            //std::cout<<"dlevmar_chkjac: "<<errVal<<std::endl;
+
+            std::cout<<err[0]<<", "<<err[1]<<", "<<err[2]<<", "<<err[3]<<", "<<std::endl;
+            exit(0);
+        }
 
         real levmarOpts[LM_OPTS_SZ];
         memcpy(levmarOpts, g_levmarOpts_ResponseModel, sizeof(levmarOpts));
@@ -334,41 +373,57 @@ namespace sp
 //        levmarOpts[2] = 1e-10;
 //        levmarOpts[3] = 1e-40;
 
-        int res = dlevmar_der(
+//        int res = dlevmar_der(
+//            &evalFuncOpt,
+//            &jacoFuncOpt,
+//            (real *)sv,
+//            NULL,
+//            size*2/2,
+//            size*2,
+//            itMax,
+//            levmarOpts,
+//            levmarInfo,
+//            &work[0],
+//            NULL,
+//            &params);
+
+        int res = dlevmar_dif(
             &evalFuncOpt,
-            &jacoFuncOpt,
             (real *)sv,
             NULL,
+            size*2/2,
             size*2,
-            size*2,
-            itMax, 
+            itMax,
             levmarOpts,
             levmarInfo,
             &work[0],
             NULL,
             &params);
 
-//         std::cout<<"result: "<<res<<std::endl;
-//         std::cout<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
-//         std::cout<<"||e||_2:"<<levmarInfo[1]<<std::endl;
-//         std::cout<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
-//         std::cout<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
-//         std::cout<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
-//         std::cout<<"# iterations:"<<levmarInfo[5]<<std::endl;
-//         std::cout<<"reason for terminating:";
-//         switch(int(levmarInfo[6]+0.5))
-//         {
-//         case 1: std::cout<<" - stopped by small gradient J^T e"<<std::endl;break;
-//         case 2: std::cout<<" - stopped by small Dp"<<std::endl;break;
-//         case 3: std::cout<<" - stopped by itmax"<<std::endl;break;
-//         case 4: std::cout<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
-//         case 5: std::cout<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
-//         case 6: std::cout<<" - stopped by small ||e||_2"<<std::endl;break;
-//         case 7: std::cout<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
-//         }
-//         std::cout<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
-//         std::cout<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
-//         std::cout<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
+//        std::cout<<"result: "<<res<<std::endl;
+//        std::cout<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
+//        std::cout<<"||e||_2:"<<levmarInfo[1]<<std::endl;
+//        std::cout<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
+//        std::cout<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
+//        std::cout<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
+//        std::cout<<"# iterations:"<<levmarInfo[5]<<std::endl;
+//        std::cout<<"reason for terminating:";
+//        switch(int(levmarInfo[6]+0.5))
+//        {
+//        case 1: std::cout<<" - stopped by small gradient J^T e"<<std::endl;break;
+//        case 2: std::cout<<" - stopped by small Dp"<<std::endl;break;
+//        case 3: std::cout<<" - stopped by itmax"<<std::endl;break;
+//        case 4: std::cout<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
+//        case 5: std::cout<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
+//        case 6: std::cout<<" - stopped by small ||e||_2"<<std::endl;break;
+//        case 7: std::cout<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
+//        }
+//        std::cout<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
+//        std::cout<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
+//        std::cout<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
+
+
+//        exit(0);
 
         return res;
     }
