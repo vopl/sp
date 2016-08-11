@@ -18,6 +18,11 @@ namespace sp
     template <>
     inline complex Window_rect::convolve<10>(real xCenter, real x0, real y0, real x1, real y1, real period)
     {
+        if(fabs(x0-x1) < std::numeric_limits<real>::epsilon()*10)
+        {
+            return 0;
+        }
+
         static const real pi = g_pi;
         const real t = period;
 
