@@ -55,7 +55,7 @@ namespace sp
         static void evalFuncOpt(double *p, double *hx, int m, int n, void *_SFuncOptParams);
         static void jacoFuncOpt(double *p, double *jx, int m, int n, void *_SFuncOptParams);
 
-        int solve_v(
+        int solve_v(real mu,
             size_t size, const real *logt, const complex *ev,//отклик
             complex *sv,//спектр
             size_t itMax,//макс итераций
