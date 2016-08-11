@@ -17,8 +17,8 @@ namespace sp
         //итерировать сигнал, для каждого отчета накапливать свертку
         complex res;
 
-        real xStart = xCenter-period*pow;
-        real xStop = xCenter;
+        real xStart = xCenter-period*pow/2;
+        real xStop = xCenter+period*pow/2;
 
         assert(xStart >= 0);
 

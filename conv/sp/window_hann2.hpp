@@ -1,6 +1,7 @@
 #pragma once
 
 #include "math.hpp"
+#include <cmath>
 
 namespace sp
 {
@@ -32,57 +33,68 @@ namespace sp
         real re, im;
 
         {
-            const real _6 =  ( 11*pi*xCenter-11*pi*x0 ) ;
-            const real _3 =  ( 12*pi*xCenter-12*pi*x0 ) ;
-            const real _17 =  ( 1140480*pi*t*x1-1140480*pi*t*x0 ) ;
-            const real _21 =  ( 10036224*pi_p_2*x1-10036224*pi_p_2*x0 ) ;
-            const real _4 =  ( 1140480*pi*t*x0-1140480*pi*t*x1 ) ;
-            const real _20 =  ( 1881792*pi*t*x0-1881792*pi*t*x1 ) ;
-            const real _12 =  ( 8*pi*xCenter-8*pi*x0 ) ;
-            const real _8 =  ( 9*pi*xCenter-9*pi*x1 ) ;
-            const real _16 =  ( 261360*pi*t*x0-261360*pi*t*x1 ) ;
-            const real _9 =  ( 9*pi*xCenter-9*pi*x0 ) ;
-            const real _11 =  ( 8*pi*xCenter-8*pi*x1 ) ;
-            const real _14 =  ( 2*pi*xCenter-2*pi*x1 ) ;
-            const real _1 =  ( 12*pi*xCenter-12*pi*x1 ) ;
             const real _2 =  ( 5*t ) ;
-            const real _19 =  ( 392040*pi*t*x0-392040*pi*t*x1 ) ;
-            const real _10 =  ( 392040*pi*t*x1-392040*pi*t*x0 ) ;
-            const real _5 =  ( 11*pi*xCenter-11*pi*x1 ) ;
-            const real _13 =  ( 1881792*pi*t*x1-1881792*pi*t*x0 ) ;
-            const real _15 =  ( 2*pi*xCenter-2*pi*x0 ) ;
-            const real _7 =  ( 1393920*pi*t*x0-1393920*pi*t*x1 ) ;
-            const real _18 =  ( 1393920*pi*t*x1-1393920*pi*t*x0 ) ;
+            const real _17 =  ( 2*pi*xCenter-2*pi*x0 ) ;
+            const real _9 =  ( 9*pi*xCenter-9*pi*x1 ) ;
             const real _0 =  ( 261360*pi*t*x1-261360*pi*t*x0 ) ;
-            const real _35 = cos ( _14/t ) ;
-            const real _29 = cos ( _8/_2 ) ;
-            const real _32 = cos ( _11/_2 ) ;
-            const real _25 = sin ( _5/_2 ) ;
-            const real _37 = sin ( _3/_2 ) ;
-            const real _41 = sin ( _15/t ) ;
-            const real _22 = sin ( _1/_2 ) ;
-            const real _28 = sin ( _8/_2 ) ;
-            const real _34 = sin ( _14/t ) ;
-            const real _33 = cos ( _12/_2 ) ;
-            const real _30 = cos ( _9/_2 ) ;
-            const real _26 = cos ( _5/_2 ) ;
-            const real _36 = cos ( _15/t ) ;
-            const real _31 = sin ( _11/_2 ) ;
-            const real _39 = sin ( _9/_2 ) ;
+            const real _12 =  ( 392040*pi*t*x1-392040*pi*t*x0 ) ;
+            const real _19 =  ( 392040*pi*t*x0-392040*pi*t*x1 ) ;
+            const real _20 =  ( 1881792*pi*t*x0-1881792*pi*t*x1 ) ;
+            const real _5 =  ( 11*pi*xCenter-11*pi*x1 ) ;
+            const real _10 =  ( 9*pi*xCenter-9*pi*x0-5*pi*t ) ;
+            const real _1 =  ( 12*pi*xCenter-12*pi*x1 ) ;
+            const real _4 =  ( 11*pi*xCenter-11*pi*x1+5*pi*t ) ;
+            const real _13 =  ( 8*pi*xCenter-8*pi*x1 ) ;
+            const real _16 =  ( 2*pi*xCenter-2*pi*x1 ) ;
+            const real _21 =  ( 10036224*pi_p_2*x1-10036224*pi_p_2*x0 ) ;
+            const real _18 =  ( 261360*pi*t*x0-261360*pi*t*x1 ) ;
+            const real _3 =  ( 12*pi*xCenter-12*pi*x0 ) ;
+            const real _7 =  ( 11*pi*xCenter-11*pi*x0 ) ;
+            const real _14 =  ( 8*pi*xCenter-8*pi*x0 ) ;
+            const real _11 =  ( 9*pi*xCenter-9*pi*x0 ) ;
+            const real _8 =  ( 9*pi*xCenter-9*pi*x1-5*pi*t ) ;
+            const real _15 =  ( 1881792*pi*t*x1-1881792*pi*t*x0 ) ;
+            const real _6 =  ( 11*pi*xCenter-11*pi*x0+5*pi*t ) ;
+            const real _34 = sin ( _10/_2 ) ;
+            const real _30 = cos ( _7/_2 ) ;
+            const real _29 = sin ( _7/_2 ) ;
+            const real _28 = sin ( _6/_2 ) ;
+            const real _44 = sin ( _14/_2 ) ;
+            const real _46 = cos ( _4/_2 ) ;
+            const real _38 = cos ( _13/_2 ) ;
+            const real _27 = cos ( _5/_2 ) ;
+            const real _35 = sin ( _11/_2 ) ;
+            const real _49 = cos ( _10/_2 ) ;
+            const real _48 = cos ( _8/_2 ) ;
+            const real _31 = sin ( _8/_2 ) ;
+            const real _43 = sin ( _3/_2 ) ;
             const real _23 = cos ( _1/_2 ) ;
-            const real _27 = cos ( _6/_2 ) ;
-            const real _38 = sin ( _6/_2 ) ;
-            const real _40 = sin ( _12/_2 ) ;
+            const real _32 = sin ( _9/_2 ) ;
+            const real _33 = cos ( _9/_2 ) ;
+            const real _47 = cos ( _6/_2 ) ;
+            const real _37 = sin ( _13/_2 ) ;
+            const real _42 = cos ( _17/t ) ;
+            const real _22 = sin ( _1/_2 ) ;
+            const real _26 = sin ( _5/_2 ) ;
+            const real _39 = cos ( _14/_2 ) ;
+            const real _41 = cos ( _16/t ) ;
+            const real _25 = sin ( _4/_2 ) ;
+            const real _45 = sin ( _17/t ) ;
+            const real _36 = cos ( _11/_2 ) ;
             const real _24 = cos ( _3/_2 ) ;
-            const real _44 =  ( 108900*t_p_2*_22+_0*_23-108900*t_p_2*_37-518400*t_p_2*_25+_4*_26+518400*t_p_2*_38-774400*t_p_2*_28+_7*_29+774400*t_p_2*_39+245025*t_p_2*_31+_10*_32-245025*t_p_2*_40+940896*t_p_2*_34+_13*_35-940896*t_p_2*_41 ) ;
-            const real _42 =  ( _0*_22-108900*t_p_2*_23+108900*t_p_2*_24+_4*_25+518400*t_p_2*_26-518400*t_p_2*_27+_7*_28+774400*t_p_2*_29-774400*t_p_2*_30+_10*_31-245025*t_p_2*_32+245025*t_p_2*_33+_13*_34-940896*t_p_2*_35+940896*t_p_2*_36 ) ;
-            const real _45 =  ( -108900*t_p_2*_22+108900*t_p_2*_37+_16*_24+518400*t_p_2*_25-518400*t_p_2*_38+_17*_27+774400*t_p_2*_28-774400*t_p_2*_39+_18*_30-245025*t_p_2*_31+245025*t_p_2*_40+_19*_33-940896*t_p_2*_34+940896*t_p_2*_41+_20*_36 ) ;
-            const real _43 =  ( 108900*t_p_2*_23+_16*_37-108900*t_p_2*_24-518400*t_p_2*_26+_17*_38+518400*t_p_2*_27-774400*t_p_2*_29+_18*_39+774400*t_p_2*_30+245025*t_p_2*_32+_19*_40-245025*t_p_2*_33+940896*t_p_2*_35+_20*_41-940896*t_p_2*_36 ) ;
-            const real _47 =  ( _44*y1+_45*y0 ) ;
-            const real _46 =  ( _42*y1+_43*y0 ) ;
+            const real _40 = sin ( _16/t ) ;
+            const real _53 =  ( -108900*t_p_2*_22+108900*t_p_2*_43+_18*_24-1140480*pi*t*x1*_46-518400*t_p_2*_26-1140480*pi*t*x1*_27+1140480*pi*t*x1*_47+518400*t_p_2*_29+1140480*pi*t*x0*_30-1393920*pi*t*x1*_48-774400*t_p_2*_32-1393920*pi*t*x1*_33+1393920*pi*t*x1*_49+774400*t_p_2*_35+1393920*pi*t*x0*_36-245025*t_p_2*_37+245025*t_p_2*_44+_19*_39-940896*t_p_2*_40+940896*t_p_2*_45+_20*_42 ) ;
+            const real _52 =  ( 108900*t_p_2*_22+_0*_23-108900*t_p_2*_43+1140480*pi*t*x0*_46+518400*t_p_2*_26+1140480*pi*t*x1*_27-1140480*pi*t*x0*_47-518400*t_p_2*_29-1140480*pi*t*x0*_30+1393920*pi*t*x0*_48+774400*t_p_2*_32+1393920*pi*t*x1*_33-1393920*pi*t*x0*_49-774400*t_p_2*_35-1393920*pi*t*x0*_36+245025*t_p_2*_37+_12*_38-245025*t_p_2*_44+940896*t_p_2*_40+_15*_41-940896*t_p_2*_45 ) ;
+            const real _51 =  ( 108900*t_p_2*_23+_18*_43-108900*t_p_2*_24-1140480*pi*t*x1*_25-1140480*pi*t*x1*_26+518400*t_p_2*_27+1140480*pi*t*x1*_28+1140480*pi*t*x0*_29-518400*t_p_2*_30-1393920*pi*t*x1*_31-1393920*pi*t*x1*_32+774400*t_p_2*_33+1393920*pi*t*x1*_34+1393920*pi*t*x0*_35-774400*t_p_2*_36+245025*t_p_2*_38+_19*_44-245025*t_p_2*_39+940896*t_p_2*_41+_20*_45-940896*t_p_2*_42 ) ;
+            const real _50 =  ( _0*_22-108900*t_p_2*_23+108900*t_p_2*_24+1140480*pi*t*x0*_25+1140480*pi*t*x1*_26-518400*t_p_2*_27-1140480*pi*t*x0*_28-1140480*pi*t*x0*_29+518400*t_p_2*_30+1393920*pi*t*x0*_31+1393920*pi*t*x1*_32-774400*t_p_2*_33-1393920*pi*t*x0*_34-1393920*pi*t*x0*_35+774400*t_p_2*_36+_12*_37-245025*t_p_2*_38+245025*t_p_2*_39+_15*_40-940896*t_p_2*_41+940896*t_p_2*_42 ) ;
+            const real _54 =  ( _50*y1+_51*y0 ) ;
+            const real _55 =  ( _52*y1+_53*y0 ) ;
             //expr
 
-            re = -_46/_21;im = _47/_21;
+            re = -_54/_21;im = _55/_21;
+
+
+            assert(std::isfinite(re) && std::isfinite(im));
         }
 
         return complex(re, im)/t;
@@ -108,15 +120,12 @@ namespace sp
         real re, im;
 
         {
-            const real _2 =  ( 1000000000*pi*t_p_10-5100000000*pi*t_p_8+10203300000*pi*t_p_6-10003540000*pi*t_p_4+4803500160*pi*t_p_2-903260160*pi ) ;
-            const real _4 =  ( 37500*t_p_4+73875*t_p_2+7128 ) ;
-            const real _3 = cos ( 20*pi*t ) ;
-            const real _1 = sin ( 20*pi*t ) ;
+            const real _1 = sin ( 10*pi*t ) ;
+            const real _2 =  ( 500000000*pi*t_p_10-2550000000*pi*t_p_8+5101650000*pi*t_p_6-5001770000*pi*t_p_4+2401750080*pi*t_p_2-451630080*pi ) ;
+            const real _3 =  ( 37500*t_p_4+73875*t_p_2+7128 ) ;
             const real _0 =  ( 7500*t_p_5+74625*t_p_3+36378*t ) ;
-            const real _5 =  ( _0*_1 ) ;
-            const real _7 =  ( _4*_3-37500*t_p_4-73875*t_p_2-7128 ) ;
-            const real _6 =  ( _0*_3-7500*t_p_5-74625*t_p_3-36378*t ) ;
-            const real _8 =  ( _4*_1 ) ;
+            const real _5 =  ( _3*_1 ) ;
+            const real _4 =  ( _0*_1 ) ;
             //expr
 
 
@@ -130,7 +139,8 @@ namespace sp
             }
             else
             {
-                rr = _5/_2;ri = _6/_2;ir = _7/_2;ii = -_8/_2;
+                rr = _4/_2;ii = -_5/_2;
+                ri = ir = 0;
             }
         }
     }
