@@ -1,0 +1,10 @@
+rr=((8*pow^2-2*pow)*sin((4*%pi*pow+%pi)*tw)+(8*pow^2+2*pow)*sin((4*%pi*pow-%pi)*tw)+(16*pow^2-1)*
+sin(4*%pi*pow*tw)+(64*pow^3-4*pow)*sin(%pi*tw)+(64*%pi*pow^3-4*%pi*pow)*tw)/((256*%pi*pow^3-16*%pi*pow)*ts);
+
+ri=((8*pow^2-2*pow)*cos((4*%pi*pow+%pi)*tw)+(8*pow^2+2*pow)*cos((4*%pi*pow-%pi)*tw)+(16*pow^2-1)*cos(4*%pi*pow*tw)-32*pow^2+1)/((256*%pi*pow^3-16*%pi*pow)*ts);
+
+
+ir=-((8*pow^2-2*pow)*cos((4*%pi*pow+%pi)*tw)+(8*pow^2+2*pow)*cos((4*%pi*pow-%pi)*tw)+(16*pow^2-1)*cos(4*%pi*pow*tw)-32*pow^2+1)/((256*%pi*pow^3-16*%pi*pow)*ts);
+
+ii=((8*pow^2-2*pow)*sin((4*%pi*pow+%pi)*tw)+(8*pow^2+2*pow)*sin((4*%pi*pow-%pi)*tw)+(16*pow^2-1)*
+sin(4*%pi*pow*tw)+(4*pow-64*pow^3)*sin(%pi*tw)+(4*%pi*pow-64*%pi*pow^3)*tw)/((256*%pi*pow^3-16*%pi*pow)*ts);
