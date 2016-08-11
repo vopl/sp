@@ -1,0 +1,30 @@
+cosian(x,t):=(cos(2*%pi*x/t)+1)/2;
+
+se(x,p,pow) := cos(2*%pi*x/1+p) * cosian(x,pow);
+
+plot2d(se(t,0,10), [t, -10/2, 10/2]);
+
+hr(x,t) := cos(2*%pi*x/t);
+hi(x,t) := -sin(2*%pi*x/t);
+
+kpr(t,tw,ts, p, pow) := integrate(se(x,p,pow)*hr(x,t), x,-(ts*pow)/2,(ts*pow)/2)/(tw*pow);
+kpi(t,tw,ts, p, pow) := integrate(se(x,p,pow)*hi(x,t), x,-(ts*pow)/2,(ts*pow)/2)/(tw*pow);
+
+krr(t,tw,ts, pow) := integrate(kpr(t,tw,ts,p, pow)*hr(p,2*%pi), p,0,2*%pi)/%pi; /* 1  */
+kri(t,tw,ts, pow) := integrate(kpr(t,tw,ts,p, pow)*hi(p,2*%pi), p,0,2*%pi)/%pi; /* 2  */
+kir(t,tw,ts, pow) := integrate(kpi(t,tw,ts,p, pow)*hr(p,2*%pi), p,0,2*%pi)/%pi; /* 2  */
+kii(t,tw,ts, pow) := integrate(kpi(t,tw,ts,p, pow)*hi(p,2*%pi), p,0,2*%pi)/%pi; /* -1 */
+
+
+_pow : 10;
+mp : (1.0+0.5/_pow);
+mm : (1.0-0.5/_pow);
+
+plot2d([
+	(kii(t/mp,t,t,_pow)*mp + kii(t/mm,t,t,_pow)*mm),
+	(krr(t/mp,t,t,_pow)*mp + krr(t/mm,t,t,_pow)*mm),
+	
+/*	kii(t/mp,t,t,_pow)*mp + kii(t/mm,t,t,_pow)*mm,
+	kii(t/mp,t,1,_pow)*mp + kii(t/mm,t,1,_pow)*mm,*/
+	0
+	], [t, 0, 1]);
