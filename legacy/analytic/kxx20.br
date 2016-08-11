@@ -1,0 +1,12 @@
+TReal _1 =  ( 4*pi_p_2-1 ) ;
+TReal _0 = sin ( 4*pi_p_2 ) ;
+TReal _2 = cos ( 4*pi_p_2 ) ;
+TReal _6 =  ( pi*_0*amount ) ;
+TReal _3 =  ( 2*pi_p_2*_0*amount ) ;
+TReal _4 =  ( 2*pi_p_2*_2-2*pi_p_2 ) ;
+TReal _5 =  ( pi*_2-pi ) ;
+TReal _7 =  ( _4*amount ) ;
+TReal _8 =  ( _5*amount ) ;
+//expr
+
+rr=_3/_1;ri=_7/_1;ir=_8/_1;ii=-_6/_1;

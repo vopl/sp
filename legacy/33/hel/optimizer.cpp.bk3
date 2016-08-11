@@ -1,0 +1,675 @@
+#include "stdafx.h"
+#include "hel/optimizer.h"
+#include "hel/workTimeUtils.h"
+#include "hel/levmar.h"
+#include "hel/responseSeparator.h"
+
+namespace hel
+{
+	//////////////////////////////////////////////////////////////////////////
+	Optimizer::Optimizer()
+		: _levelPosition2Process(0)
+		, _levelPositionsTotal(0)
+	{
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Optimizer::setup(ScaledData &scaledData, const SettingsOptimizer &settingsOptimizer)
+	{
+		_settingsScaledData = scaledData.getSettings();
+		_settingsOptimizer = settingsOptimizer;
+
+		if(!_responseModel)
+		{
+			_responseModel.reset(new ResponseModel);
+			_responseModel->setup(
+				this,
+				_settingsOptimizer._calibratorMinPeriod, 
+				_settingsOptimizer._calibratorMaxPeriod, 
+				_settingsOptimizer._calibratorStepsPeriod,
+				_settingsOptimizer._calibratorStepsPhase);
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	bool Optimizer::processCalibrator(size_t steps)
+	{
+		return _responseModel->build(this, steps);
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	real Optimizer::getProcessCalibratorState()
+	{
+		return _responseModel->getCompletePercent();
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////
+	const SettingsOptimizer &Optimizer::getSettings()const
+	{
+		return _settingsOptimizer;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	const SettingsScaledData &Optimizer::getSettingsScaledData()const
+	{
+		return _settingsScaledData;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	size_t Optimizer::getNeedDataSamples() const
+	{
+		return size_t(_settingsOptimizer._samplesOnPeriod * _settingsOptimizer._periodsOnWin);
+	}
+
+
+
+
+
+
+
+
+	//////////////////////////////////////////////////////////////////////////
+	struct SEvalFuncParams
+	{
+		const TVLeveledValue	*_level;
+		real		_T;
+		real		_a;
+		real		_b;
+		bool		_minusLevel;
+	};
+	real g_levmarOpts[LM_OPTS_SZ] = 
+	{
+		1E-40, //LM_INIT_MU,//mu
+		1E-80, //LM_STOP_THRESH,	//stopping thresholds for ||J^T e||_inf, 
+		1E-80, //LM_STOP_THRESH,	//||Dp||_2 and 
+		1E-80, //LM_STOP_THRESH,	//||e||_2. Set to NULL for defaults to be used.
+
+//  		LM_INIT_MU,//mu
+//  		LM_STOP_THRESH,	//stopping thresholds for ||J^T e||_inf, 
+//  		LM_STOP_THRESH,	//||Dp||_2 and 
+//  		LM_STOP_THRESH,	//||e||_2. Set to NULL for defaults to be used.
+//  		LM_DIFF_DELTA
+	};
+	//////////////////////////////////////////////////////////////////////////
+	void evalFuncCosPoly(double *p, double *hx, int m, int n, void *adata)
+	{
+		int maxPow = m-2-1;
+		SEvalFuncParams *efp = (SEvalFuncParams *)adata;
+		TVLeveledValue::const_iterator valuesIter = efp->_level->begin();
+		real a = efp->_a;
+		real b = efp->_b;
+		real T = efp->_T;
+		for(int idx=0; idx<n; idx++, valuesIter++)
+		{
+			real t = valuesIter->getTime();
+			real cosVal = cos((t-b) * c_2Pi / T + p[0]) * p[1];
+
+			t = 2.0*(t - a)/(b - a) - 1.0;
+
+			double polyVal;
+			double b1;
+			double b2;
+			int i;
+
+			b1 = 0;
+			b2 = 0;
+			i = maxPow;
+			do
+			{
+				polyVal = 2*t*b1-b2+p[2+i];
+				b2 = b1;
+				b1 = polyVal;
+				i = i-1;
+			}
+			while(i>=0);
+			polyVal = polyVal-t*b2;
+
+			hx[idx] = cosVal + polyVal;
+		}
+
+		if(efp->_minusLevel)
+		{
+			valuesIter = efp->_level->begin();
+			for(int idx=0; idx<n; idx++, valuesIter++)
+			{
+				hx[idx] =  hx[idx] - valuesIter->getValue();
+			}
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void jacoFuncCosPoly(double *p, double *jx, int m, int n, void *adata)
+	{
+		int maxPow = m-2-1;
+		SEvalFuncParams *efp = (SEvalFuncParams *)adata;
+		TVLeveledValue::const_iterator valuesIter = efp->_level->begin();
+		real a = efp->_a;
+		real b = efp->_b;
+		real T = efp->_T;
+
+		for(int idx=0; idx<n; idx++, valuesIter++)
+		{
+			real *d = jx+idx*m;
+
+			real t = valuesIter->getTime();
+
+			real hArg = c_2Pi / T * (t-b) + p[0];
+			d[0] = -sin(hArg) * p[1];
+			d[1] = cos(hArg);
+
+			t = 2.0*(t - a)/(b - a) - 1.0;
+			if(maxPow == 0)
+			{
+				d[2+0] = 1;
+			}
+			else if(maxPow == 1)
+			{
+				d[2+0] = 1;
+				d[2+1] = t;
+			}
+			else
+			{
+				d[2+0] = 1;
+				d[2+1] = t;
+
+				for(int i=2; i<=maxPow; i++)
+				{
+					d[2+i] = 2.0*t*d[2+i-1] - d[2+i-2];
+				}
+			}
+		}
+	}
+
+	AP goertzel(const real *samples, size_t size, size_t T)
+	{
+		real w = (c_2Pi/size)*T;
+		real cosine = cos(w);
+		real sine = sin(w);
+		real coeff = 2 * cosine;
+
+		real Q0=0, Q1=0, Q2=0;
+
+		for(size_t i(0); i<size; i++)
+		{
+			Q0 = coeff * Q1 - Q2 + samples[i];
+			Q2 = Q1;
+			Q1 = Q0;
+		}
+
+		real re = (Q1 - Q2 * cosine);
+		real im = (Q2 * sine);
+
+		AP res;
+		res._A = sqrt(re*re + im*im);
+		res._P = atan2(im, re);
+
+		return res;
+	}
+
+
+
+
+
+	void LowPassFir(
+		real Fs,
+		real Fd,
+		size_t n,
+		TVReal &A)
+	{
+		real w = 2*c_pi*(Fs/Fd);
+		real q = w/c_pi;
+
+		n+=2;
+		n |= 1;
+		A.resize(n-2);
+
+		size_t mn = n/2-1;
+		A[mn] = q;
+		for(size_t k(1); k<n/2; k++)
+		{
+ 			real x = real(k)/n*2;
+ 			real p = c_pi*x;
+			A[mn+k] = A[mn-k] = q*(sin(k*w)/(k*w));// * ((1.0-x) * cos(p) + sin(p)/c_pi);
+		}
+	}
+
+	static TVReal fir,firh,firl;
+	//LowPassFir(1.0/100, 1, level.size()/_settingsOptimizer._periodsOnWin, fir);
+
+	//////////////////////////////////////////////////////////////////////////
+	AP Optimizer::probeOne(
+		const TVLeveledValue &level_, 
+		real T, 
+		real a,
+		real b,
+		TVReal &argsStorage, 
+		TVReal &threadStorage) const
+	{
+		//////////////////////////////////////////////////////////////////////////
+		TVLeveledValue level(level_);
+
+		static bool firInit = true;
+
+		if(firInit)
+		{
+			LowPassFir((1.0+0.1/_settingsOptimizer._periodsOnWin)/_settingsOptimizer._samplesOnPeriod, 1, _settingsOptimizer._samplesOnPeriod, firh);
+ 			LowPassFir((1.0-0.1/_settingsOptimizer._periodsOnWin)/_settingsOptimizer._samplesOnPeriod, 1, _settingsOptimizer._samplesOnPeriod, firl);
+// // 			LowPassFir((1-0.01/_settingsOptimizer._periodsOnWin)/_settingsOptimizer._samplesOnPeriod, 1, level.size() - _settingsOptimizer._samplesOnPeriod, firl);
+ 			fir.resize(firh.size());
+ 			for(size_t i(0); i<firh.size(); i++)
+ 			{
+ 				fir[i] = firh[i] - firl[i];
+ 			}
+
+// 			size_t n = fir.size()+2;
+// 			size_t mn = n/2-1;
+// 			for(size_t k(1); k<n/2; k++)
+// 			{
+// 				real x = real(k)/n*2;
+// 				real p = c_pi*x;
+// 				fir[mn+k] *= ((1.0-x) * cos(p) + sin(p)/c_pi);
+// 				fir[mn-k] *= ((1.0-x) * cos(p) + sin(p)/c_pi);
+// 			}
+
+			//half
+			//fir.erase(fir.begin()+fir.size()/2, fir.end());
+
+			firInit = false;
+		}
+		
+		threadStorage.resize(level.size());
+
+		for(size_t i(0); i<level.size(); i++)
+		{
+			real w = real(i)/level.size();
+
+			threadStorage[i] = level[i]._value - level.front()._value*(1-w) - level.back()._value*(w);
+		}
+
+ 		level.erase(level.begin(), level.end() - _settingsOptimizer._samplesOnPeriod);
+ 		a = level.front()._time;
+		for(size_t i(0); i<level.size(); i++)
+		{
+			level[i]._value = 0;
+		}
+
+		for(size_t i(0); i<threadStorage.size(); i++)
+		{
+			real s = 0;
+			for(size_t j(0); j<fir.size(); j++)
+			{
+				s += fir[j]*threadStorage[(i+j) % threadStorage.size()];
+			}
+
+			level[i%level.size()]._value += s;
+		}
+
+// 		real maxx = 0;
+// 		real minx = 0;
+// 		for(size_t i(0); i<level.size(); i++)
+// 		{
+// 			maxx = std::max(maxx, level[i]._value);
+// 			minx = std::min(minx, level[i]._value);
+// 		}
+// 
+// 		AP res;
+// 		res._A = (maxx - minx)/2;
+// 		return res;
+
+
+		//////////////////////////////////////////////////////////////////////////
+		size_t polyPow = 0;//_settingsOptimizer._polyPow;
+		size_t argumentsAmount = 1 + 2 + polyPow + 1;//prevP, cos(x/T+a0)*a1 + poly(a2,...)
+
+		if(argsStorage.empty())
+		{
+			argsStorage.resize(argumentsAmount);
+			prepareArgs(level, T, argsStorage, a, b);
+		}
+		else
+		{
+			real prevPhase = argsStorage[0];
+			argsStorage[0] = argsStorage[1];
+			argsStorage[1] += argsStorage[1]-prevPhase;
+		}
+
+		//////////////////////////////////////////////////////////////////////////
+		SEvalFuncParams efp;
+		efp._level = &level;
+		efp._a = a;
+		efp._b = b;
+		efp._T = T;
+		efp._minusLevel = true;
+		int dmdRes = dlevmar_der_autoMu(
+			evalFuncCosPoly, 
+			jacoFuncCosPoly, 
+			&argsStorage[1], 
+			NULL, 
+			argumentsAmount-1,
+			level.size(), 
+			threadStorage, 
+			(void *)&efp);
+
+		correctArgs(level, T, argsStorage);
+		AP r;
+		r._A = argsStorage[2];// + (argsStorage[3]);
+		r._P = argsStorage[1];
+		return r;
+
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Optimizer::prepareArgs(const TVLeveledValue &level, real T, TVReal &argsStorage, real a, real b) const
+	{
+		int maxPow = argsStorage.size()-2-1-1;
+		//////////////////////////////////////////////////////////////////////////
+		//вычисление коэффициентов полинома
+		real bma = 0.5 * (b - a);
+		real bpa = 0.5 * (b + a);
+		real fac = 2.0/(maxPow +1.0);
+
+		TVReal f(maxPow+1);
+
+		for(int k = 0; k<=maxPow; k++)
+		{
+			real y = cos(c_pi * (k+0.5)/(maxPow+1));
+			real t = y*bma + bpa;
+			TVLeveledValue::const_iterator value = std::lower_bound(level.begin(), level.end(), t);
+			if(value == level.end())
+			{
+				value--;
+			}
+			f[k] = value->getValue();
+		}
+
+		for(int j = 0; j<=maxPow; j++)
+		{
+			double sum = 0.0;
+			for(int k = 0; k<=maxPow; k++)
+			{
+				sum += f[k]*cos(c_pi * j*(k+0.5)/(maxPow+1));
+			}
+			argsStorage[3+j] = fac * sum;
+		}
+		argsStorage[3] /= 2;
+
+		//период
+		argsStorage[0] = T;
+
+		//фаза
+		argsStorage[1] = 0;
+
+		//амплитуда
+		argsStorage[2] = 0;
+
+		TVReal polyVal(level.size());
+		SEvalFuncParams efp;
+		efp._level = &level;
+		efp._a = a;
+		efp._b = b;
+		efp._T = T;
+		efp._minusLevel = false;
+		evalFuncCosPoly(&argsStorage.front(), &polyVal.front(), argsStorage.size(), level.size(), &efp);
+
+		real sum = 0;
+		for(size_t i(0); i<level.size(); i++)
+		{
+			sum += fabs(level[i].getValue() - polyVal[i]);
+		}
+		
+		argsStorage[2] = sum / level.size();
+
+
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Optimizer::correctArgs(const TVLeveledValue &level, real T, TVReal &argsStorage) const
+	{
+		if(argsStorage[2] < 0)
+		{
+			argsStorage[2] = -argsStorage[2];
+			argsStorage[1] += c_pi;
+		}
+
+		argsStorage[1] = alignPhase(argsStorage[1]);
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////
+	void Optimizer::prepareWork(const ScaledData &scaledData)
+	{
+		_levelPositionsTotal = scaledData.getLevelsAmount();
+		if(_prevScaledDataPushCounter == scaledData.getPushCounter() && _TVector.size() >= _levelPositionsTotal)
+		{
+			return;
+		}
+		_levelPosition2Process = 0;
+		_argsStorage.clear();
+
+		size_t samplesOnWin = size_t(_settingsOptimizer._samplesOnPeriod * _settingsOptimizer._periodsOnWin);
+		while(_levelPositionsTotal > 0 && scaledData.getLevel(_levelPositionsTotal-1).size() < samplesOnWin)
+		{
+			_levelPositionsTotal--;
+		}
+
+		while(_TVector.size() < _levelPositionsTotal)
+		{
+			const Level &level = scaledData.getLevel(_TVector.size());
+			real range = level.getPeriod()*samplesOnWin;
+			_TVector.push_back(range/_settingsOptimizer._periodsOnWin);
+		}
+		_PVector.resize(_TVector.size());
+		_AVector.resize(_TVector.size());
+
+		_b = scaledData.getLastTime();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Optimizer::terminateWork(const ScaledData &scaledData)
+	{
+		_prevScaledDataPushCounter = scaledData.getPushCounter();
+
+// 		//////////////////////////////////////////////////////////////////////////
+// 		_tOut.clear();
+// 		_pOut.clear();
+// 		_aOut.clear();
+// 
+// 		ResponseSeparator rs(
+// 			_TVector, 
+// 			_PVector, 
+// 			_AVector,
+// 			_responseModel,
+// 			_tOut,
+// 			_pOut,
+// 			_aOut);
+// 
+// 		rs.separate();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	bool Optimizer::workPart(const ScaledData &scaledData)
+	{
+		if(_prevScaledDataPushCounter == scaledData.getPushCounter())
+		{
+			return false;
+		}
+		size_t samplesOnWin = size_t(_settingsOptimizer._samplesOnPeriod * _settingsOptimizer._periodsOnWin);
+
+		//////////////////////////////////////////////////////////////////////////
+		size_t steps2Process;
+		real speed = _workSpeedMeter.getSpeed();
+		if(speed)
+		{
+			steps2Process = size_t(speed * _settingsOptimizer._analyzeBestTime);
+		}
+		else
+		{
+			steps2Process = 1;
+		}
+
+		real threadTime = getThreadTime();
+
+		TVReal threadStorage;
+		size_t localIterationsAmount = 0;
+		while(_levelPosition2Process < _levelPositionsTotal)
+		{
+			const Level &level0 = scaledData.getLevel(_levelPosition2Process);
+			Level level;
+			level0.makeAligned(scaledData.getLastTime(), level);
+
+			if(level.size() < samplesOnWin)
+			{
+				//no data
+				continue;
+			}
+
+			real T = _TVector[_levelPosition2Process];
+			real a = level[0].getTime();
+			AP ap = probeOne(level, T, a, _b, _argsStorage, threadStorage);
+			_PVector[_levelPosition2Process] = ap._P;
+			_AVector[_levelPosition2Process] = ap._A;
+
+			static std::ofstream out("stap");
+			out.precision(20);
+			out.setf(std::ios::scientific);
+			out
+				<<scaledData.getTimeMapper().internal2ExternalOffset(T)<<"\t"
+				<<ap._A<<"\t"
+				<<ap._P<<"\t"
+				<<std::endl;
+
+
+			_levelPosition2Process++;
+
+			//////////////////////////////////////////////////////////////////////////
+			//окончание отработки одного окна, проверить условие выхода
+			localIterationsAmount++;
+			if(localIterationsAmount >= steps2Process)
+			{
+				real probeThreadTime = getThreadTime() - threadTime;
+
+				if(probeThreadTime > 0.1)
+				{
+					break;
+				}
+			}
+		}
+
+		//засеч потраченное процессорное время
+		threadTime = getThreadTime() - threadTime;
+
+		
+		//_workSpeedMeter.push(probedIterationsAmount, threadTime);
+		_workSpeedMeter.push(localIterationsAmount, threadTime);
+
+
+		//вернуть флаг о необходимости еще работы
+		return _levelPosition2Process < _levelPositionsTotal;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	real Optimizer::getCompletePercent() const
+	{
+		return _levelPositionsTotal?(real(_levelPosition2Process) / _levelPositionsTotal) : 0;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	real Optimizer::getSpeed() const
+	{
+		return _workSpeedMeter.getSpeed();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	real Optimizer::getEstimateTime() const
+	{
+		real speed = _workSpeedMeter.getSpeed();
+
+		if(!speed)
+		{
+			return 0;
+		}
+
+		return (_levelPositionsTotal - _levelPosition2Process) / speed;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	real Optimizer::getElapsedTime() const
+	{
+		return _workSpeedMeter.getElapsedTime();
+	}
+
+
+	size_t Optimizer::fillExtrap(
+		const ScaledData &scaledData,
+		const real *time,
+		real *value,
+		size_t size)
+	{
+		real pastConstWndPeriods = 8;
+		real pastCosWndPeriods = 10;
+
+		real futConstWndPeriods = 8;
+		real futCosWndPeriods = 10;
+
+
+
+
+
+
+
+		for(size_t i(0); i<size; i++)
+		{
+			real v = 0;
+			real t = time[i];
+			for(size_t j(0); j<_tOut.size(); j++)
+			{
+				real tPeriods = (t - _b)/_tOut[j];
+				real wnd = 1;
+
+				if(tPeriods>0)
+				{//fut
+					if(tPeriods > futCosWndPeriods)
+					{
+						//wnd = 0
+						continue;
+					}
+
+					if(tPeriods > futConstWndPeriods)
+					{
+						wnd = cos((tPeriods-futConstWndPeriods)/(futCosWndPeriods-futConstWndPeriods)*c_pi)/2+0.5;
+					}
+					else
+					{
+						wnd = 1;
+					}
+				}
+				else
+				{//past
+					if(tPeriods < -pastCosWndPeriods)
+					{
+						//wnd = 0
+						continue;
+					}
+
+					if(tPeriods < -pastConstWndPeriods)
+					{
+						wnd = cos((tPeriods-pastConstWndPeriods)/(pastCosWndPeriods-pastConstWndPeriods)*c_pi)/2+0.5;
+					}
+					else
+					{
+						wnd = 1;
+					}
+				}
+
+				v += _aOut[j]*cos(c_2Pi*(t-_b)/_tOut[j]+_pOut[j]) * wnd;
+			}
+
+			value[i] = v;
+		}
+
+
+		return 0;
+	}
+}
+

@@ -1,0 +1,17 @@
+
+kaizer(x,wnd,beta) := bessel_i(0, beta*sqrt(1.0-(2*x/wnd-1)^2)) / bessel_i(0, beta);
+wxplot2d([kaizer(x,10,10)], [x,0,10])$
+
+hamming(x,wnd,alfa) := alfa+(1-alfa) * cos(2*%pi*(x-wnd/2)/wnd);
+wxplot2d([hamming(x,10,0.54)], [x,0,10])$
+
+lp(x,wnd,t):= sin(2*%pi*(x-wnd/2)/t) / (2*%pi*(x-wnd/2)/t) * 2/t;
+wxplot2d([lp(x,10,1)], [x,0,10])$
+
+
+lpk(x,wnd,t,beta) := lp(x,wnd,t) * kaizer(x,wnd,beta);
+lph(x,wnd,t,alfa) := lp(x,wnd,t) * hamming(x,wnd,alfa);
+wxplot2d([lph(x,10,1,0.54)], [x,0,10])$
+
+test(wnd,t) := integrate(lp(x,wnd,t), x, 1, 2);
+test(wnd,t);

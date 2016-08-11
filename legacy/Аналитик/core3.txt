@@ -1,0 +1,17 @@
+gaussian13(x, mu, sigma) := exp(-0.5*((x-mu)/sigma*3)^2);
+
+se(x,p,pow) := gaussian13(x, 0, pow)*cos(2*Pi*x/1+p);
+
+hr(x,t) := cos(2*Pi*x/t);
+hr(x,t) := -sin(2*Pi*x/t);
+
+kpr0(t, tw, p, pow) := int(se(x,p,pow)*hr(x,t), x=-(tw*pow)..0)/(tw*pow);
+kpi0(t, tw, p, pow) := int(se(x,p,pow)*hi(x,t), x=-(tw*pow)..0)/(tw*pow);
+
+kpr(t, p, pow, amount, offset) := amount*kpr0(t/(1+offset/pow), t, p,pow);
+kpi(t, p, pow, amount, offset) := amount*kpi0(t/(1+offset/pow), t, p,pow);
+
+krr(t, pow, amount, offset) := int(kpr(t,p, pow, amount, offset)*hr(p,1), p=0..2*Pi)*2*Pi;
+kri(t, pow, amount, offset) := int(kpr(t,p, pow, amount, offset)*hi(p,1), p=0..2*Pi)*2*Pi;
+kir(t, pow, amount, offset) := int(kpi(t,p, pow, amount, offset)*hr(p,1), p=0..2*Pi)*2*Pi;
+kii(t, pow, amount, offset) := int(kpi(t,p, pow, amount, offset)*hi(p,1), p=0..2*Pi)*2*Pi;

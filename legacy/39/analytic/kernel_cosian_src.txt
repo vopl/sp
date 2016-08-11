@@ -1,0 +1,27 @@
+cosian(x,m,s):=(cos(2*%pi*(x-m)/(2*s))+1)/2;
+
+
+se(x,p,pow) := cos(2*%pi*x/1+p) * cosian(x,0,pow);
+
+hr(x,t) := cos(2*%pi*x/t);
+hi(x,t) := -sin(2*%pi*x/t);
+
+kpr(t,tw,ts, p, pow) := integrate(se(x,p,pow)*hr(x,t), x,-(ts*pow),0)/(tw*pow);
+kpi(t,tw,ts, p, pow) := integrate(se(x,p,pow)*hi(x,t), x,-(ts*pow),0)/(tw*pow);
+
+krr(t,tw,ts, pow) := integrate(kpr(t,tw,ts,p, pow)*hr(p,2*%pi), p,0,2*%pi)/%pi; /* 1  */
+kri(t,tw,ts, pow) := integrate(kpr(t,tw,ts,p, pow)*hi(p,2*%pi), p,0,2*%pi)/%pi; /* 2  */
+kir(t,tw,ts, pow) := integrate(kpi(t,tw,ts,p, pow)*hr(p,2*%pi), p,0,2*%pi)/%pi; /* 2  */
+kii(t,tw,ts, pow) := integrate(kpi(t,tw,ts,p, pow)*hi(p,2*%pi), p,0,2*%pi)/%pi; /* -1 */
+
+
+/*
+t=1
+t=2*pow/(2*pow+1)
+t=2*pow/(2*pow-1)
+*/
+ 
+trigsimp(diff(krr(t/(1-0.5/pow),t,1, pow), t));
+trigsimp(kri(t,tw,ts, pow));
+trigsimp(kir(t,tw,ts, pow));
+trigsimp(kii(t,tw,ts, pow));

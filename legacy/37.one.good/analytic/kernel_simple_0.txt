@@ -1,0 +1,4 @@
+rr=(sin(4*%pi*pow*tw)+4*%pi*pow*tw)/(8*%pi*pow*ts);
+ri=(cos(4*%pi*pow*tw)-1)/(8*%pi*pow*ts);
+ir=-(cos(4*%pi*pow*tw)-1)/(8*%pi*pow*ts);
+ii=(sin(4*%pi*pow*tw)-4*%pi*pow*tw)/(8*%pi*pow*ts);

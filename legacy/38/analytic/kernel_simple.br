@@ -1,0 +1,27 @@
+TReal _2 =  ( t+1 ) ;
+TReal _0 =  ( t_p_2-t ) ;
+TReal _4 =  ( t-1 ) ;
+TReal _5 =  ( t_p_2-1 ) ;
+TReal _3 =  ( t_p_2+t ) ;
+TReal _6 =  ( -t_p_2-t ) ;
+TReal _1 =  ( 2*pi*pow*ts/t ) ;
+TReal _9 =  ( 4*pi*pow*tw*_5 ) ;
+TReal _7 =  ( _1*_2 ) ;
+TReal _8 =  ( _1*_4 ) ;
+TReal _12 = cos ( _7 ) ;
+TReal _10 = sin ( _7 ) ;
+TReal _13 = cos ( _8 ) ;
+TReal _11 = sin ( _8 ) ;
+TReal _16 =  ( _0*_12 ) ;
+TReal _17 =  ( _3*_13 ) ;
+TReal _15 =  ( _3*_11 ) ;
+TReal _19 =  ( _6*_11 ) ;
+TReal _14 =  ( _0*_10 ) ;
+TReal _18 =  ( _6*_13 ) ;
+TReal _22 =  ( _16+_18+2*t ) ;
+TReal _20 =  ( _14+_15 ) ;
+TReal _21 =  ( _16+_17-2*t_p_2 ) ;
+TReal _23 =  ( _14+_19 ) ;
+//expr
+
+rr=_20/_9;ri=_21/_9;ir=-_22/_9;ii=_23/_9;

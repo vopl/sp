@@ -1,0 +1,41 @@
+
+se(x,p,pow) := cos(2*%pi*x/1+p);
+
+hr(x,t) := cos(2*%pi*x/t);
+hi(x,t) := -sin(2*%pi*x/t);
+
+chr(x, tk, tb) := cos(2*%pi*x/(tk*x+tb));
+chi(x, tt, tb) := -sin(2*%pi*x/(tk*x+tb));
+
+k_(x1,y1,x2,y2):=(y1-y2)/(x1-x2);
+b_(x1,y1,x2,y2):=y1 - x1*k_(x1,y1,x2,y2);
+
+t_(x,x0,t0, x1, t1):=k_(x0,t0, x1, t1)*x + b_(x0,t0, x1, t1);
+chr2(x, x0,t0, x1, t1) := cos(2*%pi*x/t_(x,x0,t0, x1, t1));
+chi2(x, x0,t0, x1, t1) := -sin(2*%pi*x/t_(x,x0,t0, x1, t1));
+
+/*  wxplot2d([chi2(x,0,10 , 10,1)], [x,0,10])$ */
+
+
+kpr(t,tw,ts, p, pow) := integrate(se(x,p,pow)*chr2(x,-(ts*pow),t*2,0,t/2), x,-(ts*pow),0)/(tw*pow);
+kpi(t,tw,ts, p, pow) := integrate(se(x,p,pow)*chi2(x,-(ts*pow),t*2,0,t/2), x,-(ts*pow),0)/(tw*pow);
+
+wxplot2d([kpr(1,1,1, 0, 10)], [x,0,10])$
+
+krr(t,tw,ts, pow) := integrate(kpr(t,ts,tw,p, pow)*hr(p,2*%pi), p,0,2*%pi)/%pi;
+kri(t,tw,ts, pow) := integrate(kpr(t,ts,tw,p, pow)*hi(p,2*%pi), p,0,2*%pi)/%pi;
+kir(t,tw,ts, pow) := integrate(kpi(t,ts,tw,p, pow)*hr(p,2*%pi), p,0,2*%pi)/%pi;
+kii(t,tw,ts, pow) := integrate(kpi(t,ts,tw,p, pow)*hi(p,2*%pi), p,0,2*%pi)/%pi;
+
+
+/*
+plot2d([mr(t,t, 10), mr(t,1, 10)], [t,0.01,3],
+ [plot_format, openmath])$
+ 
+//plot2d([(2*10*t^2-2*10)], [t,0.9999,1.0001]);
+*/
+ 
+trigsimp(krr(t,tw,ts, pow));
+trigsimp(kri(t,tw,ts, pow));
+trigsimp(kir(t,tw,ts, pow));
+trigsimp(kii(t,tw,ts, pow));

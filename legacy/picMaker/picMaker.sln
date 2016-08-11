@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "picMaker", "picMaker.vcproj", "{BB198EDC-7EE3-4846-9CB2-F5D18927487D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BB198EDC-7EE3-4846-9CB2-F5D18927487D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BB198EDC-7EE3-4846-9CB2-F5D18927487D}.Debug|Win32.Build.0 = Debug|Win32
+		{BB198EDC-7EE3-4846-9CB2-F5D18927487D}.Release|Win32.ActiveCfg = Release|Win32
+		{BB198EDC-7EE3-4846-9CB2-F5D18927487D}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
