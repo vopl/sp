@@ -1,0 +1,38 @@
+
+f(x, p) := cos(2*%pi*x+p);
+hr(x,t) := cos(2*%pi*x/t);
+hi(x,t) := -sin(2*%pi*x/t);
+
+
+
+
+
+kpr0(t, tw, p, pow) := integrate(f(x,p)*hr(x,t), x,-(tw*pow),0)/(tw*pow);
+kpi0(t, tw, p, pow) := integrate(f(x,p)*hi(x,t), x,-(tw*pow),0)/(tw*pow);
+
+kpr(t, p, pow, amount, offset) := amount*kpr0(t/(1+offset/pow), t, p,pow);
+kpi(t, p, pow, amount, offset) := amount*kpi0(t/(1+offset/pow), t, p,pow);
+
+krr(t, pow, amount, offset) := integrate(kpr(t,p, pow, amount, offset)*hr(p,1), p,0,2*%pi)*2*%pi;
+kri(t, pow, amount, offset) := integrate(kpr(t,p, pow, amount, offset)*hi(p,1), p,0,2*%pi)*2*%pi;
+kir(t, pow, amount, offset) := integrate(kpi(t,p, pow, amount, offset)*hr(p,1), p,0,2*%pi)*2*%pi;
+kii(t, pow, amount, offset) := integrate(kpi(t,p, pow, amount, offset)*hi(p,1), p,0,2*%pi)*2*%pi;
+
+/*
+plot2d([
+	krr(t,10,1, 0),
+	kri(t,10,1, 0),
+	kir(t,10,1, 0),
+	kii(t,10,1, 0)
+	], [t,0.001,2]);
+*/
+
+ratsimp(krr(t, pow, amount, offset));
+ratsimp(kri(t, pow, amount, offset));
+ratsimp(kir(t, pow, amount, offset));
+ratsimp(kii(t, pow, amount, offset));
+
+ratsimp(krr(1.1, 10, amount, 1));
+ratsimp(kri(1.1, 10, amount, 1));
+ratsimp(kir(1.1, 10, amount, 1));
+ratsimp(kii(1.1, 10, amount, 1));

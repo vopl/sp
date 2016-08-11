@@ -1,0 +1,67 @@
+cosian(x,pow) := (cos(%pi*x/pow)+1)/2;
+/*
+plot2d([
+	cosian(x,10)
+	], [x,-15,0]);
+*/
+
+f(x, p) := cos(2*%pi*x+p);
+
+hr(x,t) := cos(2*%pi*x/t);
+hi(x,t) := -sin(2*%pi*x/t);
+
+
+
+
+
+kpr(t, tw, p, pow) := integrate(f(x,p)*hr(x,t)*cosian(x,pow), x,-(tw*pow),0)/(t*pow);
+kpi(t, tw, p, pow) := integrate(f(x,p)*hi(x,t)*cosian(x,pow), x,-(tw*pow),0)/(t*pow);
+
+krr(t, tw, pow) := integrate(kpr(t,tw,p, pow)*hr(p,1), p,0,2*%pi)*2*%pi;
+kri(t, tw, pow) := integrate(kpr(t,tw,p, pow)*hi(p,1), p,0,2*%pi)*2*%pi;
+kir(t, tw, pow) := integrate(kpi(t,tw,p, pow)*hr(p,1), p,0,2*%pi)*2*%pi;
+kii(t, tw, pow) := integrate(kpi(t,tw,p, pow)*hi(p,1), p,0,2*%pi)*2*%pi;
+
+
+plot2d([
+	kri(t/(1+0.5/10),1,10) -
+	kri(t/(1-0.5/10),1,10)
+	], [t,0.001,2]);
+
+
+ratsimp(krr(t, tw,pow));
+ratsimp(kri(t, tw,pow));
+ratsimp(kir(t, tw,pow));
+ratsimp(kii(t, tw,pow));
+
+d(t,tw,pow) := ((((1024*%pi^2-256)*pow^5+(128-512*%pi^2)*pow^3+(64*%pi^2-16)*pow)
+         *t^6
+         +((768-3072*%pi^2)*pow^5+(16-64*%pi^2)*pow)*t^4
+         +((3072*%pi^2-768)*pow^5+(512*%pi^2-128)*pow^3)*t^2
+         +(256-1024*%pi^2)*pow^5)
+         *sin(((2*%pi*pow+%pi)*t+2*%pi*pow)*tw/t)^2
+         +(((1024*%pi^2-256)*pow^5+(128-512*%pi^2)*pow^3+(64*%pi^2-16)*pow)
+          *t^6
+          +((768-3072*%pi^2)*pow^5+(16-64*%pi^2)*pow)*t^4
+          +((3072*%pi^2-768)*pow^5+(512*%pi^2-128)*pow^3)*t^2
+          +(256-1024*%pi^2)*pow^5)
+          *cos(((2*%pi*pow+%pi)*t+2*%pi*pow)*tw/t)^2);
+		  
+plot2d([
+	d(t,t,10)
+	], [t,0.95,1.06]);
+	
+solve(d(t,tw,pow), t);
+
+
+/*
+	t = 2*pow/(2*pow+1),
+	t = 1,
+    t = 2*pow/(2*pow-1)
+*/
+
+ratsimp(krr(2*pow/(2*pow+1), tw,pow));
+ratsimp(kri(2*pow/(2*pow+1), tw,pow));
+ratsimp(kir(2*pow/(2*pow+1), tw,pow));
+ratsimp(kii(2*pow/(2*pow+1), tw,pow));
+

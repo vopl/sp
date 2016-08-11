@@ -1,0 +1,73 @@
+#ifndef BEGIN_PARAMS_DEFS
+#	define BEGIN_PARAMS_DEFS
+#endif
+
+#ifndef PARAM_DEF
+#	define PARAM_DEF(c,n,v)
+#endif
+
+#ifndef END_PARAMS_DEFS
+#	define END_PARAMS_DEFS
+#endif
+
+
+
+
+
+
+BEGIN_PARAMS_DEFS
+
+PARAM_DEF(ssd, linearFillWhenPush,		bool,	(false))
+PARAM_DEF(ssd, periodMult,				double,	(0.99))
+PARAM_DEF(ssd, zeroPeriod,				double,	(60.0))
+PARAM_DEF(ssd, dropWeekends,			bool,	(true))
+PARAM_DEF(ssd, weekendBegin,			double, (5*24*60*60))
+PARAM_DEF(ssd, dataValuesDoLog,			bool,	(true))
+
+PARAM_DEF(so, periodsOnWin,				double, (11.7))
+PARAM_DEF(so, samplesOnPeriod,			double, (10))
+PARAM_DEF(so, periodsOnLevel,			double, (0.01))
+PARAM_DEF(so, winStepSize,				size_t,	(1))
+PARAM_DEF(so, periodOnNearLevels,		size_t,	(8))
+PARAM_DEF(so, analyzeStepGranula,		size_t,	(0))
+PARAM_DEF(so, analyzeBestTime,			double, (0.5))
+PARAM_DEF(so, polyPowMin,				double, (11.7))
+PARAM_DEF(so, polyPowMax,				double, (11.8))
+PARAM_DEF(so, polyPowMult,				double, (1.0))
+PARAM_DEF(so, polyPowInc,				double, (1.0))
+
+
+PARAM_DEF(ss, learningRate,				double, (0.7))
+PARAM_DEF(ss, learnPeriods,				double, (200))
+PARAM_DEF(ss, learnSamplesInPeriod,		size_t,	(100))
+PARAM_DEF(ss, trainEpochsAmount,		size_t,	(100))
+PARAM_DEF(ss, inputLayers,				size_t,	(10))
+PARAM_DEF(ss, inputLayerOffsetInPeriods,double,	(0.25))
+PARAM_DEF(ss, connectionRate,			double,	(0.01))
+PARAM_DEF(ss, layer1NeuronsAmount,		size_t,	(200))
+PARAM_DEF(ss, layer2NeuronsAmount,		size_t,	(150))
+PARAM_DEF(ss, layer3NeuronsAmount,		size_t,	(125))
+PARAM_DEF(ss, layer4NeuronsAmount,		size_t,	(100))
+PARAM_DEF(ss, sameNetAmounts,			size_t,	(1))
+PARAM_DEF(ss, confidencePeriods,		double,	(2))
+PARAM_DEF(ss, statisticPeriods,			double,	(80))
+PARAM_DEF(ss, tansDerivPeriods,			double,	(40))
+PARAM_DEF(ss, minPeriod,				double,	(60*60*8))
+PARAM_DEF(ss, multPeriod,				double,	(1.025))
+PARAM_DEF(ss, maxPeriod,				double,	(60*60*24*30*1))
+PARAM_DEF(ss, minInputPeriodMult,		double,	(0.5))
+PARAM_DEF(ss, maxInputPeriodMult,		double,	(8))
+
+
+PARAM_DEF(g, makeBackups,		bool,	true)
+PARAM_DEF(g, useBackups,		bool,	true)
+PARAM_DEF(g, backup1Timeout,	double,	(60*60*1))
+PARAM_DEF(g, backup2Timeout,	double,	(60*60*24))
+PARAM_DEF(g, backup3Timeout,	double,	(60*60*24*30))
+
+END_PARAMS_DEFS
+
+
+#undef BEGIN_PARAMS_DEFS
+#undef PARAM_DEF
+#undef END_PARAMS_DEFS

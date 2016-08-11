@@ -1,0 +1,40 @@
+se(x,p,pow) := cos(2*%pi*x/1+p);
+
+hr(x,t) := cos(2*%pi*x/t);
+hi(x,t) := -sin(2*%pi*x/t);
+
+kpr(t,tw,ts, p, pow) := integrate(se(x,p,pow)*hr(x,t), x,-(ts*pow),0)/(tw*pow);
+kpi(t,tw,ts, p, pow) := integrate(se(x,p,pow)*hi(x,t), x,-(ts*pow),0)/(tw*pow);
+
+krr(t,tw,ts, pow) := integrate(kpr(t,ts,tw,p, pow)*hr(p,2*%pi), p,0,2*%pi)/%pi;
+kri(t,tw,ts, pow) := integrate(kpr(t,ts,tw,p, pow)*hi(p,2*%pi), p,0,2*%pi)/%pi;
+kir(t,tw,ts, pow) := integrate(kpi(t,ts,tw,p, pow)*hr(p,2*%pi), p,0,2*%pi)/%pi;
+kii(t,tw,ts, pow) := integrate(kpi(t,ts,tw,p, pow)*hi(p,2*%pi), p,0,2*%pi)/%pi;
+
+
+
+kpr_m(t,tw,ts, p, pow) := integrate(se(x,p,pow)*hr(x,t), x,-(ts*pow)/2,(ts*pow)/2)/(tw*pow);
+kpi_m(t,tw,ts, p, pow) := integrate(se(x,p,pow)*hi(x,t), x,-(ts*pow)/2,(ts*pow)/2)/(tw*pow);
+
+krr_m(t,tw,ts, pow) := integrate(kpr_m(t,ts,tw,p, pow)*hr(p,2*%pi), p,0,2*%pi)/%pi;
+kii_m(t,tw,ts, pow) := integrate(kpi_m(t,ts,tw,p, pow)*hi(p,2*%pi), p,0,2*%pi)/%pi;
+
+
+
+
+
+_pow : 5;
+mp : (1.0+0.5/_pow);
+mm : (1.0-0.5/_pow);
+
+plot2d([
+	krr_m(t,t,t, _pow),
+	kii_m(t,t,t, _pow),
+	krr_m(t/mp,t,t, _pow)*mp + krr_m(t/mm,t,t, _pow)*mm,
+	kii_m(t/mp,t,t, _pow)*mp + kii_m(t/mm,t,t, _pow)*mm
+	], [t,0.01,5])$
+
+
+
+trigsimp(krr_m(t,tw,ts, pow));
+trigsimp(kii_m(t,tw,ts, pow));

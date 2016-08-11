@@ -1,0 +1,15 @@
+EXPORTS
+	hel_createInstance
+	hel_destroyInstance
+
+	hel_setParam
+	hel_setupScaledData
+	hel_addOptimizer
+	hel_setupSignaller
+
+	hel_pushData
+
+	hel_startUpdate
+	hel_waitUpdate
+
+	hel_getSignals

@@ -1,0 +1,46 @@
+
+f(x, p) := cos(2*%pi*x+p);
+hre(x,t) := cos(2*%pi*x/t);
+him(x,t) := -sin(2*%pi*x/t);
+h(x,t) := hre(x,t) + %i*him(x,t);
+
+
+
+
+
+kpre0(t, tw, p, pow) := integrate(f(x,p)*hre(x,t), x,-(tw*pow),0)/(tw*pow);
+kpim0(t, tw, p, pow) := integrate(f(x,p)*him(x,t), x,-(tw*pow),0)/(tw*pow);
+
+kpre(t, p, pow) := (
+	- kpre0(t/(1-0.5/pow), t, p,pow) +
+	+ kpre0(t/(1-1/pow), t, p,pow) +
+	- kpre0(t/(1-1.5/pow), t, p, pow) +
+	+ kpre0(t/(1-2/pow), t, p, pow) +
+	- kpre0(t/(1-2.5/pow), t, p, pow) +
+	+ kpre0(t/(1-3/pow), t, p, pow) +
+	- kpre0(t/(1-3.5/pow), t, p, pow) +
+	+ kpre0(t/(1-4/pow), t, p, pow) +
+	- kpre0(t/(1-4.5/pow), t, p, pow) +
+	0
+);
+plot2d([kpre(t,0,10)], [t,0.001,2]);
+
+kpim(t, p, pow) := (kpim0(t, t, p, pow) - (kpim0(t/(1-1/pow), t, p,pow)*(1-1/pow) + kpim0(t/(1+1/pow), t, p, pow)*(1+1/pow))/2)*2;
+
+
+krere(t, pow) := integrate(kpre(t,p, pow)*hre(p,1), p,0,2*%pi)*2*%pi;
+kreim(t, pow) := integrate(kpre(t,p, pow)*him(p,1), p,0,2*%pi)*2*%pi;
+
+kimre(t, pow) := integrate(kpim(t,p, pow)*hre(p,1), p,0,2*%pi)*2*%pi;
+kimim(t, pow) := integrate(kpim(t,p, pow)*him(p,1), p,0,2*%pi)*2*%pi;
+
+
+k_re(t,t0,sre, sim, pow) := sre*krere(t/t0, pow) + sim*kreim(t/t0, pow);
+k_im(t,t0,sre, sim, pow) := sre*kimre(t/t0, pow) + sim*kimim(t/t0, pow);
+
+k_a(t,t0,sre,sim, pow) := (k_re(t,t0,sre, sim, pow)*k_re(t,t0,sre, sim, pow) + k_im(t,t0,sre, sim, pow)*k_im(t,t0,sre, sim, pow))^0.5;
+
+plot2d([k_re(t,1,1,0,10), k_im(t,1,1,0,10), k_a(t,1,1,0,10)], [t,0.001,2]);
+
+
+

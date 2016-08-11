@@ -1,0 +1,30 @@
+TReal _11 =  ( 256*pi*pow_p_3+192*pi*pow_p_2+32*pi*pow ) ;
+TReal _5 = sin ( 4*pi*pow*tw ) ;
+TReal _13 =  ( -16*pow_p_3-12*pow_p_2-2*pow ) ;
+TReal _12 = cos ( 4*pi*pow*tw ) ;
+TReal _1 =  ( 4*pi*pow+2*pi ) ;
+TReal _3 =  ( 4*pi*pow+pi ) ;
+TReal _17 =  ( -32*pi*pow_p_3-24*pi*pow_p_2-4*pi*pow ) ;
+TReal _10 =  ( 32*pi*pow_p_3+24*pi*pow_p_2+4*pi*pow ) ;
+TReal _9 = sin ( pi*tw ) ;
+TReal _16 = cos ( pi*tw ) ;
+TReal _0 =  ( 8*pow_p_2+2*pow ) ;
+TReal _14 = cos ( 2*pi*tw ) ;
+TReal _15 =  ( -64*pow_p_3-48*pow_p_2-8*pow ) ;
+TReal _7 = sin ( 2*pi*tw ) ;
+TReal _2 =  ( 16*pow_p_2+8*pow ) ;
+TReal _8 =  ( 64*pow_p_3+48*pow_p_2+8*pow ) ;
+TReal _6 =  ( 16*pow_p_3+12*pow_p_2+2*pow ) ;
+TReal _4 =  ( 8*pow_p_2+6*pow+1 ) ;
+TReal _18 = sin ( _1*tw ) ;
+TReal _22 = cos ( _3*tw ) ;
+TReal _21 = cos ( _1*tw ) ;
+TReal _20 =  ( _11*ts ) ;
+TReal _19 = sin ( _3*tw ) ;
+TReal _24 =  ( _0*_21+_2*_22+_4*_12+_13*_14+_15*_16+80*pow_p_3+28*pow_p_2-6*pow-1 ) ;
+TReal _26 =  ( _0*_18+_2*_19+_4*_5+_13*_7+_15*_9+_17*tw ) ;
+TReal _25 =  ( _0*_21+_2*_22+_4*_12+_6*_14+_8*_16-80*pow_p_3-92*pow_p_2-26*pow-1 ) ;
+TReal _23 =  ( _0*_18+_2*_19+_4*_5+_6*_7+_8*_9+_10*tw ) ;
+//expr
+
+rr=_23/_20;ri=_24/_20;ir=-_25/_20;ii=_26/_20;

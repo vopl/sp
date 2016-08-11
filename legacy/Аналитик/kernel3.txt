@@ -1,0 +1,24 @@
+se(x,p,pow) := cos(2*%pi*x/1+p);
+
+hr(x,t) := cos(2*%pi*x/t);
+hi(x,t) := sin(2*%pi*x/t);
+
+kpr(t,tw, p, pow) := integrate(se(x,p,pow)*hr(x,t), x,-(tw*pow),0)/(t*pow);
+kpi(t,tw, p, pow) := integrate(se(x,p,pow)*hi(x,t), x,-(tw*pow),0)/(t*pow);
+
+krr(t, tw, pow) := integrate(kpr(t,tw,p, pow)*hr(p,1), p,0,2*%pi)*2*%pi;
+kri(t, tw, pow) := integrate(kpr(t,tw,p, pow)*hi(p,1), p,0,2*%pi)*2*%pi;
+kir(t, tw, pow) := integrate(kpi(t,tw,p, pow)*hr(p,1), p,0,2*%pi)*2*%pi;
+kii(t, tw, pow) := integrate(kpi(t,tw,p, pow)*hi(p,1), p,0,2*%pi)*2*%pi;
+
+
+
+
+plot2d([kpi(t,t, 0, 10)-kpi(t-t/10,t, 0, 10)], [t,0.01,1],
+ [plot_format, openmath])$
+
+ 
+trigsimp(krr(t,tw, pow));
+trigsimp(kri(t,tw, pow));
+trigsimp(kir(t,tw, pow));
+trigsimp(kii(t,tw, pow));

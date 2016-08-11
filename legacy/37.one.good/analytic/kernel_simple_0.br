@@ -1,0 +1,9 @@
+TReal _0 = sin ( 4*pi*pow*tw ) ;
+TReal _1 =  ( 8*pi*pow*ts ) ;
+TReal _2 = cos ( 4*pi*pow*tw ) ;
+TReal _4 =  ( _2-1 ) ;
+TReal _3 =  ( _0+4*pi*pow*tw ) ;
+TReal _5 =  ( _0-4*pi*pow*tw ) ;
+//expr
+
+rr=_3/_1;ri=_4/_1;ir=-_4/_1;ii=_5/_1;
