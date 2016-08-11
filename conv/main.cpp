@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     for(size_t index(0); index<signal.size(); ++index)
     {
         sp::real x = index * sp::g_sampleStep;
-        signal[index] = cos((x-0.456)*sp::g_2pi/(sp::g_periodGrid[500]));//ровно посеридине нашей шкалы
+        signal[index] = cos((x-0.456)*sp::g_2pi/(sp::g_periodGrid[250]));//ровно посеридине нашей шкалы
 
         //cout << x<<","<<signal[index]<< endl;
 
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     {
         sp::TVComplex response;
 
-        sp::convolve<sp::Window_hann, 10>(0.456, signal, response);
+        sp::convolve<sp::Window_hann2, 10>(0.456, signal, response);
 
         for(size_t index(0); index<sp::g_periodSteps; ++index)
         {
@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
 
             sp::real rr,ri,ir,ii;
 
-            sp::Window_hann::kernel<10>(sp::g_periodGrid[index]/(sp::g_periodGrid[500]),rr,ri,ir,ii);
+            sp::Window_hann2::kernel<10>(sp::g_periodGrid[index]/(sp::g_periodGrid[250]),rr,ri,ir,ii);
             cout << rr << " " << ri <<" " << ir <<" "<< ii <<endl;
 
 
@@ -126,10 +126,7 @@ int main(int argc, char *argv[])
         sp::ResponseModel rm;
 
         sp::TVComplex response;
-        sp::convolve<sp::Window_hann, 10>(0.456, signal, response);
-
-        sp::TVComplex spectr(response.size());
-        //spectr = response;
+        sp::convolve<sp::Window_rect, 10>(0.456, signal, response);
 
         sp::TVReal logPeriodGrid(sp::g_periodGrid.size());
         for(size_t i(0); i<sp::g_periodSteps; ++i)
@@ -140,19 +137,27 @@ int main(int argc, char *argv[])
 
         sp::TVReal work;
 
-        rm.solve_v(
-                    response.size(),
-                    &logPeriodGrid[0],
-                &response[0],
-                &spectr[0],
-                1,
-               work);
-
-        for(size_t i(0); i<sp::g_periodSteps; ++i)
+        //для инициализации спектра нулем - mu=1e-10 лучший. При меньших значениях начинают артифакты появляться, при больших - медленно сходится
+        for(int iters(1); iters<200; iters++)
         {
-            std::cout<<spectr[i].a()<<std::endl;
-        }
+            sp::TVComplex spectr(response.size());
+            //spectr = response;
 
+            int res = rm.solve_v(1e-30,
+                        response.size(),
+                        &logPeriodGrid[0],
+                    &response[0],
+                    &spectr[0],
+                    iters,
+                   work);
+
+            cerr<<iters<<": "<<res<<endl;
+            for(size_t i(0); i<sp::g_periodSteps; ++i)
+            {
+                std::cout<<spectr[i].a()<<" ";
+            }
+            std::cout<<endl;
+        }
     }
 
     return 0;

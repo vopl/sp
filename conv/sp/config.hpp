@@ -8,9 +8,9 @@ namespace sp
     //частота в герцах
     static const real g_sampleStep = 1.0/8000;
 
-    static const real g_periodMax = 1.0/100;//период для 100 герц
-    static const real g_periodMin = 1.0/2000;//период для 2 килогерц
-    static const long g_periodSteps = 1000;//размерность сетки
+    static const real g_periodMax = 1.0/250;//период для 250 герц
+    static const real g_periodMin = 1.0/1000;//период для 2 килогерц
+    static const long g_periodSteps = 500;//размерность сетки
 
     //сетка периода, от максимума с шагом до минимума
     static const TVReal g_periodGrid = ([](){

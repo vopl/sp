@@ -8,6 +8,7 @@
 #include <cmath>
 
 #include "window_hann.hpp"
+#include "window_hann2.hpp"
 #include "window_rect.hpp"
 
 
@@ -139,7 +140,7 @@ namespace sp
             return;
         }
 
-        Window_hann::kernel<10>(t, rr, ri, ir, ii);
+        Window_rect::kernel<10>(t, rr, ri, ir, ii);
     }
 
 
@@ -225,32 +226,26 @@ namespace sp
                 real sr = p[j*2+0];
                 real si = p[j*2+1];
 
-                //assert(!"вычисления переделать на таблицу");
                 params->_rm->evalVRaw(exp(logt-slogt), rr, ri, ir, ii);
-                //params->_rm->evalVRaw_tabled(logt-slogt, rr, ri, ir, ii);
 
-                assert(std::isfinite(rr) && std::isfinite(ri));
-                assert(std::isfinite(ir) && std::isfinite(ii));
+                //assert(std::isfinite(rr) && std::isfinite(ri));
+                //assert(std::isfinite(ir) && std::isfinite(ii));
 
                 re += sr*rr - si*ri;
                 im += sr*ir - si*ii;
             }
 
-            assert(std::isfinite(re) && std::isfinite(im));
+            //assert(std::isfinite(re) && std::isfinite(im));
 
             hx[i*2+0] = re;
             hx[i*2+1] = im;
 
         }
 
-        //значения отклика, если задано, то будет вычтено из вычесленного (можно не задавать в dlrvmar_der)
-        if(params->_ev)
+        for(int i(0); i<nDiv2; i++)
         {
-            for(int i(0); i<nDiv2; i++)
-            {
-                hx[i*2+0] -= params->_ev[i].re();
-                hx[i*2+1] -= params->_ev[i].im();
-            }
+            hx[i*2+0] -= params->_ev[i].re();
+            hx[i*2+1] -= params->_ev[i].im();
         }
     }
 
@@ -297,7 +292,7 @@ namespace sp
     };
 
     //////////////////////////////////////////////////////////////////////////
-    int ResponseModel::solve_v(
+    int ResponseModel::solve_v(real mu,
         size_t size, const real *logt, const complex *ev,//отклик
         complex *sv,//спектр
         size_t itMax,//макс итераций
@@ -334,10 +329,10 @@ namespace sp
         real levmarOpts[LM_OPTS_SZ];
         memcpy(levmarOpts, g_levmarOpts_ResponseModel, sizeof(levmarOpts));
 
-        levmarOpts[0] = 1e-30;
-        levmarOpts[1] = 1e-20;
-        levmarOpts[2] = 1e-10;
-        levmarOpts[3] = 1e-40;
+        levmarOpts[0] = mu;
+//        levmarOpts[1] = 1e-20;
+//        levmarOpts[2] = 1e-10;
+//        levmarOpts[3] = 1e-40;
 
         int res = dlevmar_der(
             &evalFuncOpt,
@@ -353,27 +348,27 @@ namespace sp
             NULL,
             &params);
 
-         std::cout<<"result: "<<res<<std::endl;
-         std::cout<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
-         std::cout<<"||e||_2:"<<levmarInfo[1]<<std::endl;
-         std::cout<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
-         std::cout<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
-         std::cout<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
-         std::cout<<"# iterations:"<<levmarInfo[5]<<std::endl;
-         std::cout<<"reason for terminating:";
-         switch(int(levmarInfo[6]+0.5))
-         {
-         case 1: std::cout<<" - stopped by small gradient J^T e"<<std::endl;break;
-         case 2: std::cout<<" - stopped by small Dp"<<std::endl;break;
-         case 3: std::cout<<" - stopped by itmax"<<std::endl;break;
-         case 4: std::cout<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
-         case 5: std::cout<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
-         case 6: std::cout<<" - stopped by small ||e||_2"<<std::endl;break;
-         case 7: std::cout<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
-         }
-         std::cout<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
-         std::cout<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
-         std::cout<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
+//         std::cout<<"result: "<<res<<std::endl;
+//         std::cout<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
+//         std::cout<<"||e||_2:"<<levmarInfo[1]<<std::endl;
+//         std::cout<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
+//         std::cout<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
+//         std::cout<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
+//         std::cout<<"# iterations:"<<levmarInfo[5]<<std::endl;
+//         std::cout<<"reason for terminating:";
+//         switch(int(levmarInfo[6]+0.5))
+//         {
+//         case 1: std::cout<<" - stopped by small gradient J^T e"<<std::endl;break;
+//         case 2: std::cout<<" - stopped by small Dp"<<std::endl;break;
+//         case 3: std::cout<<" - stopped by itmax"<<std::endl;break;
+//         case 4: std::cout<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
+//         case 5: std::cout<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
+//         case 6: std::cout<<" - stopped by small ||e||_2"<<std::endl;break;
+//         case 7: std::cout<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
+//         }
+//         std::cout<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
+//         std::cout<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
+//         std::cout<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
 
         return res;
     }
