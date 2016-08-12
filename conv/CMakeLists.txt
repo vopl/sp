@@ -20,6 +20,10 @@ set(SRC_LIST
 
     sp/responseModel.hpp
     sp/responseModel.cpp
+
+
+    test/responseModel.h
+    test/responseModel.cpp
 )
 
 include_directories(.)
@@ -33,4 +37,4 @@ target_link_libraries(${PROJECT_NAME} levmar lapack blas)
 
 
 
-add_subdirectory(levmar-2.6)
+add_subdirectory(levmar-2.3)

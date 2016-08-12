@@ -21,14 +21,7 @@ namespace sp
             size_t pow);
 
         void evalVRaw(real t, real &rr, real &ri, real &ir, real &ii);
-//        void evalVRaw(const TVReal &t, TVReal &rr, TVReal &ri, TVReal &ir, TVReal &ii);
-
-        void evalVDRaw(
-            real tm, real t, real tp,
-            real & rr, real & ri, real & ir, real & ii,
-            real &drr, real &dri, real &dir, real &dii);
-//        void evalDRaw(const TVReal &t, TVReal &drr, TVReal &dri, TVReal &dir, TVReal &dii);
-//        void evalVDRaw(const TVReal &t, TVReal &rr, TVReal &ri, TVReal &ir, TVReal &ii, TVReal &drr, TVReal &dri, TVReal &dir, TVReal &dii);
+        void evalVDRaw(real tm, real t, real tp, real &rr, real &ri, real &ir, real &ii, real &drr, real &dri, real &dir, real &dii);
 
     public:
         complex eval(real t, real st, const complex &sv);

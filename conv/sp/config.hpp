@@ -6,10 +6,10 @@ namespace sp
 {
 
     //частота в герцах
-    static const real g_sampleStep = 1.0/8000;
+    static const real g_sampleStep = 1.0/22000;
 
-    static const real g_periodMax = 1.0/250;//период для 250 герц
-    static const real g_periodMin = 1.0/1000;//период для 2 килогерц
+    static const real g_periodMax = 1.0/417;//период для 250 герц
+    static const real g_periodMin = 1.0/600;//период для 2 килогерц
     static const long g_periodSteps = 500;//размерность сетки
 
     //сетка периода, от максимума с шагом до минимума
