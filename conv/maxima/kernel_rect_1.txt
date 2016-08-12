@@ -1,0 +1,4 @@
+rr = (t*sin(2*%pi*t))/(2*%pi*t^2-2*%pi);
+ri = (t*cos(2*%pi*t)-t)/(2*%pi*t^2-2*%pi);
+ir = (cos(2*%pi*t)-1)/(2*%pi*t^2-2*%pi);
+ii = -sin(2*%pi*t)/(2*%pi*t^2-2*%pi);

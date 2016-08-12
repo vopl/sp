@@ -16,6 +16,38 @@ namespace sp
     };
 
     template <>
+    inline void Window_rect::kernel<1>(real period, real &rr, real &ri, real &ir, real &ii)
+    {
+        static const real pi = g_pi;
+        const real t = period;
+        const real t_p_2 = t*t;
+        const real ts = period;// < 1 ? period : 1;
+
+        {
+            const real _0 = sin ( 2*pi*t ) ;
+            const real _2 = cos ( 2*pi*t ) ;
+            const real _1 =  ( 2*pi*t_p_2-2*pi ) ;
+            const real _3 =  ( t*_0 ) ;
+            const real _5 =  ( _2-1 ) ;
+            const real _4 =  ( t*_2-t ) ;
+            //expr
+
+            if(t>real(1.0)-std::numeric_limits<real>::epsilon()*10 &&
+               t<real(1.0)+std::numeric_limits<real>::epsilon()*10)
+            {
+                rr = real(1)/2;
+                ri = 0;
+                ir = 0;
+                ii = -real(1)/2;
+            }
+            else
+            {
+                rr = _3/_1;ri = _4/_1;ir = _5/_1;ii = -_0/_1;
+            }
+        }
+    }
+
+    template <>
     inline complex Window_rect::convolve<10>(real xCenter, real x0, real y0, real x1, real y1, real period)
     {
         if(fabs(x0-x1) < std::numeric_limits<real>::epsilon()*10)
