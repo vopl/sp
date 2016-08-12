@@ -334,11 +334,11 @@ if(!(k%100)){
           break;
         }
 
-       if(Dp_L2>=(p_L2+eps2)/(LM_CNST(EPSILON)*LM_CNST(EPSILON))){ /* almost singular */
-       //if(Dp_L2>=(p_L2+eps2)/LM_CNST(EPSILON)){ /* almost singular */
-         stop=4;
-         break;
-       }
+//       //if(Dp_L2>=(p_L2+eps2)/(LM_CNST(EPSILON)*LM_CNST(EPSILON))){ /* almost singular */
+//       if(Dp_L2>=(p_L2+eps2)/LM_CNST(EPSILON)){ /* almost singular */
+//         stop=4;
+//         break;
+//       }
 
         (*func)(pDp, hx, m, n, adata); ++nfev; /* evaluate function at p + Dp */
         /* compute ||e(pDp)||_2 */
@@ -729,11 +729,11 @@ if(!(k%100)){
         break;
       }
 
-      if(Dp_L2>=(p_L2+eps2)/(LM_CNST(EPSILON)*LM_CNST(EPSILON))){ /* almost singular */
-      //if(Dp_L2>=(p_L2+eps2)/LM_CNST(EPSILON)){ /* almost singular */
-        stop=4;
-        break;
-      }
+//      if(Dp_L2>=(p_L2+eps2)/(LM_CNST(EPSILON)*LM_CNST(EPSILON))){ /* almost singular */
+//      //if(Dp_L2>=(p_L2+eps2)/LM_CNST(EPSILON)){ /* almost singular */
+//        stop=4;
+//        break;
+//      }
 
       (*func)(pDp, wrk, m, n, adata); ++nfev; /* evaluate function at p + Dp */
       /* compute ||e(pDp)||_2 */

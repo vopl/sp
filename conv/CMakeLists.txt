@@ -37,4 +37,4 @@ target_link_libraries(${PROJECT_NAME} levmar lapack blas)
 
 
 
-add_subdirectory(levmar-2.3)
+add_subdirectory(levmar-2.6)
