@@ -130,8 +130,11 @@ int main(int argc, char *argv[])
 
         for(size_t i(0); i<sp::g_periodSteps; ++i)
         {
-            response[i] = rm.eval(sp::g_periodGrid[i], sp::g_periodGrid[250-1], sp::complex(1,0));
-            response[i] += rm.eval(sp::g_periodGrid[i], sp::g_periodGrid[250+1], sp::complex(1,0));
+            sp::real t1 = (sp::g_periodGrid[250-1] + sp::g_periodGrid[250-2])/2;
+            sp::real t2 = (sp::g_periodGrid[250+1] + sp::g_periodGrid[250+1])/2;
+
+            response[i] = rm.eval(sp::g_periodGrid[i], t1, sp::complex(1,0));
+            response[i] += rm.eval(sp::g_periodGrid[i], t2, sp::complex(1,0));
         }
 
         sp::TVReal logPeriodGrid(sp::g_periodGrid.size());

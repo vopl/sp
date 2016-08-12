@@ -14,6 +14,56 @@ namespace sp
         static void kernel(real period, real &rr, real &ri, real &ir, real &ii);
     };
 
+
+    template <>
+    inline void Window_hann::kernel<1>(real period, real &rr, real &ri, real &ir, real &ii)
+    {
+        static const real pi = g_pi;
+        const real t = period;
+        const real t_p_2 = t*t;
+        const real t_p_3 = t*t*t;
+        const real t_p_4 = t*t*t*t;
+        const real t_p_5 = t*t*t*t*t;
+        const real t_p_6 = t*t*t*t*t*t;
+        const real t_p_7 = t*t*t*t*t*t*t;
+        const real t_p_8 = t*t*t*t*t*t*t*t;
+        const real t_p_9 = t*t*t*t*t*t*t*t*t;
+        const real t_p_10 = t*t*t*t*t*t*t*t*t*t;
+        const real t_p_11 = t*t*t*t*t*t*t*t*t*t*t;
+        const real t_p_12 = t*t*t*t*t*t*t*t*t*t*t*t;
+        const real t_p_13 = t*t*t*t*t*t*t*t*t*t*t*t*t;
+        const real t_p_14 = t*t*t*t*t*t*t*t*t*t*t*t*t*t;
+
+        const real ts = period;// < 1 ? period : 1;
+
+        {
+            const real _4 =  ( 4*pi*t_p_4-20*pi*t_p_2+16*pi ) ;
+            const real _0 =  ( t_p_2+2 ) ;
+            const real _2 =  ( 4*pi*t_p_5-20*pi*t_p_3+16*pi*t ) ;
+            const real _1 = sin ( 2*pi*t ) ;
+            const real _3 = cos ( 2*pi*t ) ;
+            const real _5 =  ( _0*_1 ) ;
+            const real _7 =  ( _0*_3-t_p_2-2 ) ;
+            const real _8 =  ( 3*_1 ) ;
+            const real _6 =  ( 3*_3-3 ) ;
+            //expr
+
+            if(t>real(1.0)-std::numeric_limits<real>::epsilon()*10 &&
+               t<real(1.0)+std::numeric_limits<real>::epsilon()*10)
+            {
+                rr = real(1)/4;
+                ri = 0;
+                ir = 0;
+                ii = -real(1)/4;
+            }
+            else
+            {
+                rr = -_5/_2;ir = -_6/_4;ri = -_7/_2;ii = _8/_4;
+            }
+        }
+    }
+
+
     template <>
     inline complex Window_hann::convolve<10>(real xCenter, real x0, real y0, real x1, real y1, real period)
     {

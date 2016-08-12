@@ -477,7 +477,7 @@ namespace sp
     void ResponseModel::evalVRaw(
         real t, real &rr, real &ri, real &ir, real &ii)
     {
-//        Window_hann::kernel<10>(t, rr, ri, ir, ii);
+//        Window_rect::kernel<1>(t, rr, ri, ir, ii);
 //        return;
 
         if(t<=0)
@@ -693,8 +693,8 @@ namespace sp
         memcpy(levmarOpts, g_levmarOpts_ResponseModel, sizeof(levmarOpts));
 
         levmarOpts[0] = mu;
-        levmarOpts[1] = 1e-20;
-        levmarOpts[2] = 1e-10;
+        levmarOpts[1] = 1e-40;
+        levmarOpts[2] = 1e-40;
         levmarOpts[3] = 1e-40;
 
         int res = dlevmar_der(
