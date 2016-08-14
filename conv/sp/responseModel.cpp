@@ -21,14 +21,14 @@
 //     int dAx_eq_b_Chol(double *A, double *B, double *x, int m);
 //     int dAx_eq_b_LU(double *A, double *B, double *x, int m);
 //     int dAx_eq_b_SVD(double *A, double *B, double *x, int m);
-// 
-// 
-// 
+//
+//
+//
 //     int dgesdd_(char *jobz, long *m, long *n, double *
-//         a, long *lda, double *s, double *u, long *ldu, 
-//         double *vt, long *ldvt, double *work, long *lwork, 
+//         a, long *lda, double *s, double *u, long *ldu,
+//         double *vt, long *ldvt, double *work, long *lwork,
 //         long *iwork, long *info);
-// 
+//
 //     int min(int a, int b)
 //     {
 //         if(a<b) return a;
@@ -50,55 +50,55 @@
 //                     A[col*m+row] = a[row*n+col];
 //             free(a);
 //         }
-// 
+//
 //         double *s = (double *)malloc(sizeof(double)*m);
 //         double *u = (double *)malloc(sizeof(double)*m*m);
 //         double *vt = (double *)malloc(sizeof(double)*n*n);
-// 
+//
 //         long lwork = 3*min(m,n)*min(m,n) + max(max(m,n),4*min(m,n)*min(m,n)+4*min(m,n));
 //         double *work = (double *)malloc(sizeof(double)*lwork);
 //         long *iwork = (long *)malloc(sizeof(long)*8*min(m,n));
-// 
+//
 //         long info;
-// 
+//
 //         dgesdd_(
-//             "A", 
-//             (long *)&m, 
-//             (long *)&n, 
-//             A, 
-//             (long *)&m, 
-//             s, 
-//             u, 
-//             (long *)&m, 
-//             vt, 
+//             "A",
+//             (long *)&m,
 //             (long *)&n,
-//             work, 
-//             (long *)&lwork, 
-//             iwork, 
+//             A,
+//             (long *)&m,
+//             s,
+//             u,
+//             (long *)&m,
+//             vt,
+//             (long *)&n,
+//             work,
+//             (long *)&lwork,
+//             iwork,
 //             &info);
-// 
+//
 //         if(0 == info)
 //         {
 //             /* compute machine epsilon */
 //             double eps, aux;
 //             for(eps=1.0; aux=eps+1.0, aux-1.0>0.0; eps*=0.5);
 //             eps*=2.0;
-// 
+//
 //             /* compute the pseudoinverse in a */
 //             memset(A, 0, sizeof(double)*m*n); /* initialize to zero */
-// 
+//
 //             int rank, i, j;
 //             double one_over_denom, thresh;
-// 
+//
 //             for(rank=0, thresh=eps*s[0]; rank<m && s[rank]>thresh; rank++)
 //             {
 //                 one_over_denom=1.0/s[rank];
-// 
+//
 //                 for(j=0; j<m; j++)
 //                     for(i=0; i<n; i++)
 //                         A[i*m+j]+=vt[rank+i*n]*u[j+rank*m]*one_over_denom;
 //             }
-// 
+//
 //             /* compute A^+ b in x */
 //             double sum;
 //             for(i=0; i<n; i++)
@@ -110,16 +110,16 @@
 //                 x[i]=sum;
 //             }
 //         }
-// 
+//
 //         free(s);
 //         free(u);
 //         free(vt);
 //         free(work);
 //         free(iwork);
-// 
+//
 //         return 0 == info;
 //     }
-// 
+//
 // };
 
 using namespace sp;
@@ -486,7 +486,7 @@ namespace sp
             return;
         }
 
-        size_t _pow = 1;
+        size_t _pow = 3;
 
         rr=ri=ir=ii=0;
         real ts = t>1?1:t;
@@ -555,7 +555,7 @@ namespace sp
         parabolicArgs(ltm, irm, lt, ir, ltp, irp, a, b, c); dir = (2*a*lt + b);
         parabolicArgs(ltm, iim, lt, ii, ltp, iip, a, b, c); dii = (2*a*lt + b);
     }
-    
+
 
 
     //////////////////////////////////////////////////////////////////////////
@@ -646,11 +646,11 @@ namespace sp
     }
 
 
-    static real g_levmarOpts_ResponseModel[LM_OPTS_SZ] = 
+    static real g_levmarOpts_ResponseModel[LM_OPTS_SZ] =
     {
         LM_INIT_MU,//mu
-        LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf, 
-        LM_STOP_THRESH,    //||Dp||_2 and 
+        LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
+        LM_STOP_THRESH,    //||Dp||_2 and
         LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
     };
 
@@ -704,7 +704,7 @@ namespace sp
             NULL,
             size*2,
             size*2,
-            itMax, 
+            itMax,
             levmarOpts,
             levmarInfo,
             &work[0],
@@ -731,7 +731,7 @@ namespace sp
          }
          std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
          std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
-         //std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
+         std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
          //exit(1);
 
         return res;
