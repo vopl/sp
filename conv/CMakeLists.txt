@@ -10,7 +10,8 @@ set(SRC_LIST
 
     sp/config.hpp
 
-    sp/convolve.hpp
+    sp/convolver.hpp
+    sp/convolver.cpp
 
 
     sp/kernel.hpp
