@@ -15,7 +15,7 @@ namespace sp
     class complex
     {
     public:
-//        Complex();
+//        complex();
         complex(real v1=0, real v2=0, EComplexConstructType ecct = CREIM);
         complex(const complex &z);
 
