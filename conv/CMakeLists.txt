@@ -10,20 +10,11 @@ set(SRC_LIST
 
     sp/config.hpp
 
-    sp/window_rect.hpp
-    sp/window_nutall.hpp
-    sp/window_hann.hpp
-    sp/window_hann2.hpp
-
     sp/convolve.hpp
 
 
-    sp/responseModel.hpp
-    sp/responseModel.cpp
-
-
-    test/responseModel.h
-    test/responseModel.cpp
+    sp/kernel.hpp
+    sp/kernel.cpp
 )
 
 include_directories(.)
