@@ -16,6 +16,14 @@ set(SRC_LIST
 
     sp/kernel.hpp
     sp/kernel.cpp
+
+
+    test/responseModel.h
+    test/responseModel.cpp
+
+    test/signalProcessor.h
+    test/signalProcessor.cpp
+
 )
 
 include_directories(.)

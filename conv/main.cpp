@@ -54,14 +54,14 @@ int main(int argc, char *argv[])
 
     if(0)
     {
-        sp::Convolver c(10, sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps);
+        sp::Convolver c(5, sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps);
 
         sp::TVComplex response1;
         c.execute(0, sp::g_sampleStep, signal, 0.55, response1);
 
 
 
-        sp::Kernel rm(10);
+        sp::Kernel rm(5);
 
         sp::TVComplex response2(sp::g_periodSteps);
 
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 
             response2[i] += rm.eval(sp::g_periodGrid[i], sp::g_periodGrid[sp::g_periodGrid.size()/2], sp::complex(1,0));
 
-            std::cout<<response1[i].im()<<", "<<response2[i].im()<<std::endl;
+            std::cout<<response1[i].re()<<", "<<response2[i].re()<<std::endl;
         }
 
 
@@ -83,19 +83,27 @@ int main(int argc, char *argv[])
         sp::Kernel rm(10);
 
         sp::TVComplex response(sp::g_periodSteps);
-        //sp::convolve<sp::Window_hann, 10>(0.55, signal, response);
+        sp::Convolver c(10, sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps);
+        c.execute(0, sp::g_sampleStep, signal, 0.55, response);
 
         for(size_t i(0); i<sp::g_periodSteps; ++i)
         {
+            std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
             response[i] = 0;
 
-            //response[i] += rm.eval(10, sp::g_periodGrid[i], sp::g_periodGrid[sp::g_periodGrid.size()/2], sp::complex(0,1));
+            response[i] += rm.eval(sp::g_periodGrid[i], sp::g_periodGrid[sp::g_periodGrid.size()/2], sp::complex(0,1));
 
-            for(size_t j(80); j<sp::g_periodSteps-160; j+=50)
-            {
-                response[i] += rm.eval(sp::g_periodGrid[i], sp::g_periodGrid[j], sp::complex(1,0));
-            }
+            std::cout<<response[i].re()<<", "<<response[i].im()<<std::endl;
+
+
+
+//            for(size_t j(80); j<sp::g_periodSteps-160; j+=50)
+//            {
+//                response[i] += rm.eval(sp::g_periodGrid[i], sp::g_periodGrid[j], sp::complex(0,1));
+//            }
         }
+
+        exit(0);
 
         sp::TVReal work;
 
