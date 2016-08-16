@@ -85,7 +85,6 @@ namespace
         ri += (ri_1*mp - ri_2*mm);
         ir += (ir_1*mp - ir_2*mm);
         ii += (ii_1*mp - ii_2*mm);
-
     }
 
 
@@ -234,7 +233,7 @@ namespace sp
 
         static real levmarOpts[LM_OPTS_SZ] =
         {
-            1e-40,  //LM_INIT_MU,        //mu
+            1e-10,  //LM_INIT_MU,        //mu
             1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
             1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
             1e-20,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
