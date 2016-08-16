@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "responseModel.h"
 #include "math.h"
 #include "levmar.h"
