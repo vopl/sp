@@ -1,7 +1,10 @@
 #include "convolver.hpp"
+#include <iostream>
+#include <boost/math/special_functions.hpp>
 
 namespace sp
 {
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Convolver::Convolver(real pow, real periodMin, real periodMax, std::size_t periodSteps)
         : _pow(pow)
     {
@@ -15,6 +18,7 @@ namespace sp
         }
     }
 
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     Convolver::~Convolver()
     {
 
@@ -22,6 +26,7 @@ namespace sp
 
     namespace
     {
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         complex evalSegment(real period, real xTarget, real x0, real y0, real x1, real y1, real xStart, real xStop)
         {
             real _2pi_div_period = g_2pi/period;
@@ -68,6 +73,7 @@ namespace sp
             return complex(re, im);
         }
 
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         complex executeOne(real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, real period, real pow)
         {
             const real _winLen = period * pow;
@@ -137,8 +143,119 @@ namespace sp
         }
     }
 
+    namespace
+    {
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        real kaizer(real beta, int n, int N)
+        {
+            real nom = boost::math::cyl_bessel_i(0, beta*sqrt(1.0-sqr(real(2*n-N+1)/(N-1))));
+            real denom = boost::math::cyl_bessel_i(0, beta);
+
+            return nom / denom;
+        }
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        void lowPassFir(
+            real Fs,
+            real Fd,
+            std::size_t n,
+            TVReal &A)
+        {
+            real f = Fs/Fd;
+            real w = g_2pi*f;
+            real q = 2*f;
+
+            n+=2;
+            n |= 1;
+            A.resize(n-2);
+
+            std::size_t mn = n/2-1;
+            A[mn] = q;
+            for(std::size_t k(1); k<n/2; k++)
+            {
+                //A[mn+k] = A[mn-k] = q*(sin(k*w)/(k*w));
+                A[mn+k] = A[mn-k] = q* boost::math::sinc_pi(k*w);
+            }
+
+            real kaizerBeta = 5;
+            TVReal _wnd(A.size());
+            n = _wnd.size();
+            mn = n/2;
+            _wnd[mn+0] = kaizer(kaizerBeta, n/2, n);
+            for(std::size_t k(1); k<=n/2; k++)
+            {
+                if(mn+k < _wnd.size())
+                {
+                    _wnd[mn+k] = kaizer(kaizerBeta, n/2+k, n);
+                }
+                _wnd[mn-k] = kaizer(kaizerBeta, n/2-k, n);
+            }
+
+            for(std::size_t i(0); i<A.size(); i++)
+            {
+                A[i] *= _wnd[i];
+            }
+
+        }
+
+        //фиры тяжело вычисляются, в основном из за кайзера. Это прекэшированные значения
+        using FirId = std::tuple<real, std::size_t, std::size_t>;
+        FirId g_firId{0,0,0};
+        std::vector<std::vector<real>> g_firs;
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        real /*signalStartTime*/ prepareSignal(real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, real pow, real maxT, TVReal &preparedSignal)
+        {
+            std::size_t minLen = std::size_t(pow*10);//по 10 точек на период, иначе fir не справляется
+            std::size_t maxLen = std::size_t(pow*(maxT/signalSampleLength)*2) + minLen + 2;
+
+            std::size_t endIdx = std::size_t((targetTime - signalStartTime)/signalSampleLength) + minLen/2;
+            assert(endIdx <= signal.size());
+
+            preparedSignal.resize((maxLen - minLen)/2);
+
+            FirId firId{pow, minLen, maxLen};
+            if(firId != g_firId)
+            {
+                g_firs.resize((maxLen - minLen)/2);
+                for(std::size_t len(minLen); len < maxLen; len+=2)
+                {
+                    real bndT = len/(pow);
+                    lowPassFir(1+1.0/pow, bndT/2, len, g_firs[len/2]);
+                }
+            }
+
+            for(std::size_t len(minLen); len < maxLen; len+=2)
+            {
+                //TVReal fir;
+                //real bndT = len/(pow);
+                //lowPassFir(1+1.0/pow, bndT/2, len, fir);
+                const TVReal &fir = g_firs[len/2];
+
+                real preparedValue = 0;
+                for(std::size_t i(0); i<fir.size(); i++)
+                {
+                    preparedValue += signal[endIdx-1-i] * fir[i];
+                }
+                preparedSignal[preparedSignal.size()-1 - (len-minLen)/2] = preparedValue;
+            }
+
+            return targetTime - preparedSignal.size()*signalSampleLength;
+        }
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void Convolver::execute(real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, TVComplex &echo)
     {
+        TVReal preparedSignal;
+        signalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _pow, _periodGrid.back(), preparedSignal);
+
+        for(std::size_t idx(0); idx<4000; ++idx)
+        {
+            std::cout<<signal[signal.size()-1-idx]<<", "<<preparedSignal[preparedSignal.size()-1-idx]<<std::endl;
+        }
+        exit(0);
+
         echo.resize(_periodGrid.size());
         for(std::size_t i(0); i<_periodGrid.size(); i++)
         {

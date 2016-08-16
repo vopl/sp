@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
 
     }
 
+    if(0)
     {
         hel::ScaledData sd;
 
@@ -100,15 +101,15 @@ int main(int argc, char *argv[])
 
         sp::TVComplex response(sp::g_periodSteps);
         sp::Convolver c(POW, sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps);
-        c.execute(0, sp::g_sampleStep, signal, (signal.size()-1)*sp::g_sampleStep, response);
+        c.execute(0, sp::g_sampleStep, signal, 1.5, response);
 
         for(size_t i(0); i<sp::g_periodSteps; ++i)
         {
-            //std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
+            std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
 
             response[i] = 0;
             response[i] += rm.eval(sp::g_periodGrid[i], 1.0/100, sp::complex(1,0));
-            //std::cout<<response[i].re()<<", "<<response[i].im()<<std::endl;
+            std::cout<<response[i].re()<<", "<<response[i].im()<<std::endl;
         }
 
         exit(0);
