@@ -92,11 +92,11 @@ extern "C" {
 #define LM_BLEIC_DER_WORKSZ(npar, nmeas, nconstr1, nconstr2) LM_BLEC_DER_WORKSZ((npar)+(nconstr2), (nmeas)+(nconstr2), (nconstr1)+(nconstr2))
 #define LM_BLEIC_DIF_WORKSZ(npar, nmeas, nconstr1, nconstr2) LM_BLEC_DIF_WORKSZ((npar)+(nconstr2), (nmeas)+(nconstr2), (nconstr1)+(nconstr2))
 
-#define LM_OPTS_SZ    	 5 /* max(4, 5) */
-#define LM_INFO_SZ    	 10
+#define LM_OPTS_SZ         5 /* max(4, 5) */
+#define LM_INFO_SZ         10
 #define LM_ERROR         -1
-#define LM_INIT_MU    	 1E-03
-#define LM_STOP_THRESH	 1E-17
+#define LM_INIT_MU         1E-03
+#define LM_STOP_THRESH     1E-17
 #define LM_DIFF_DELTA    1E-06
 #define LM_VERSION       "2.6 (November 2011)"
 

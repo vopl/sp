@@ -9,110 +9,110 @@
 
 // extern "C"
 // {
-// 	int dAx_eq_b_Chol(double *A, double *B, double *x, int m);
-// 	int dAx_eq_b_QR(double *A, double *B, double *x, int m);
-// 	int dAx_eq_b_QRLS(double *A, double *B, double *x, int m, int n);
-// 	int dAx_eq_b_Chol(double *A, double *B, double *x, int m);
-// 	int dAx_eq_b_LU(double *A, double *B, double *x, int m);
-// 	int dAx_eq_b_SVD(double *A, double *B, double *x, int m);
+//     int dAx_eq_b_Chol(double *A, double *B, double *x, int m);
+//     int dAx_eq_b_QR(double *A, double *B, double *x, int m);
+//     int dAx_eq_b_QRLS(double *A, double *B, double *x, int m, int n);
+//     int dAx_eq_b_Chol(double *A, double *B, double *x, int m);
+//     int dAx_eq_b_LU(double *A, double *B, double *x, int m);
+//     int dAx_eq_b_SVD(double *A, double *B, double *x, int m);
 //
 //
 //
-// 	int dgesdd_(char *jobz, long *m, long *n, double *
-// 		a, long *lda, double *s, double *u, long *ldu,
-// 		double *vt, long *ldvt, double *work, long *lwork,
-// 		long *iwork, long *info);
+//     int dgesdd_(char *jobz, long *m, long *n, double *
+//         a, long *lda, double *s, double *u, long *ldu,
+//         double *vt, long *ldvt, double *work, long *lwork,
+//         long *iwork, long *info);
 //
-// 	int min(int a, int b)
-// 	{
-// 		if(a<b) return a;
-// 		return b;
-// 	}
-// 	int max(int a, int b)
-// 	{
-// 		if(a>b) return a;
-// 		return b;
-// 	}
-// 	int dAx_eq_b_SVD2(double *A, double *B, double *x, long m, long n)
-// 	{
-// 		//column major a
-// 		{
-// 			double *a = (double *)malloc(sizeof(double)*m*n);
-// 			memcpy(a, A, sizeof(double)*m*n);
-// 			for(long row=0; row<m; row++)
-// 				for(long col=0; col<n; col++)
-// 					A[col*m+row] = a[row*n+col];
-// 			free(a);
-// 		}
+//     int min(int a, int b)
+//     {
+//         if(a<b) return a;
+//         return b;
+//     }
+//     int max(int a, int b)
+//     {
+//         if(a>b) return a;
+//         return b;
+//     }
+//     int dAx_eq_b_SVD2(double *A, double *B, double *x, long m, long n)
+//     {
+//         //column major a
+//         {
+//             double *a = (double *)malloc(sizeof(double)*m*n);
+//             memcpy(a, A, sizeof(double)*m*n);
+//             for(long row=0; row<m; row++)
+//                 for(long col=0; col<n; col++)
+//                     A[col*m+row] = a[row*n+col];
+//             free(a);
+//         }
 //
-// 		double *s = (double *)malloc(sizeof(double)*m);
-// 		double *u = (double *)malloc(sizeof(double)*m*m);
-// 		double *vt = (double *)malloc(sizeof(double)*n*n);
+//         double *s = (double *)malloc(sizeof(double)*m);
+//         double *u = (double *)malloc(sizeof(double)*m*m);
+//         double *vt = (double *)malloc(sizeof(double)*n*n);
 //
-// 		long lwork = 3*min(m,n)*min(m,n) + max(max(m,n),4*min(m,n)*min(m,n)+4*min(m,n));
-// 		double *work = (double *)malloc(sizeof(double)*lwork);
-// 		long *iwork = (long *)malloc(sizeof(long)*8*min(m,n));
+//         long lwork = 3*min(m,n)*min(m,n) + max(max(m,n),4*min(m,n)*min(m,n)+4*min(m,n));
+//         double *work = (double *)malloc(sizeof(double)*lwork);
+//         long *iwork = (long *)malloc(sizeof(long)*8*min(m,n));
 //
-// 		long info;
+//         long info;
 //
-// 		dgesdd_(
-// 			"A",
-// 			(long *)&m,
-// 			(long *)&n,
-// 			A,
-// 			(long *)&m,
-// 			s,
-// 			u,
-// 			(long *)&m,
-// 			vt,
-// 			(long *)&n,
-// 			work,
-// 			(long *)&lwork,
-// 			iwork,
-// 			&info);
+//         dgesdd_(
+//             "A",
+//             (long *)&m,
+//             (long *)&n,
+//             A,
+//             (long *)&m,
+//             s,
+//             u,
+//             (long *)&m,
+//             vt,
+//             (long *)&n,
+//             work,
+//             (long *)&lwork,
+//             iwork,
+//             &info);
 //
-// 		if(0 == info)
-// 		{
-// 			/* compute machine epsilon */
-// 			double eps, aux;
-// 			for(eps=1.0; aux=eps+1.0, aux-1.0>0.0; eps*=0.5);
-// 			eps*=2.0;
+//         if(0 == info)
+//         {
+//             /* compute machine epsilon */
+//             double eps, aux;
+//             for(eps=1.0; aux=eps+1.0, aux-1.0>0.0; eps*=0.5);
+//             eps*=2.0;
 //
-// 			/* compute the pseudoinverse in a */
-// 			memset(A, 0, sizeof(double)*m*n); /* initialize to zero */
+//             /* compute the pseudoinverse in a */
+//             memset(A, 0, sizeof(double)*m*n); /* initialize to zero */
 //
-// 			int rank, i, j;
-// 			double one_over_denom, thresh;
+//             int rank, i, j;
+//             double one_over_denom, thresh;
 //
-// 			for(rank=0, thresh=eps*s[0]; rank<m && s[rank]>thresh; rank++)
-// 			{
-// 				one_over_denom=1.0/s[rank];
+//             for(rank=0, thresh=eps*s[0]; rank<m && s[rank]>thresh; rank++)
+//             {
+//                 one_over_denom=1.0/s[rank];
 //
-// 				for(j=0; j<m; j++)
-// 					for(i=0; i<n; i++)
-// 						A[i*m+j]+=vt[rank+i*n]*u[j+rank*m]*one_over_denom;
-// 			}
+//                 for(j=0; j<m; j++)
+//                     for(i=0; i<n; i++)
+//                         A[i*m+j]+=vt[rank+i*n]*u[j+rank*m]*one_over_denom;
+//             }
 //
-// 			/* compute A^+ b in x */
-// 			double sum;
-// 			for(i=0; i<n; i++)
-// 			{
-// 				for(j=0, sum=0.0; j<m; j++)
-// 				{
-// 					sum+=A[i*m+j]*B[j];
-// 				}
-// 				x[i]=sum;
-// 			}
-// 		}
+//             /* compute A^+ b in x */
+//             double sum;
+//             for(i=0; i<n; i++)
+//             {
+//                 for(j=0, sum=0.0; j<m; j++)
+//                 {
+//                     sum+=A[i*m+j]*B[j];
+//                 }
+//                 x[i]=sum;
+//             }
+//         }
 //
-// 		free(s);
-// 		free(u);
-// 		free(vt);
-// 		free(work);
-// 		free(iwork);
+//         free(s);
+//         free(u);
+//         free(vt);
+//         free(work);
+//         free(iwork);
 //
-// 		return 0 == info;
-// 	}
+//         return 0 == info;
+//     }
 //
 // };
 
@@ -124,7 +124,7 @@ void lsq(size_t cols, size_t rows, TVReal &A, TVReal &b, TVReal &x)
     int res;
 
     res = dAx_eq_b_QRLS(&A[0], &b[0], &x[0], rows, cols);
-    //  		res = dAx_eq_b_SVD2(&A[0], &b[0], &x[0], rows, cols);
+    //          res = dAx_eq_b_SVD2(&A[0], &b[0], &x[0], rows, cols);
     return;
 
     TVReal normalA(cols*cols);
@@ -191,21 +191,21 @@ namespace hel
             return c_pi;
         }
 
-// 		//////////////////////////////////////////////////////////////////////////
-// 		template <> mpfr::mpreal sin_p_2<mpfr::mpreal>(const mpfr::mpreal &x)
-// 		{
-// 			real v = mpfr::sin(x);
-// 			return v*v;
-// 		}
-// 		template <> mpfr::mpreal cos_p_2<mpfr::mpreal>(const mpfr::mpreal &x)
-// 		{
-// 			real v = mpfr::cos(x);
-// 			return v*v;
-// 		}
-// 		template <> mpfr::mpreal mkPi<mpfr::mpreal>()
-// 		{
-// 			return mpfr::const_pi();
-// 		}
+//         //////////////////////////////////////////////////////////////////////////
+//         template <> mpfr::mpreal sin_p_2<mpfr::mpreal>(const mpfr::mpreal &x)
+//         {
+//             real v = mpfr::sin(x);
+//             return v*v;
+//         }
+//         template <> mpfr::mpreal cos_p_2<mpfr::mpreal>(const mpfr::mpreal &x)
+//         {
+//             real v = mpfr::cos(x);
+//             return v*v;
+//         }
+//         template <> mpfr::mpreal mkPi<mpfr::mpreal>()
+//         {
+//             return mpfr::const_pi();
+//         }
 
         //////////////////////////////////////////////////////////////////////////
         template <class TReal>
@@ -622,18 +622,18 @@ namespace hel
     }
 
 
-// 	//////////////////////////////////////////////////////////////////////////
-// 	void ResponseModel::evalVRaw(const TVReal &t, TVReal &rr, TVReal &ri, TVReal &ir, TVReal &ii)
-// 	{
-// 		rr.resize(t.size());
-// 		ri.resize(t.size());
-// 		ir.resize(t.size());
-// 		ii.resize(t.size());
-// 		for(size_t i(0); i<t.size(); i++)
-// 		{
-// 			evalVRaw(t[i], rr[i], ri[i], ir[i], ii[i]);
-// 		}
-// 	}
+//     //////////////////////////////////////////////////////////////////////////
+//     void ResponseModel::evalVRaw(const TVReal &t, TVReal &rr, TVReal &ri, TVReal &ir, TVReal &ii)
+//     {
+//         rr.resize(t.size());
+//         ri.resize(t.size());
+//         ir.resize(t.size());
+//         ii.resize(t.size());
+//         for(size_t i(0); i<t.size(); i++)
+//         {
+//             evalVRaw(t[i], rr[i], ri[i], ir[i], ii[i]);
+//         }
+//     }
 
     //////////////////////////////////////////////////////////////////////////
     void ResponseModel::evalVDRaw(
@@ -671,66 +671,66 @@ namespace hel
         parabolicArgs(ltm, irm, lt, ir, ltp, irp, a, b, c); dir = (2*a*lt + b);
         parabolicArgs(ltm, iim, lt, ii, ltp, iip, a, b, c); dii = (2*a*lt + b);
 
-// 		drr = (rrp-rrm) / (ltp-ltm);
-// 		dri = (rip-rim) / (ltp-ltm);
-// 		dir = (irp-irm) / (ltp-ltm);
-// 		dii = (iip-iim) / (ltp-ltm);
+//         drr = (rrp-rrm) / (ltp-ltm);
+//         dri = (rip-rim) / (ltp-ltm);
+//         dir = (irp-irm) / (ltp-ltm);
+//         dii = (iip-iim) / (ltp-ltm);
         //
 
-// 		{
-// 			delta = lt-ltm;
-// 			real rrm3, rim3, irm3, iim3;
-// 			evalVRaw(exp(lt-3*delta), rrm3, rim3, irm3, iim3);
-// 			real rrm2, rim2, irm2, iim2;
-// 			evalVRaw(exp(lt-2*delta), rrm2, rim2, irm2, iim2);
-// 			real rrm1, rim1, irm1, iim1;
-// 			evalVRaw(exp(lt-1*delta), rrm1, rim1, irm1, iim1);
-// 			real rrm0, rim0, irm0, iim0;
-// 			evalVRaw(exp(lt-0*delta), rrm0, rim0, irm0, iim0);
-// 			real rrp1, rip1, irp1, iip1;
-// 			evalVRaw(exp(lt+1*delta), rrp1, rip1, irp1, iip1);
-// 			real rrp2, rip2, irp2, iip2;
-// 			evalVRaw(exp(lt+2*delta), rrp2, rip2, irp2, iip2);
-// 			real rrp3, rip3, irp3, iip3;
-// 			evalVRaw(exp(lt+3*delta), rrp3, rip3, irp3, iip3);
+//         {
+//             delta = lt-ltm;
+//             real rrm3, rim3, irm3, iim3;
+//             evalVRaw(exp(lt-3*delta), rrm3, rim3, irm3, iim3);
+//             real rrm2, rim2, irm2, iim2;
+//             evalVRaw(exp(lt-2*delta), rrm2, rim2, irm2, iim2);
+//             real rrm1, rim1, irm1, iim1;
+//             evalVRaw(exp(lt-1*delta), rrm1, rim1, irm1, iim1);
+//             real rrm0, rim0, irm0, iim0;
+//             evalVRaw(exp(lt-0*delta), rrm0, rim0, irm0, iim0);
+//             real rrp1, rip1, irp1, iip1;
+//             evalVRaw(exp(lt+1*delta), rrp1, rip1, irp1, iip1);
+//             real rrp2, rip2, irp2, iip2;
+//             evalVRaw(exp(lt+2*delta), rrp2, rip2, irp2, iip2);
+//             real rrp3, rip3, irp3, iip3;
+//             evalVRaw(exp(lt+3*delta), rrp3, rip3, irp3, iip3);
 //
-// 			drr = (rrp3-9*rrp2+45*rrp1-45*rrm1+9*rrm2-rrm3)/(60*delta);
-// 			dri = (rip3-9*rip2+45*rip1-45*rim1+9*rim2-rim3)/(60*delta);
-// 			dir = (irp3-9*irp2+45*irp1-45*irm1+9*irm2-irm3)/(60*delta);
-// 			dii = (iip3-9*iip2+45*iip1-45*iip1+9*iim2-iim3)/(60*delta);
-// 		}
+//             drr = (rrp3-9*rrp2+45*rrp1-45*rrm1+9*rrm2-rrm3)/(60*delta);
+//             dri = (rip3-9*rip2+45*rip1-45*rim1+9*rim2-rim3)/(60*delta);
+//             dir = (irp3-9*irp2+45*irp1-45*irm1+9*irm2-irm3)/(60*delta);
+//             dii = (iip3-9*iip2+45*iip1-45*iip1+9*iim2-iim3)/(60*delta);
+//         }
     }
 
-// 	//////////////////////////////////////////////////////////////////////////
-// 	void ResponseModel::evalDRaw(const TVReal &t, TVReal &drr, TVReal &dri, TVReal &dir, TVReal &dii)
-// 	{
-// 		drr.resize(t.size());
-// 		dri.resize(t.size());
-// 		dir.resize(t.size());
-// 		dii.resize(t.size());
-// 		for(size_t i(0); i<t.size(); i++)
-// 		{
-// 			real rr,ri, ir, ii;
-// 			evalVDRaw(t[i], rr, ri, ir, ii, drr[i], dri[i], dir[i], dii[i]);
-// 		}
-// 	}
+//     //////////////////////////////////////////////////////////////////////////
+//     void ResponseModel::evalDRaw(const TVReal &t, TVReal &drr, TVReal &dri, TVReal &dir, TVReal &dii)
+//     {
+//         drr.resize(t.size());
+//         dri.resize(t.size());
+//         dir.resize(t.size());
+//         dii.resize(t.size());
+//         for(size_t i(0); i<t.size(); i++)
+//         {
+//             real rr,ri, ir, ii;
+//             evalVDRaw(t[i], rr, ri, ir, ii, drr[i], dri[i], dir[i], dii[i]);
+//         }
+//     }
 //
-// 	//////////////////////////////////////////////////////////////////////////
-// 	void ResponseModel::evalVDRaw(const TVReal &t, TVReal &rr, TVReal &ri, TVReal &ir, TVReal &ii, TVReal &drr, TVReal &dri, TVReal &dir, TVReal &dii)
-// 	{
-// 		rr.resize(t.size());
-// 		ri.resize(t.size());
-// 		ir.resize(t.size());
-// 		ii.resize(t.size());
-// 		drr.resize(t.size());
-// 		dri.resize(t.size());
-// 		dir.resize(t.size());
-// 		dii.resize(t.size());
-// 		for(size_t i(0); i<t.size(); i++)
-// 		{
-// 			evalVDRaw(t[i], rr[i], ri[i], ir[i], ii[i], drr[i], dri[i], dir[i], dii[i]);
-// 		}
-// 	}
+//     //////////////////////////////////////////////////////////////////////////
+//     void ResponseModel::evalVDRaw(const TVReal &t, TVReal &rr, TVReal &ri, TVReal &ir, TVReal &ii, TVReal &drr, TVReal &dri, TVReal &dir, TVReal &dii)
+//     {
+//         rr.resize(t.size());
+//         ri.resize(t.size());
+//         ir.resize(t.size());
+//         ii.resize(t.size());
+//         drr.resize(t.size());
+//         dri.resize(t.size());
+//         dir.resize(t.size());
+//         dii.resize(t.size());
+//         for(size_t i(0); i<t.size(); i++)
+//         {
+//             evalVDRaw(t[i], rr[i], ri[i], ir[i], ii[i], drr[i], dri[i], dir[i], dii[i]);
+//         }
+//     }
 
     //////////////////////////////////////////////////////////////////////////
     void ResponseModel::evalVRaw_tabled(
@@ -885,7 +885,7 @@ namespace hel
             dri = vds1._dri;
             dir = vds1._dir;
             dii = vds1._dii;
-        }	}
+        }    }
 
     //////////////////////////////////////////////////////////////////////////
     Complex ResponseModel::eval(real t, real st, const Complex &sv)
@@ -1050,9 +1050,9 @@ namespace hel
     static real g_levmarOpts_ResponseModel[LM_OPTS_SZ] =
     {
         LM_INIT_MU,//mu
-        LM_STOP_THRESH,	//stopping thresholds for ||J^T e||_inf,
-        LM_STOP_THRESH,	//||Dp||_2 and
-        LM_STOP_THRESH,	//||e||_2. Set to NULL for defaults to be used.
+        LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
+        LM_STOP_THRESH,    //||Dp||_2 and
+        LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
     };
 
     //////////////////////////////////////////////////////////////////////////
@@ -1083,19 +1083,19 @@ namespace hel
         }
 
 
-// 		TVReal err(eSize*2);
-// 		params._ev=NULL;
-// 		dlevmar_chkjac(
-// 			evalFuncOpt,
-// 			jacoFuncOpt,
-// 			&args[0],
-// 			sSize*3,
-// 			eSize*2,
-// 			&params,
-// 			&err.front());
-// 		real errVal = std::accumulate(err.begin(), err.end(), 0.0)/err.size();
-// 		std::cout<<"dlevmar_chkjac: "<<errVal<<std::endl;
-// 		exit(0);
+//         TVReal err(eSize*2);
+//         params._ev=NULL;
+//         dlevmar_chkjac(
+//             evalFuncOpt,
+//             jacoFuncOpt,
+//             &args[0],
+//             sSize*3,
+//             eSize*2,
+//             &params,
+//             &err.front());
+//         real errVal = std::accumulate(err.begin(), err.end(), 0.0)/err.size();
+//         std::cout<<"dlevmar_chkjac: "<<errVal<<std::endl;
+//         exit(0);
 
         real levmarOpts[LM_OPTS_SZ];
         memcpy(levmarOpts, g_levmarOpts_ResponseModel, sizeof(levmarOpts));
@@ -1146,19 +1146,19 @@ namespace hel
         assert(sizeof(double) == sizeof(Complex)/2);//хак Complex[n] используется как double[n*2]
 
 
-// 		TVReal err(eSize*2);
-// 		params._ev = NULL;
-// 		dlevmar_chkjac(
-// 			evalFuncOpt,
-// 			jacoFuncOpt,
-// 			(real *)sv,
-// 			sSize*2,
-// 			eSize*2,
-// 			&params,
-// 			&err.front());
-// 		real errVal = std::accumulate(err.begin(), err.end(), 0.0)/err.size();
-// 		std::cout<<"dlevmar_chkjac: "<<errVal<<std::endl;
-// 		exit(0);
+//         TVReal err(eSize*2);
+//         params._ev = NULL;
+//         dlevmar_chkjac(
+//             evalFuncOpt,
+//             jacoFuncOpt,
+//             (real *)sv,
+//             sSize*2,
+//             eSize*2,
+//             &params,
+//             &err.front());
+//         real errVal = std::accumulate(err.begin(), err.end(), 0.0)/err.size();
+//         std::cout<<"dlevmar_chkjac: "<<errVal<<std::endl;
+//         exit(0);
 
         real levmarOpts[LM_OPTS_SZ];
         memcpy(levmarOpts, g_levmarOpts_ResponseModel, sizeof(levmarOpts));
@@ -1182,27 +1182,27 @@ namespace hel
             NULL,
             &params);
 
-// 		std::cout<<"result: "<<res<<std::endl;
-// 		std::cout<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
-// 		std::cout<<"||e||_2:"<<levmarInfo[1]<<std::endl;
-// 		std::cout<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
-// 		std::cout<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
-// 		std::cout<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
-// 		std::cout<<"# iterations:"<<levmarInfo[5]<<std::endl;
-// 		std::cout<<"reason for terminating:";
-// 		switch(int(levmarInfo[6]+0.5))
-// 		{
-// 		case 1: std::cout<<" - stopped by small gradient J^T e"<<std::endl;break;
-// 		case 2: std::cout<<" - stopped by small Dp"<<std::endl;break;
-// 		case 3: std::cout<<" - stopped by itmax"<<std::endl;break;
-// 		case 4: std::cout<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
-// 		case 5: std::cout<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
-// 		case 6: std::cout<<" - stopped by small ||e||_2"<<std::endl;break;
-// 		case 7: std::cout<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
-// 		}
-// 		std::cout<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
-// 		std::cout<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
-// 		std::cout<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
+//         std::cout<<"result: "<<res<<std::endl;
+//         std::cout<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
+//         std::cout<<"||e||_2:"<<levmarInfo[1]<<std::endl;
+//         std::cout<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
+//         std::cout<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
+//         std::cout<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
+//         std::cout<<"# iterations:"<<levmarInfo[5]<<std::endl;
+//         std::cout<<"reason for terminating:";
+//         switch(int(levmarInfo[6]+0.5))
+//         {
+//         case 1: std::cout<<" - stopped by small gradient J^T e"<<std::endl;break;
+//         case 2: std::cout<<" - stopped by small Dp"<<std::endl;break;
+//         case 3: std::cout<<" - stopped by itmax"<<std::endl;break;
+//         case 4: std::cout<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
+//         case 5: std::cout<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
+//         case 6: std::cout<<" - stopped by small ||e||_2"<<std::endl;break;
+//         case 7: std::cout<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
+//         }
+//         std::cout<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
+//         std::cout<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
+//         std::cout<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
 
         return res;
     }
@@ -1254,10 +1254,10 @@ int f()
     _optimizerPows.push_back(5); _optimizerWeights.push_back(-2);
 
     rm.setup(
-        1e2,	// real maxT,
-        1000,	// size_t stepsT_l1,
-        1000,	// size_t stepsT_ge1,
-        5);	//pow
+        1e2,    // real maxT,
+        1000,    // size_t stepsT_l1,
+        1000,    // size_t stepsT_ge1,
+        5);    //pow
 
 
     rm.dump("out");

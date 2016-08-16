@@ -24,6 +24,11 @@ set(SRC_LIST
     test/signalProcessor.h
     test/signalProcessor.cpp
 
+    test/scaledData.h
+    test/scaledData.cpp
+
+    test/settings.h
+
 )
 
 include_directories(.)

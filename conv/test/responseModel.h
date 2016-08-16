@@ -24,17 +24,17 @@ namespace hel
         typedef std::vector<VDS> TVVDS;
         //////////////////////////////////////////////////////////////////////////
         //таблицы для t<1
-        real	_l1_tStep;
-        TVReal	_l1_t;//ti=_le1_t[i]
-        TVVDS	_l1_vds;
+        real    _l1_tStep;
+        TVReal    _l1_t;//ti=_le1_t[i]
+        TVVDS    _l1_vds;
 
         //таблицы для t>=1
-        real	_ge1_loglogtStep;
-        TVReal	_ge1_loglogt;//ti=exp(exp(_g1_loglogt)-1);
-        TVVDS	_ge1_vds;
+        real    _ge1_loglogtStep;
+        TVReal    _ge1_loglogt;//ti=exp(exp(_g1_loglogt)-1);
+        TVVDS    _ge1_vds;
 
 
-        size_t	_pow;
+        size_t    _pow;
 
     public:
         ResponseModel();
@@ -47,14 +47,14 @@ namespace hel
             size_t pow);
 
         void evalVRaw(real t, real &rr, real &ri, real &ir, real &ii);
-//		void evalVRaw(const TVReal &t, TVReal &rr, TVReal &ri, TVReal &ir, TVReal &ii);
+//        void evalVRaw(const TVReal &t, TVReal &rr, TVReal &ri, TVReal &ir, TVReal &ii);
 
         void evalVDRaw(
             real tm, real t, real tp,
             real & rr, real & ri, real & ir, real & ii,
             real &drr, real &dri, real &dir, real &dii);
-//		void evalDRaw(const TVReal &t, TVReal &drr, TVReal &dri, TVReal &dir, TVReal &dii);
-//		void evalVDRaw(const TVReal &t, TVReal &rr, TVReal &ri, TVReal &ir, TVReal &ii, TVReal &drr, TVReal &dri, TVReal &dir, TVReal &dii);
+//        void evalDRaw(const TVReal &t, TVReal &drr, TVReal &dri, TVReal &dir, TVReal &dii);
+//        void evalVDRaw(const TVReal &t, TVReal &rr, TVReal &ri, TVReal &ir, TVReal &ii, TVReal &drr, TVReal &dri, TVReal &dir, TVReal &dii);
 
         //////////////////////////////////////////////////////////////////////////
         void evalVRaw_tabled(
@@ -75,18 +75,18 @@ namespace hel
         {
             //сетка логарифма периода, должна быть задана всегда
             //длина n
-            const real		*_elogt;
+            const real        *_elogt;
 
             //значения отклика, если задано, то будет вычтено из вычесленного (можно не задавать в dlrvmar_der)
             //длина n
-            const Complex	*_ev;
+            const Complex    *_ev;
 
             //логарифм значения периода спектра. Если задано то период спектра не оптимизируется
             //длина m
-            const real		*_slogt;
+            const real        *_slogt;
 
             //собственно, вычислялка ядра
-            ResponseModel	*_rm;
+            ResponseModel    *_rm;
         };
         //аргумент s как набор триплетов количеством m штук
         //p(j*3+0)=st

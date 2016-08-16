@@ -12,53 +12,53 @@
 namespace hel
 {
 
-	//////////////////////////////////////////////////////////////////////////
-	class OnePeriodProcessor
-	{
-		real _period;
-		real _winLen;
-		real _step0;
+    //////////////////////////////////////////////////////////////////////////
+    class OnePeriodProcessor
+    {
+        real _period;
+        real _winLen;
+        real _step0;
 
-		typedef ConvolCore_trig2 Part;
+        typedef ConvolCore_trig2 Part;
 
-		ConvolCore_trig		_part_m1;
-		ConvolCore_trig		_part_p1;
+        ConvolCore_trig        _part_m1;
+        ConvolCore_trig        _part_p1;
 
         //Complex _value;
 
-	public:
-		OnePeriodProcessor();
-		void setup(real period, real periodsOnWin);
-		Complex eval(const TDTimedValue &signal);
+    public:
+        OnePeriodProcessor();
+        void setup(real period, real periodsOnWin);
+        Complex eval(const TDTimedValue &signal);
 
-	private:
+    private:
 
 
 
-	};
+    };
 
-	//////////////////////////////////////////////////////////////////////////
-	class SignalProcessor
-	{
-		size_t _periodsOnWin;
-		TVReal _periodLogE;
-		TVComplex _valueE;
+    //////////////////////////////////////////////////////////////////////////
+    class SignalProcessor
+    {
+        size_t _periodsOnWin;
+        TVReal _periodLogE;
+        TVComplex _valueE;
 
-		typedef std::vector<OnePeriodProcessor> TVProcessors;
-		TVProcessors _processors;
-	public:
-		SignalProcessor();
-		void setup(
-			real minPeriodE, 
-			real maxPeriodE, 
-			size_t stepsPeriodE, 
-			size_t periodsOnWin);
-		void update(const TDTimedValue &signal);
+        typedef std::vector<OnePeriodProcessor> TVProcessors;
+        TVProcessors _processors;
+    public:
+        SignalProcessor();
+        void setup(
+            real minPeriodE, 
+            real maxPeriodE, 
+            size_t stepsPeriodE, 
+            size_t periodsOnWin);
+        void update(const TDTimedValue &signal);
 
-		const TVReal &getPeriodLogE() const;
-		const TVComplex &getValueE() const;
-	private:
+        const TVReal &getPeriodLogE() const;
+        const TVComplex &getValueE() const;
+    private:
 
-	};
+    };
 }
 #endif

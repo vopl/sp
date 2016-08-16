@@ -77,11 +77,11 @@ extern void dlevmar_trans_mat_mat_mult(double *a, double *b, int n, int m);
 
 /* forward finite differences */
 extern void slevmar_fdif_forw_jac_approx(void (*func)(float *p, float *hx, int m, int n, void *adata),
-					float *p, float *hx, float *hxx, float delta,
-					float *jac, int m, int n, void *adata);
+                    float *p, float *hx, float *hxx, float delta,
+                    float *jac, int m, int n, void *adata);
 extern void dlevmar_fdif_forw_jac_approx(void (*func)(double *p, double *hx, int m, int n, void *adata),
-					double *p, double *hx, double *hxx, double delta,
-					double *jac, int m, int n, void *adata);
+                    double *p, double *hx, double *hxx, double delta,
+                    double *jac, int m, int n, void *adata);
 
 /* central finite differences */
 extern void slevmar_fdif_cent_jac_approx(void (*func)(float *p, float *hx, int m, int n, void *adata),
