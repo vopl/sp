@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "scaledData.h"
 #include "math.h"
 

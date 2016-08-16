@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "signalProcessor.h"
 #include <cstdlib>
 #include <iostream>
@@ -101,9 +100,9 @@ namespace hel
 
     //////////////////////////////////////////////////////////////////////////
     void SignalProcessor::setup(
-        real minPeriodE, 
-        real maxPeriodE, 
-        size_t stepsPeriodE, 
+        real minPeriodE,
+        real maxPeriodE,
+        size_t stepsPeriodE,
         size_t periodsOnWin)
 
     {
