@@ -332,7 +332,7 @@ namespace hel
             A[mn+k] = A[mn-k] = q* boost::math::sinc_pi(k*w);
         }
 
-        real kaizerBeta = 4.5;
+        real kaizerBeta = 5;
         TVReal _wnd(A.size());
         n = _wnd.size();
         mn = n/2;

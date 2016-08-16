@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
         }
 
         hel::TDTimedValue signal2;
-        sd.fillSmoothedDischarged(1.5, signal2, 100, POW*0.9625, false);
+        sd.fillSmoothedDischarged(1.5, signal2, 100, POW*0.9620, false);
 
         sp::TVReal signal3;
         for(const auto &tv : signal2)
@@ -102,16 +102,16 @@ int main(int argc, char *argv[])
         sp::Convolver c(POW, sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps);
         c.execute(0, sp::g_sampleStep, signal, (signal.size()-1)*sp::g_sampleStep, response);
 
-//        for(size_t i(0); i<sp::g_periodSteps; ++i)
-//        {
-//            std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
+        for(size_t i(0); i<sp::g_periodSteps; ++i)
+        {
+            //std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
 
-//            response[i] = 0;
-//            response[i] += rm.eval(sp::g_periodGrid[i], 1.0/100, sp::complex(1,0));
-//            std::cout<<response[i].re()<<", "<<response[i].im()<<std::endl;
-//        }
+            response[i] = 0;
+            response[i] += rm.eval(sp::g_periodGrid[i], 1.0/100, sp::complex(1,0));
+            //std::cout<<response[i].re()<<", "<<response[i].im()<<std::endl;
+        }
 
-//        exit(0);
+        exit(0);
 
         sp::TVReal work;
 
