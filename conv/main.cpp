@@ -3,6 +3,7 @@
 #include "sp/config.hpp"
 #include "sp/math.hpp"
 #include "sp/kernel.hpp"
+#include "sp/kernelTabled.hpp"
 #include "sp/convolver.hpp"
 
 #include "test/scaledData.h"
@@ -93,6 +94,13 @@ int main(int argc, char *argv[])
 //        exit(0);
 
         signal.swap(signal3);
+    }
+
+    if(1)
+    {
+        sp::KernelTabled kt;
+        kt.setup(10, 0.1, 10, 1000);
+        exit(0);
     }
 
     if(1)

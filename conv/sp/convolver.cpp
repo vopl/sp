@@ -198,6 +198,7 @@ namespace sp
 
         }
 
+        //МНОГОПОТОК НЕ ПРОЙДЕТ
         //фиры тяжело вычисляются, в основном из за кайзера. Это прекэшированные значения
         using FirId = std::tuple<real, std::size_t, std::size_t>;
         FirId g_firId{0,0,0};
@@ -250,11 +251,11 @@ namespace sp
         TVReal preparedSignal;
         signalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _pow, _periodGrid.back(), preparedSignal);
 
-        for(std::size_t idx(0); idx<4000; ++idx)
-        {
-            std::cout<<signal[signal.size()-1-idx]<<", "<<preparedSignal[preparedSignal.size()-1-idx]<<std::endl;
-        }
-        exit(0);
+//        for(std::size_t idx(0); idx<4000; ++idx)
+//        {
+//            std::cout<<signal[signal.size()-1-idx]<<", "<<preparedSignal[preparedSignal.size()-1-idx]<<std::endl;
+//        }
+//        exit(0);
 
         echo.resize(_periodGrid.size());
         for(std::size_t i(0); i<_periodGrid.size(); i++)

@@ -17,6 +17,9 @@ set(SRC_LIST
     sp/kernel.hpp
     sp/kernel.cpp
 
+    sp/kernelTabled.hpp
+    sp/kernelTabled.cpp
+
 
     test/responseModel.h
     test/responseModel.cpp
