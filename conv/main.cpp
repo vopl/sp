@@ -5,6 +5,8 @@
 #include "sp/kernel.hpp"
 #include "sp/convolver.hpp"
 
+#include "test/scaledData.h"
+
 using namespace std;
 
 
@@ -24,7 +26,7 @@ using namespace std;
 
 
 
-
+#define POW 10.0
 
 
 int main(int argc, char *argv[])
@@ -42,68 +44,74 @@ int main(int argc, char *argv[])
 
     sp::TVReal signal;
 
-    signal.resize(100000);
+    signal.resize(5.1/sp::g_sampleStep);//10 сек
     for(size_t index(0); index<signal.size(); ++index)
     {
         sp::real x = index * sp::g_sampleStep;
-        signal[index] = cos((x-0.55)*sp::g_2pi/(sp::g_periodGrid[sp::g_periodGrid.size()/2]));//ровно посеридине нашей шкалы
+        signal[index] = cos((x-1.5)*sp::g_2pi*100);//ровно посеридине нашей шкалы
 
         //cout << x<<","<<signal[index]<< endl;
 
     }
 
-    if(0)
     {
-        sp::Convolver c(5, sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps);
+        hel::ScaledData sd;
 
-        sp::TVComplex response1;
-        c.execute(0, sp::g_sampleStep, signal, 0.55, response1);
+        hel::SettingsScaledData settings;
 
+        settings._zeroPeriod = sp::g_sampleStep;
+        settings._smoothLength = 0;
+        settings._maxLength = 100000000;
 
+        sd.setup(settings);
 
-        sp::Kernel rm(5);
-
-        sp::TVComplex response2(sp::g_periodSteps);
-
-        for(size_t i(0); i<sp::g_periodSteps; ++i)
+        for(std::size_t idx(0); idx<signal.size(); idx++)
         {
-            response2[i] = 0;
+            hel::TimedValue tv;
+            tv._time = sp::g_sampleStep * idx;
+            tv._value = signal[idx];
 
-            response2[i] += rm.eval(sp::g_periodGrid[i], sp::g_periodGrid[sp::g_periodGrid.size()/2], sp::complex(1,0));
-
-            std::cout<<response1[i].re()<<", "<<response2[i].re()<<std::endl;
+            sd.pushData(&tv, 1);
         }
 
+        hel::TDTimedValue signal2;
+        sd.fillSmoothedDischarged(1.5, signal2, 100, POW*0.9625, false);
 
-        return 0;
+        sp::TVReal signal3;
+        for(const auto &tv : signal2)
+        {
+            signal3.push_back(tv._value);
+        }
+
+//        for(std::size_t i(0); i<std::min(signal.size(), signal3.size()); i+=1)
+//        {
+//            if(i>1000) break;
+
+//            std::cout<<signal[(1.0/sp::g_sampleStep + 0.5)-i]<<", "<<signal3[signal3.size()-1-i]<<std::endl;
+//        }
+//        exit(0);
+
+        signal.swap(signal3);
     }
 
     if(1)
     {
-        sp::Kernel rm(10);
+        sp::Kernel rm(POW);
 
         sp::TVComplex response(sp::g_periodSteps);
-        sp::Convolver c(10, sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps);
-        c.execute(0, sp::g_sampleStep, signal, 0.55, response);
+        sp::Convolver c(POW, sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps);
+        c.execute(0, sp::g_sampleStep, signal, (signal.size()-1)*sp::g_sampleStep, response);
 
-        for(size_t i(0); i<sp::g_periodSteps; ++i)
-        {
-            std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
-            response[i] = 0;
+//        for(size_t i(0); i<sp::g_periodSteps; ++i)
+//        {
+//            std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
 
-            response[i] += rm.eval(sp::g_periodGrid[i], sp::g_periodGrid[sp::g_periodGrid.size()/2], sp::complex(0,1));
+//            response[i] = 0;
+//            response[i] += rm.eval(sp::g_periodGrid[i], 1.0/100, sp::complex(1,0));
+//            std::cout<<response[i].re()<<", "<<response[i].im()<<std::endl;
+//        }
 
-            std::cout<<response[i].re()<<", "<<response[i].im()<<std::endl;
-
-
-
-//            for(size_t j(80); j<sp::g_periodSteps-160; j+=50)
-//            {
-//                response[i] += rm.eval(sp::g_periodGrid[i], sp::g_periodGrid[j], sp::complex(0,1));
-//            }
-        }
-
-        exit(0);
+//        exit(0);
 
         sp::TVReal work;
 
@@ -124,9 +132,8 @@ int main(int argc, char *argv[])
             cerr<<iters<<": "<<res<<endl;
             for(size_t i(0); i<sp::g_periodSteps; ++i)
             {
-                std::cout<<spectr[i].a()<<" ";
+                std::cout<<spectr[i].re()<<" "<<spectr[i].im()<<std::endl;
             }
-            std::cout<<endl;
         }
     }
 
