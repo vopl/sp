@@ -177,7 +177,7 @@ namespace sp
                 A[mn+k] = A[mn-k] = q* boost::math::sinc_pi(k*w);
             }
 
-            real kaizerBeta = 5;
+            real kaizerBeta = 10;
             TVReal _wnd(A.size());
             n = _wnd.size();
             mn = n/2;
@@ -218,20 +218,24 @@ namespace sp
             FirId firId{pow, minLen, maxLen};
             if(firId != g_firId)
             {
+                g_firs.clear();
                 g_firs.resize((maxLen - minLen)/2);
                 for(std::size_t len(minLen); len < maxLen; len+=2)
                 {
-                    real bndT = len/(pow);
-                    lowPassFir(1+1.0/pow, bndT/2, len, g_firs[len/2]);
+                    //std::cerr<<"make fir "<<len<<"/"<<maxLen<<std::endl;
+                    real bndT = len/(pow-0.5);
+                    lowPassFir(1+1.0/pow, bndT/2, len, g_firs[(len-minLen)/2]);
                 }
+
+                g_firId = firId;
             }
 
             for(std::size_t len(minLen); len < maxLen; len+=2)
             {
                 //TVReal fir;
-                //real bndT = len/(pow);
+                //real bndT = len/(pow-0.5);
                 //lowPassFir(1+1.0/pow, bndT/2, len, fir);
-                const TVReal &fir = g_firs[len/2];
+                const TVReal &fir = g_firs[(len-minLen)/2];
 
                 real preparedValue = 0;
                 for(std::size_t i(0); i<fir.size(); i++)
