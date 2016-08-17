@@ -177,7 +177,7 @@ namespace sp
                 A[mn+k] = A[mn-k] = q* boost::math::sinc_pi(k*w);
             }
 
-            real kaizerBeta = 10;
+            real kaizerBeta = 5;
             TVReal _wnd(A.size());
             n = _wnd.size();
             mn = n/2;
@@ -209,6 +209,10 @@ namespace sp
         {
             std::size_t minLen = std::size_t(pow*10);//по 10 точек на период, иначе fir не справляется
             std::size_t maxLen = std::size_t(pow*(maxT/signalSampleLength)*2) + minLen + 2;
+            if(maxLen&1)
+            {
+                maxLen+=1;
+            }
 
             std::size_t endIdx = std::size_t((targetTime - signalStartTime)/signalSampleLength) + minLen/2;
             assert(endIdx <= signal.size());
@@ -218,23 +222,25 @@ namespace sp
             FirId firId{pow, minLen, maxLen};
             if(firId != g_firId)
             {
+                //pow*=0.9620;
                 g_firs.clear();
                 g_firs.resize((maxLen - minLen)/2);
                 for(std::size_t len(minLen); len < maxLen; len+=2)
                 {
                     //std::cerr<<"make fir "<<len<<"/"<<maxLen<<std::endl;
-                    real bndT = len/(pow-0.5);
+                    real bndT = len/(pow);
                     lowPassFir(1+1.0/pow, bndT/2, len, g_firs[(len-minLen)/2]);
                 }
+                //pow/=0.9620;
 
                 g_firId = firId;
             }
 
             for(std::size_t len(minLen); len < maxLen; len+=2)
             {
-                //TVReal fir;
-                //real bndT = len/(pow-0.5);
-                //lowPassFir(1+1.0/pow, bndT/2, len, fir);
+//                TVReal fir;
+//                real bndT = len/(pow);
+//                lowPassFir(1+1.0/pow, bndT/2, len, fir);
                 const TVReal &fir = g_firs[(len-minLen)/2];
 
                 real preparedValue = 0;
@@ -255,7 +261,7 @@ namespace sp
         TVReal preparedSignal;
         signalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _pow, _periodGrid.back(), preparedSignal);
 
-//        for(std::size_t idx(0); idx<4000; ++idx)
+//        for(std::size_t idx(0); idx<preparedSignal.size(); ++idx)
 //        {
 //            std::cout<<signal[signal.size()-1-idx]<<", "<<preparedSignal[preparedSignal.size()-1-idx]<<std::endl;
 //        }

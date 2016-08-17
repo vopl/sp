@@ -96,10 +96,21 @@ int main(int argc, char *argv[])
         signal.swap(signal3);
     }
 
-    if(1)
+    if(0)
     {
         sp::KernelTabled kt;
-        kt.setup(10, 0.1, 10, 1000);
+        kt.setup(10, 0.5, 4, 1000);
+
+        sp::Kernel k(10);
+
+        for(sp::real t(0.5); t<4; t+=0.01)
+        {
+            sp::complex vt = kt.eval(t, 1, sp::complex(1,0));
+            sp::complex v = k.eval(t, 1, sp::complex(1,0));
+
+            std::cout<<vt.re()<<", "<<vt.im()<<", "<<v.re()<<", "<<v.im()<<std::endl;
+        }
+
         exit(0);
     }
 

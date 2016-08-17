@@ -17,6 +17,9 @@ namespace sp
         complex eval(real t, real st, const complex &sv);
 
     private:
+        void evalKernel(real t, real &rr, real &ri, real &ir, real &ii);
+
+    private:
         std::string stateFileName();
         bool load();
         bool save();
