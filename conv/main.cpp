@@ -103,10 +103,10 @@ int main(int argc, char *argv[])
 
         sp::Kernel k(10);
 
-        for(sp::real t(0.5); t<4; t+=0.01)
+        for(sp::real t(0.1); t<4; t+=0.01)
         {
-            sp::complex vt = kt.eval(t, 1, sp::complex(1,0));
-            sp::complex v = k.eval(t, 1, sp::complex(1,0));
+            sp::complex vt = kt.eval(t, 1, sp::complex(0,1));
+            sp::complex v = k.eval(t, 1, sp::complex(0,1));
 
             std::cout<<vt.re()<<", "<<vt.im()<<", "<<v.re()<<", "<<v.im()<<std::endl;
         }

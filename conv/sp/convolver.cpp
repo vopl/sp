@@ -224,6 +224,7 @@ namespace sp
             FirId firId{pow, minLen, maxLen};
             if(firId != g_firId)
             {
+                std::cerr<<"make fir"<<std::endl;
                 real pow4Bound = pow + 0.5;//с учетом коэффициента по кайзеру - такое значение даст отсечку с серидиной очень близкой pow
                 g_firs.clear();
                 g_firs.resize((maxLen - minLen)/2);
@@ -235,6 +236,7 @@ namespace sp
                 }
 
                 g_firId = firId;
+                std::cerr<<"done"<<std::endl;
             }
 
             for(std::size_t len(minLen); len < maxLen; len+=2)
