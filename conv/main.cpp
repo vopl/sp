@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
     if(1)
     {
         sp::KernelTabled kt;
-        kt.setup(10, 0.1, 10, 1000);
+        kt.setup(10, 0.8, 1.2, 1000);
         exit(0);
     }
 
