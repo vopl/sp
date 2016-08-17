@@ -3,6 +3,7 @@
 #include "levmar.h"
 
 #include <iostream>
+#include <fstream>
 
 namespace sp
 {
@@ -14,6 +15,116 @@ namespace sp
     KernelTabled::~KernelTabled()
     {
 
+    }
+
+    void KernelTabled::setup(real pow, real periodSmallMult, real periodBigMult, std::size_t periodSteps)
+    {
+        _pow = pow;
+        _periodSmallMult = periodSmallMult;
+        _periodBigMult = periodBigMult;
+        _periodSteps = periodSteps;
+
+        if(!load())
+        {
+            build();
+            save();
+        }
+    }
+
+    complex KernelTabled::eval(real t, real st, const complex &sv)
+    {
+        assert(0);
+    }
+
+    std::string KernelTabled::stateFileName()
+    {
+        char tmp[4096];
+        sprintf(tmp, "kt_state_POW%0.15e_TMIN%0.15e_TMAX%0.15e_TSTEPS%zd.bin", double(_pow), double(_periodSmallMult), double(_periodBigMult), _periodSteps);
+
+        return tmp;
+    }
+
+    bool KernelTabled::load()
+    {
+        //std::cout<<stateFileName()<<std::endl;
+
+        std::ifstream in(stateFileName().c_str(), std::ios::in|std::ios::binary);
+        if(!in)
+        {
+            return false;
+        }
+
+        _kre.resize(_periodSteps);
+        _kim.resize(_periodSteps);
+        _kdre.resize(_periodSteps);
+        _kdim.resize(_periodSteps);
+
+        std::streamsize bytesAmount = std::streamsize(_periodSteps*sizeof(complex));
+
+        in.read(reinterpret_cast<char *>(&_kre[0]), bytesAmount);
+        if(in.gcount() != bytesAmount)
+        {
+            return false;
+        }
+
+        in.read(reinterpret_cast<char *>(&_kim[0]), bytesAmount);
+        if(in.gcount() != bytesAmount)
+        {
+            return false;
+        }
+
+        in.read(reinterpret_cast<char *>(&_kdre[0]), bytesAmount);
+        if(in.gcount() != bytesAmount)
+        {
+            return false;
+        }
+
+        in.read(reinterpret_cast<char *>(&_kdim[0]), bytesAmount);
+        if(in.gcount() != bytesAmount)
+        {
+            return false;
+        }
+        in.close();
+        return true;
+    }
+
+    bool KernelTabled::save()
+    {
+        std::ofstream out(stateFileName().c_str(), std::ios::out|std::ios::binary);
+        if(!out)
+        {
+            std::cerr<<"unable to open file: "<<stateFileName();
+            abort();
+            return false;
+        }
+
+        std::streamsize bytesAmount = std::streamsize(_periodSteps*sizeof(complex));
+
+        out.write(reinterpret_cast<char *>(&_kre[0]), bytesAmount);
+        if(out.tellp() != bytesAmount)
+        {
+            return false;
+        }
+
+        out.write(reinterpret_cast<char *>(&_kim[0]), bytesAmount);
+        if(out.tellp() != bytesAmount*2)
+        {
+            return false;
+        }
+
+        out.write(reinterpret_cast<char *>(&_kdre[0]), bytesAmount);
+        if(out.tellp() != bytesAmount*3)
+        {
+            return false;
+        }
+
+        out.write(reinterpret_cast<char *>(&_kdim[0]), bytesAmount);
+        if(out.tellp() != bytesAmount*4)
+        {
+            return false;
+        }
+        out.close();
+        return true;
     }
 
     namespace
@@ -89,19 +200,18 @@ namespace sp
         }
     }
 
-    void KernelTabled::setup(real pow, real periodSmallMult, real periodBigMult, std::size_t periodSteps)
+    void KernelTabled::build()
     {
-//        if(!load())
-//        {
-//            build();
-//            save();
-//        }
+        _kre.clear();
+        _kim.clear();
+        _kdre.clear();
+        _kdim.clear();
 
-        Convolver c(pow, periodSmallMult, periodBigMult, periodSteps);
+        Convolver c(_pow, _periodSmallMult, _periodBigMult, _periodSteps);
 
-        real targetX = periodBigMult*pow;
-        const real sampleStep = periodSmallMult/10;//1000 сэмплов на минимальный период
-        TVReal signal(targetX/sampleStep+1000);
+        real targetX = _periodBigMult*_pow;
+        const real sampleStep = _periodSmallMult/10;//1000 сэмплов на минимальный период
+        TVReal signal(std::size_t(targetX/sampleStep)+1000);
 
         const std::size_t phasesAmount = 30;
 
@@ -122,7 +232,7 @@ namespace sp
             //std::cout<<echos[phaseIndex][10].re()<<", "<<echos[phaseIndex][10].im()<<std::endl;
         }
 
-//        //проверить отклонение
+//        //проверить отклонение, должно быть на уровне машинной точности
 //        for(std::size_t i(0); i<periodSteps; ++i)
 //        {
 //            real re=0, im=0;
@@ -135,11 +245,11 @@ namespace sp
 //        }
 
 
-        _kre.resize(periodSteps);
-        _kim.resize(periodSteps);
+        _kre.resize(_periodSteps);
+        _kim.resize(_periodSteps);
 
         TVReal hre(phasesAmount), him(phasesAmount);
-        for(std::size_t periodIndex(0); periodIndex<periodSteps; ++periodIndex)
+        for(std::size_t periodIndex(0); periodIndex<_periodSteps; ++periodIndex)
         {
             for(std::size_t phaseIndex(0); phaseIndex<phasesAmount; ++phaseIndex)
             {
@@ -151,21 +261,20 @@ namespace sp
             _kim[periodIndex] = approxCos(him);
         }
 
-        _kdre.resize(periodSteps);
-        _kdim.resize(periodSteps);
+        _kdre.resize(_periodSteps);
+        _kdim.resize(_periodSteps);
 
-        _kdre[0] = (_kre[1] - complex())/2;
-        _kdim[0] = (_kim[1] - complex())/2;
-
-        for(std::size_t periodIndex(1); periodIndex<periodSteps-1; ++periodIndex)
+        for(std::size_t periodIndex(1); periodIndex<_periodSteps-1; ++periodIndex)
         {
             _kdre[periodIndex] = (_kre[periodIndex+1] - _kre[periodIndex-1])/2;
             _kdim[periodIndex] = (_kim[periodIndex+1] - _kim[periodIndex-1])/2;
         }
 
-        _kdre[periodSteps-1] = (complex() - _kre[periodSteps-2])/2;
-        _kdim[periodSteps-1] = (complex() - _kim[periodSteps-2])/2;
+        _kdre[0] = _kdre[1];
+        _kdim[0] = _kdim[1];
 
-        assert(0);
+        _kdre[_periodSteps-1] = _kdre[_periodSteps-2];
+        _kdim[_periodSteps-1] = _kdim[_periodSteps-2];
     }
+
 }

@@ -2,6 +2,7 @@
 
 #include "sp/types.hpp"
 #include "sp/complex.hpp"
+#include <string>
 
 namespace sp
 {
@@ -12,6 +13,20 @@ namespace sp
         ~KernelTabled();
 
         void setup(real pow, real periodSmallMult=0.1, real periodBigMult=10, std::size_t periodSteps=1000);
+
+        complex eval(real t, real st, const complex &sv);
+
+    private:
+        std::string stateFileName();
+        bool load();
+        bool save();
+        void build();
+
+    private:
+        real _pow;
+        real _periodSmallMult;
+        real _periodBigMult;
+        std::size_t _periodSteps;
 
     private:
         TVComplex _kre;
