@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
         signal.swap(signal3);
     }
 
-    if(0)
+    if(1)
     {
         sp::KernelTabled kt;
         kt.setup(10, 0.5, 4, 1000);

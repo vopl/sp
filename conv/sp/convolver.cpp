@@ -111,7 +111,7 @@ namespace sp
 
             std::size_t indexStop = std::size_t((xStop - signalStartTime) / signalSampleLength);
             assert(indexStart <= indexStop);
-            assert(indexStop < signal.size());
+            assert(indexStop < signal.size()-2);
 
             if(indexStop != indexStart)
             {
@@ -207,14 +207,16 @@ namespace sp
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         real /*signalStartTime*/ prepareSignal(real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, real pow, real maxT, TVReal &preparedSignal)
         {
+            const std::size_t extraSamples = 4;
+
             std::size_t minLen = std::size_t(pow*10);//по 10 точек на период, иначе fir не справляется
-            std::size_t maxLen = std::size_t(pow*(maxT/signalSampleLength)*2) + minLen + 2;
+            std::size_t maxLen = std::size_t(pow*(maxT/signalSampleLength)*2) + minLen + 2 + extraSamples*2;
             if(maxLen&1)
             {
                 maxLen+=1;
             }
 
-            std::size_t endIdx = std::size_t((targetTime - signalStartTime)/signalSampleLength) + minLen/2;
+            std::size_t endIdx = std::size_t((targetTime - signalStartTime)/signalSampleLength) + minLen/2 + extraSamples;
             assert(endIdx <= signal.size());
 
             preparedSignal.resize((maxLen - minLen)/2);
@@ -222,16 +224,15 @@ namespace sp
             FirId firId{pow, minLen, maxLen};
             if(firId != g_firId)
             {
-                //pow*=0.9620;
+                real pow4Bound = pow + 0.5;//с учетом коэффициента по кайзеру - такое значение даст отсечку с серидиной очень близкой pow
                 g_firs.clear();
                 g_firs.resize((maxLen - minLen)/2);
                 for(std::size_t len(minLen); len < maxLen; len+=2)
                 {
                     //std::cerr<<"make fir "<<len<<"/"<<maxLen<<std::endl;
-                    real bndT = len/(pow);
-                    lowPassFir(1+1.0/pow, bndT/2, len, g_firs[(len-minLen)/2]);
+                    real bndT = len/(pow4Bound);
+                    lowPassFir(1+1.0/pow4Bound, bndT/2, len, g_firs[(len-minLen)/2]);
                 }
-                //pow/=0.9620;
 
                 g_firId = firId;
             }
@@ -251,7 +252,8 @@ namespace sp
                 preparedSignal[preparedSignal.size()-1 - (len-minLen)/2] = preparedValue;
             }
 
-            return targetTime - preparedSignal.size()*signalSampleLength;
+            real preparedTargetTime = targetTime - (preparedSignal.size()-extraSamples)*signalSampleLength;
+            return preparedTargetTime;
         }
     }
 
@@ -259,18 +261,19 @@ namespace sp
     void Convolver::execute(real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, TVComplex &echo)
     {
         TVReal preparedSignal;
-        signalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _pow, _periodGrid.back(), preparedSignal);
+        real preparedSignalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _pow, _periodGrid.back(), preparedSignal);
 
-//        for(std::size_t idx(0); idx<preparedSignal.size(); ++idx)
+//        std::size_t signalTargetIdx = (targetTime - signalStartTime)/signalSampleLength;
+//        for(std::size_t idx(0); idx<preparedSignal.size()- /*extraSamples*/ 4; ++idx)
 //        {
-//            std::cout<<signal[signal.size()-1-idx]<<", "<<preparedSignal[preparedSignal.size()-1-idx]<<std::endl;
+//            std::cout<<signal[signalTargetIdx-1-idx]<<", "<<preparedSignal[preparedSignal.size()-1- /*extraSamples*/ 4-idx]<<std::endl;
 //        }
 //        exit(0);
 
         echo.resize(_periodGrid.size());
         for(std::size_t i(0); i<_periodGrid.size(); i++)
         {
-            echo[i] = executeOne(signalStartTime, signalSampleLength, signal, targetTime, _periodGrid[i], _pow);
+            echo[i] = executeOne(preparedSignalStartTime, signalSampleLength, preparedSignal, targetTime, _periodGrid[i], _pow);
         }
     }
 
