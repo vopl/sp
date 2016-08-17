@@ -258,6 +258,7 @@ namespace sp
 
     void KernelTabled::build()
     {
+        std::cerr<<"build kernel"<<std::endl;
         _kre.clear();
         _kim.clear();
         _kdre.clear();
@@ -266,7 +267,7 @@ namespace sp
         Convolver c(_pow, _periodSmallMult, _periodBigMult, _periodSteps);
 
         real targetX = _periodBigMult*_pow*2.1;
-        const real sampleStep = _periodSmallMult/20;//10 сэмплов на минимальный период
+        const real sampleStep = _periodSmallMult/20;//20 сэмплов на минимальный период
         TVReal signal(std::size_t(targetX/sampleStep)+1000);
 
         const std::size_t phasesAmount = 30;
@@ -275,7 +276,7 @@ namespace sp
         for(std::size_t phaseIndex(0); phaseIndex<phasesAmount; ++phaseIndex)
         {
             //fill signal
-            //std::cout<<phaseIndex<<" signal"<<std::endl;
+            std::cerr<<phaseIndex<<" signal"<<std::endl;
 
 //            std::size_t startIdx = (targetX-10.0)/sampleStep;
 //            std::size_t stopIdx = (targetX)/sampleStep+1;
@@ -286,7 +287,7 @@ namespace sp
                 signal[sindex] = cos(g_2pi*(sampleStep*sindex - targetX) + phaseIndex*g_2pi/phasesAmount);
             }
 
-            //std::cout<<phaseIndex<<" echo"<<std::endl;
+            std::cerr<<phaseIndex<<" echo"<<std::endl;
             //fill echo
             c.execute(0, sampleStep, signal, targetX, echos[phaseIndex]);
 
@@ -336,6 +337,7 @@ namespace sp
 
         _kdre[_periodSteps-1] = _kdre[_periodSteps-2];
         _kdim[_periodSteps-1] = _kdim[_periodSteps-2];
+        std::cerr<<"done"<<std::endl;
     }
 
 }
