@@ -276,7 +276,12 @@ namespace sp
         {
             //fill signal
             //std::cout<<phaseIndex<<" signal"<<std::endl;
-            for(std::size_t sindex(0); sindex<signal.size(); sindex++)
+
+//            std::size_t startIdx = (targetX-10.0)/sampleStep;
+//            std::size_t stopIdx = (targetX)/sampleStep+1;
+            std::size_t startIdx = 0;
+            std::size_t stopIdx = signal.size();
+            for(std::size_t sindex(startIdx); sindex<stopIdx; sindex++)
             {
                 signal[sindex] = cos(g_2pi*(sampleStep*sindex - targetX) + phaseIndex*g_2pi/phasesAmount);
             }
