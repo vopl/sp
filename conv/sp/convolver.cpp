@@ -212,7 +212,7 @@ namespace sp
                 {
                     if(len >= minLen)
                     {
-                        std::cerr<<len<<"/"<<maxLen<<std::endl;
+                        //std::cerr<<len<<"/"<<maxLen<<std::endl;
                         real bndT = (len+1)/pow/2;
                         lowPassFir(bndT, len, g_firs[(len-minLen)/2]);
                     }
