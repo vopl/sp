@@ -13,6 +13,9 @@ set(SRC_LIST
 
     sp/config.hpp
 
+    sp/periodGrid.hpp
+    sp/periodGrid.cpp
+
     sp/convolver.hpp
     sp/convolver.cpp
 
