@@ -99,11 +99,12 @@ int main(int argc, char *argv[])
     if(1)
     {
         sp::KernelTabled kt;
-        kt.setup(10, 0.5, 4, 1000);
+        //kt.setup(10, 0.01, 10, 10000);
+        kt.setup(5, 0.5, 3, 1000);
 
-        sp::Kernel k(10);
+        sp::Kernel k(5);
 
-        for(sp::real t(0.1); t<4; t+=0.01)
+        for(sp::real t(0.5); t<3; t+=0.01)
         {
             sp::complex vt = kt.eval(t, 1, sp::complex(0,1));
             sp::complex v = k.eval(t, 1, sp::complex(0,1));

@@ -8,13 +8,11 @@ namespace sp
     Convolver::Convolver(real pow, real periodMin, real periodMax, std::size_t periodSteps)
         : _pow(pow)
     {
-        real minTLog = log(periodMin);
-        real maxTLog = log(periodMax);
-        real logtStep = (maxTLog - minTLog) / (periodSteps-1);
+        real periodStep = (periodMax - periodMin) / (periodSteps-1);
         _periodGrid.resize(periodSteps);
         for(std::size_t k(0); k<periodSteps; k++)
         {
-            _periodGrid[k] = exp(minTLog+k*logtStep);
+            _periodGrid[k] = periodMin + k*periodStep;
         }
     }
 
@@ -156,46 +154,26 @@ namespace sp
 
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         void lowPassFir(
-            real Fs,
-            real Fd,
+            real bndT,
             std::size_t n,
             TVReal &A)
         {
-            real f = Fs/Fd;
-            real w = g_2pi*f;
-            real q = 2*f;
+            real w = g_2pi/bndT;
+            real q = 2/bndT;
 
             n+=2;
             n |= 1;
             A.resize(n-2);
 
             std::size_t mn = n/2-1;
-            A[mn] = q;
+            real kaizerBeta = 5;
+
+            A[mn] = q * 1.0;//kaizer(kaizerBeta, mn, n);
             for(std::size_t k(1); k<n/2; k++)
             {
-                //A[mn+k] = A[mn-k] = q*(sin(k*w)/(k*w));
-                A[mn+k] = A[mn-k] = q* boost::math::sinc_pi(k*w);
+                //A[mn+k] = A[mn-k] = q* boost::math::sinc_pi(k*w) * kaizer(kaizerBeta, mn+1-k, n);
+                A[mn+k] = A[mn-k] = q* boost::math::sinc_pi(k*w) * kaizer(kaizerBeta, mn+1-k, n-2);
             }
-
-            real kaizerBeta = 5;
-            TVReal _wnd(A.size());
-            n = _wnd.size();
-            mn = n/2;
-            _wnd[mn+0] = kaizer(kaizerBeta, n/2, n);
-            for(std::size_t k(1); k<=n/2; k++)
-            {
-                if(mn+k < _wnd.size())
-                {
-                    _wnd[mn+k] = kaizer(kaizerBeta, n/2+k, n);
-                }
-                _wnd[mn-k] = kaizer(kaizerBeta, n/2-k, n);
-            }
-
-            for(std::size_t i(0); i<A.size(); i++)
-            {
-                A[i] *= _wnd[i];
-            }
-
         }
 
         //МНОГОПОТОК НЕ ПРОЙДЕТ
@@ -207,55 +185,75 @@ namespace sp
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         real /*signalStartTime*/ prepareSignal(real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, real pow, real maxT, TVReal &preparedSignal)
         {
-            const std::size_t extraSamples = 4;
+            size_t extraSamples = 4;
 
-            std::size_t minLen = std::size_t(pow*10);//по 10 точек на период, иначе fir не справляется
-            std::size_t maxLen = std::size_t(pow*(maxT/signalSampleLength)*2) + minLen + 2 + extraSamples*2;
+            std::size_t minLen = std::size_t(pow*4);//по 4 точки на период, иначе fir не справляется
+
+            std::size_t maxLen = std::size_t(pow*(maxT/signalSampleLength)*2) + 1;
             if(maxLen&1)
             {
                 maxLen+=1;
             }
 
-            std::size_t endIdx = std::size_t((targetTime - signalStartTime)/signalSampleLength) + minLen/2 + extraSamples;
+            std::size_t endIdx = std::size_t((targetTime - signalStartTime)/signalSampleLength);
             assert(endIdx <= signal.size());
+            assert(endIdx > maxLen/2);
 
-            preparedSignal.resize((maxLen - minLen)/2);
+            preparedSignal.reserve(maxLen/2 + extraSamples);
+            preparedSignal.resize(maxLen/2);
 
             FirId firId{pow, minLen, maxLen};
             if(firId != g_firId)
             {
                 std::cerr<<"make fir"<<std::endl;
-                real pow4Bound = pow + 0.5;//с учетом коэффициента по кайзеру - такое значение даст отсечку с серидиной очень близкой pow
                 g_firs.clear();
-                g_firs.resize((maxLen - minLen)/2);
-                for(std::size_t len(minLen); len < maxLen; len+=2)
+                g_firs.resize(maxLen/2);
+                for(std::size_t len(1); len < maxLen; len+=2)
                 {
-                    //std::cerr<<"make fir "<<len<<"/"<<maxLen<<std::endl;
-                    real bndT = len/(pow4Bound);
-                    lowPassFir(1+1.0/pow4Bound, bndT/2, len, g_firs[(len-minLen)/2]);
+                    if(len >= minLen)
+                    {
+                        std::cerr<<len<<"/"<<maxLen<<std::endl;
+                        real bndT = (len+1)/pow/2;
+                        lowPassFir(bndT, len, g_firs[(len-minLen)/2]);
+                    }
                 }
 
                 g_firId = firId;
-                std::cerr<<"done"<<std::endl;
+                std::cerr<<"fir done"<<std::endl;
             }
 
-            for(std::size_t len(minLen); len < maxLen; len+=2)
+            for(std::size_t len(1); len < maxLen; len+=2)
             {
-//                TVReal fir;
-//                real bndT = len/(pow);
-//                lowPassFir(1+1.0/pow, bndT/2, len, fir);
-                const TVReal &fir = g_firs[(len-minLen)/2];
-
-                real preparedValue = 0;
-                for(std::size_t i(0); i<fir.size(); i++)
+                if(len >= minLen)
                 {
-                    preparedValue += signal[endIdx-1-i] * fir[i];
+//                    TVReal fir;
+//                    real bndT = (len+1)/pow/2;
+//                    lowPassFir(bndT, len, fir);
+
+                    const TVReal &fir = g_firs[(len-minLen)/2];
+
+                    real preparedValue = 0;
+                    for(std::size_t i(0); i<fir.size(); i++)
+                    {
+                        preparedValue += signal[endIdx-1-i] * fir[i];
+                    }
+                    preparedSignal[preparedSignal.size()-1-len/2] = preparedValue;
                 }
-                preparedSignal[preparedSignal.size()-1 - (len-minLen)/2] = preparedValue;
+                else
+                {
+                    preparedSignal[preparedSignal.size()-1-len/2] = signal[endIdx-1-len/2];
+                }
             }
 
-            real preparedTargetTime = targetTime - (preparedSignal.size()-extraSamples)*signalSampleLength;
-            return preparedTargetTime;
+            real preparedSignalStartTime = targetTime - preparedSignal.size()*signalSampleLength;
+
+            for(std::size_t i(0); i<extraSamples; i++)
+            {
+                preparedSignal.push_back(signal[endIdx+i]);
+            }
+
+            return preparedSignalStartTime;
+
         }
     }
 
@@ -266,9 +264,9 @@ namespace sp
         real preparedSignalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _pow, _periodGrid.back(), preparedSignal);
 
 //        std::size_t signalTargetIdx = (targetTime - signalStartTime)/signalSampleLength;
-//        for(std::size_t idx(0); idx<preparedSignal.size()- /*extraSamples*/ 4; ++idx)
+//        for(std::size_t idx(0); idx<preparedSignal.size()-4; ++idx)
 //        {
-//            std::cout<<signal[signalTargetIdx-1-idx]<<", "<<preparedSignal[preparedSignal.size()-1- /*extraSamples*/ 4-idx]<<std::endl;
+//            std::cout<<signal[signalTargetIdx-1-idx]<<", "<<preparedSignal[preparedSignal.size()-1-4-idx]<<std::endl;
 //        }
 //        exit(0);
 
