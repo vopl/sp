@@ -5,15 +5,9 @@
 namespace sp
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    Convolver::Convolver(real pow, real periodMin, real periodMax, std::size_t periodSteps)
+    Convolver::Convolver(real pow)
         : _pow(pow)
     {
-        real periodStep = (periodMax - periodMin) / (periodSteps-1);
-        _periodGrid.resize(periodSteps);
-        for(std::size_t k(0); k<periodSteps; k++)
-        {
-            _periodGrid[k] = periodMin + k*periodStep;
-        }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -212,7 +206,7 @@ namespace sp
                 {
                     if(len >= minLen)
                     {
-                        //std::cerr<<len<<"/"<<maxLen<<std::endl;
+                        std::cerr<<len<<"/"<<maxLen<<std::endl;
                         real bndT = (len+1)/pow/2;
                         lowPassFir(bndT, len, g_firs[(len-minLen)/2]);
                     }
@@ -258,10 +252,10 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Convolver::execute(real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, TVComplex &echo)
+    void Convolver::execute(PeriodGrid &periodGrid, real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, TVComplex &echo)
     {
         TVReal preparedSignal;
-        real preparedSignalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _pow, _periodGrid.back(), preparedSignal);
+        real preparedSignalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _pow, periodGrid.grid().back(), preparedSignal);
 
 //        std::size_t signalTargetIdx = (targetTime - signalStartTime)/signalSampleLength;
 //        for(std::size_t idx(0); idx<preparedSignal.size()-4; ++idx)
@@ -270,10 +264,10 @@ namespace sp
 //        }
 //        exit(0);
 
-        echo.resize(_periodGrid.size());
-        for(std::size_t i(0); i<_periodGrid.size(); i++)
+        echo.resize(periodGrid.grid().size());
+        for(std::size_t i(0); i<periodGrid.grid().size(); i++)
         {
-            echo[i] = executeOne(preparedSignalStartTime, signalSampleLength, preparedSignal, targetTime, _periodGrid[i], _pow);
+            echo[i] = executeOne(preparedSignalStartTime, signalSampleLength, preparedSignal, targetTime, periodGrid.grid()[i], _pow);
         }
     }
 

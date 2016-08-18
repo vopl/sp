@@ -1,19 +1,19 @@
 #pragma once
 
 #include "math.hpp"
+#include "periodGrid.hpp"
 
 namespace sp
 {
     class Convolver
     {
     public:
-        Convolver(real pow, real periodMin, real periodMax, std::size_t periodSteps);
+        Convolver(real pow);
         ~Convolver();
 
-        void execute(real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, TVComplex &echo);
+        void execute(PeriodGrid &periodGrid, real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, TVComplex &echo);
 
     private:
         real    _pow;
-        TVReal  _periodGrid;
     };
 }

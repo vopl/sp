@@ -5,6 +5,7 @@
 #include "sp/kernel.hpp"
 #include "sp/kernelTabled.hpp"
 #include "sp/convolver.hpp"
+#include "sp/periodGrid.hpp"
 
 #include "test/scaledData.h"
 
@@ -49,7 +50,7 @@ int main(int argc, char *argv[])
     for(size_t index(0); index<signal.size(); ++index)
     {
         sp::real x = index * sp::g_sampleStep;
-        signal[index] = cos((x-1.5)*sp::g_2pi*100);//ровно посеридине нашей шкалы
+        signal[index] = cos((x-1.5)*sp::g_2pi*200);//ровно посеридине нашей шкалы
 
         //cout << x<<","<<signal[index]<< endl;
 
@@ -117,20 +118,28 @@ int main(int argc, char *argv[])
 
     if(1)
     {
+        sp::PeriodGrid periodGrid(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::periodLin);
+
         sp::KernelTabled kt;
         kt.setup(5, 0.01, 10, 10000);
+//        sp::Kernel kt(5);
+
 
         sp::TVComplex response(sp::g_periodSteps);
-        sp::Convolver c(POW, sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps);
-        c.execute(0, sp::g_sampleStep, signal, 1.5, response);
+        sp::Convolver c(POW);
+        c.execute(periodGrid, 0, sp::g_sampleStep, signal, 1.5, response);
 
-//        for(size_t i(0); i<sp::g_periodSteps; ++i)
+//        for(size_t i(0); i<periodGrid.grid().size(); ++i)
 //        {
+
+//            std::cout<<periodGrid.grid()[i]<<", ";
+
 //            std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
 
 //            response[i] = 0;
-//            response[i] += rm.eval(sp::g_periodGrid[i], 1.0/100, sp::complex(1,0));
-//            std::cout<<response[i].re()<<", "<<response[i].im()<<std::endl;
+//            response[i] += kt.eval(periodGrid.grid()[i], 1.0/200, sp::complex(1,0));
+//            std::cout<<response[i].re()<<", "<<response[i].im();
+//            std::cout<<std::endl;
 //        }
 
 //        exit(0);
@@ -146,8 +155,8 @@ int main(int argc, char *argv[])
             //spectr[97] = sp::complex(1,0);
 
             int res = kt.deconvolve(
-                                 response.size(), &sp::g_periodGrid[0], &response[0],
-                                 spectr.size(), &sp::g_periodGrid[0], &spectr[0],
+                                 response.size(), &periodGrid.grid()[0], &response[0],
+                                 spectr.size(), &periodGrid.grid()[0], &spectr[0],
                                  iters,
                                  work);
 

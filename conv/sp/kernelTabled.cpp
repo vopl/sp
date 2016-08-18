@@ -443,13 +443,14 @@ namespace sp
         _kdre.clear();
         _kdim.clear();
 
-        Convolver c(_pow, _periodMin, _periodMax, _periodSteps);
+        PeriodGrid periodGrid(_periodMin, _periodMax, _periodSteps, PeriodGridType::periodLin);
+        Convolver c(_pow);
 
         real targetX = _periodMax*_pow*2.5;
-        const real sampleStep = _periodMin/10;//10 сэмплов на минимальный период
+        const real sampleStep = _periodMin/1;//10 сэмплов на минимальный период
         TVReal signal(std::size_t(targetX/sampleStep)+1000);
 
-        const std::size_t phasesAmount = 30;
+        const std::size_t phasesAmount = 10;
 
         std::vector<TVComplex> echos(phasesAmount);
         for(std::size_t phaseIndex(0); phaseIndex<phasesAmount; ++phaseIndex)
@@ -468,7 +469,7 @@ namespace sp
 
             std::cerr<<phaseIndex<<" echo"<<std::endl;
             //fill echo
-            c.execute(0, sampleStep, signal, targetX, echos[phaseIndex]);
+            c.execute(periodGrid, 0, sampleStep, signal, targetX, echos[phaseIndex]);
 
             //std::cout<<echos[phaseIndex][10].re()<<", "<<echos[phaseIndex][10].im()<<std::endl;
         }

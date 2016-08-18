@@ -38,6 +38,12 @@ namespace sp
         std::size_t _periodSteps;
         real _periodStep;
 
+//        real _flogMin;
+//        real _flogMax;
+//        std::size_t _flogSteps;
+//        real _flogStep;
+
+
     private:
         TVComplex _kre;
         TVComplex _kim;
