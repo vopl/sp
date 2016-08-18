@@ -16,13 +16,11 @@ namespace sp
     static const TVReal g_periodGrid = ([](){
         TVReal res;
 
-        real minTLog = log(g_periodMin);
-        real maxTLog = log(g_periodMax);
-        real logtStep = (maxTLog - minTLog) / (g_periodSteps-1);
+        real periodStep = (g_periodMax - g_periodMin) / (g_periodSteps-1);
         res.resize(g_periodSteps);
-        for(size_t k(0); k<g_periodSteps; k++)
+        for(std::size_t k(0); k<g_periodSteps; k++)
         {
-            res[k] = exp(minTLog+k*logtStep);
+            res[k] = g_periodMin + k*periodStep;
         }
 
         return res;

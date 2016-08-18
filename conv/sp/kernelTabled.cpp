@@ -41,12 +41,194 @@ namespace sp
 
     namespace
     {
+        //////////////////////////////////////////////////////////////////////////
+        struct LevmarParams
+        {
+            //сетка периода, должна быть задана всегда
+            //отклика - длина n/2
+            const real      *_et;
+
+            //спектра - длина m/2
+            const real      *_st;
+
+            //значения отклика, если задано
+            //длина n/2
+            const complex   *_ev;
+
+            KernelTabled    *_kernelTabled;
+        };
+
+        //////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////////////
+        void evalLevmarFunc(double *p, double *hx, int m, int n, void *_levmarParams)
+        {
+            LevmarParams *params = (LevmarParams *)_levmarParams;
+
+            for(int i(0); i<n/2; i++)
+            {
+                real et = params->_et[i];
+                real re = 0;
+                real im = 0;
+
+                for(int j(0); j<m/2; j++)
+                {
+                    real st = params->_st[j];
+
+                    real rr, ri, ir, ii;
+                    params->_kernelTabled->evalKernel(et/st, rr, ri, ir, ii);
+
+                    //assert(std::isfinite(rr) && std::isfinite(ri));
+                    //assert(std::isfinite(ir) && std::isfinite(ii));
+
+                    real sr = p[j*2+0];
+                    real si = p[j*2+1];
+
+                    re += sr*rr - si*ri;
+                    im += sr*ir - si*ii;
+                }
+
+                //assert(std::isfinite(re) && std::isfinite(im));
+
+                hx[i*2+0] = re;
+                hx[i*2+1] = im;
+
+            }
+
+            for(int i(0); i<n/2; i++)
+            {
+                hx[i*2+0] -= params->_ev[i].re();
+                hx[i*2+1] -= params->_ev[i].im();
+            }
+        }
+
+        //////////////////////////////////////////////////////////////////////////
+        void evalLevmarJaco(double *p, double *jx, int m, int n, void *_levmarParams)
+        {
+            LevmarParams *params = (LevmarParams *)_levmarParams;
+
+            for(int i(0); i<n/2; i++)
+            {
+                real et = params->_et[i];
+
+                for(int j(0); j<m/2; j++)
+                {
+                    real st = params->_st[j];
+
+                    real rr,  ri,  ir,  ii;
+                    params->_kernelTabled->evalKernel(et/st, rr, ri, ir, ii);
+
+                    jx[(i*2+0)*m+j*2+0] = rr;
+                    jx[(i*2+0)*m+j*2+1] = -ri;
+
+                    jx[(i*2+1)*m+j*2+0] = ir;
+                    jx[(i*2+1)*m+j*2+1] = -ii;
+                }
+            }
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    int KernelTabled::deconvolve(
+        size_t esize, const real *et, const complex *ev,//отклик
+        size_t ssize, const real *st,       complex *sv,//спектр
+        size_t itMax,//макс итераций
+        TVReal &work)
+    {
+        LevmarParams params;
+        params._et = et;
+        params._ev = ev;
+        params._st = st;
+        params._kernelTabled = this;
+
+        real levmarInfo[LM_INFO_SZ];
+        if(work.size() < LM_DER_WORKSZ(ssize*2, esize*2))
+        {
+            work.resize(LM_DER_WORKSZ(ssize*2, esize*2));
+        }
+
+        assert(sizeof(double) == sizeof(complex)/2);//хак Complex[n] используется как double[n*2]
+
+
+//         TVReal err(size*2);
+//         params._ev = NULL;
+//         dlevmar_chkjac(
+//             evalLevmarFunc,
+//             evalLevmarJaco,
+//             (real *)sv,
+//             ssize*2,
+//             esize*2,
+//             &params,
+//             &err.front());
+//         real errVal = std::accumulate(err.begin(), err.end(), 0.0)/err.size();
+//         std::cout<<"dlevmar_chkjac: "<<errVal<<std::endl;
+//         exit(0);
+
+        static real levmarOpts[LM_OPTS_SZ] =
+        {
+            1e-30,  //LM_INIT_MU,        //mu
+            1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
+            1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
+            1e-20,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
+        };
+
+        int res = dlevmar_der(
+            &evalLevmarFunc,
+            &evalLevmarJaco,
+            (real *)sv,
+            NULL,
+            ssize*2,
+            esize*2,
+            itMax,
+            levmarOpts,
+            levmarInfo,
+            &work[0],
+            NULL,
+            &params);
+
+         std::cerr<<"result: "<<res<<std::endl;
+         std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
+         std::cerr<<"||e||_2:"<<levmarInfo[1]<<std::endl;
+         std::cerr<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
+         std::cerr<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
+         std::cerr<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
+         std::cerr<<"# iterations:"<<levmarInfo[5]<<std::endl;
+         std::cerr<<"reason for terminating:";
+         switch(int(levmarInfo[6]+0.5))
+         {
+         case 1: std::cerr<<" - stopped by small gradient J^T e"<<std::endl;break;
+         case 2: std::cerr<<" - stopped by small Dp"<<std::endl;break;
+         case 3: std::cerr<<" - stopped by itmax"<<std::endl;break;
+         case 4: std::cerr<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
+         case 5: std::cerr<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
+         case 6: std::cerr<<" - stopped by small ||e||_2"<<std::endl;break;
+         case 7: std::cerr<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
+         }
+         std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
+         std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
+         std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
+         //exit(1);
+
+        return res;
+    }
+
+    namespace
+    {
         real approx01(real x, real y0, real dy0, real y1, real dy1)
         {
             assert(x>=0 && x<=1);
 
-            //TODO: кубическим сплайном по двум точкам с производными
-            return y0*(1-x) + y1*(x);
+            //кубическим сплайном по двум точкам с производными
+            real x2 = x*x;
+            real x3 = x2*x;
+            return  (+2*x3 - 3*x2 + 1)*y0 +
+                    (+1*x3 - 2*x2 + x)*dy0 +
+                    (-2*x3 + 3*x2 + 0)*y1 +
+                    (+1*x3 - 1*x2 + 0)*dy1;
+
+
+//            //линейно
+//            return y0*(1-x) + y1*(x);
         }
     }
 
@@ -264,7 +446,7 @@ namespace sp
         Convolver c(_pow, _periodMin, _periodMax, _periodSteps);
 
         real targetX = _periodMax*_pow*2.5;
-        const real sampleStep = _periodMin/100;//10 сэмплов на минимальный период
+        const real sampleStep = _periodMin/10;//10 сэмплов на минимальный период
         TVReal signal(std::size_t(targetX/sampleStep)+1000);
 
         const std::size_t phasesAmount = 30;

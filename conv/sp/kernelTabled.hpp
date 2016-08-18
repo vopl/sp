@@ -16,7 +16,13 @@ namespace sp
 
         complex eval(real t, real st, const complex &sv);
 
-    private:
+        int deconvolve(
+            size_t esize, const real *et, const complex *ev,//отклик
+            size_t ssize, const real *st,       complex *sv,//спектр
+            size_t itMax,//макс итераций
+            TVReal &work);
+
+    public:
         void evalKernel(real t, real &rr, real &ri, real &ir, real &ii);
 
     private:
