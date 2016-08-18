@@ -17,12 +17,13 @@ namespace sp
 
     }
 
-    void KernelTabled::setup(real pow, real periodSmallMult, real periodBigMult, std::size_t periodSteps)
+    void KernelTabled::setup(real pow, real periodMin, real periodMax, std::size_t periodSteps)
     {
         _pow = pow;
-        _periodSmallMult = periodSmallMult;
-        _periodBigMult = periodBigMult;
+        _periodMin = periodMin;
+        _periodMax = periodMax;
         _periodSteps = periodSteps;
+        _periodStep = (_periodMax - _periodMin) / (_periodSteps-1);
 
         if(!load())
         {
@@ -51,16 +52,16 @@ namespace sp
 
     void KernelTabled::evalKernel(real t, real &rr, real &ri, real &ir, real &ii)
     {
-        if(t <= _periodSmallMult)
+        if(t <= _periodMin)
         {
-            rr = approx01(t/_periodSmallMult, 0, 0, _kre.front().re(), _kdre.front().re());
-            ri = approx01(t/_periodSmallMult, 0, 0, _kre.front().im(), _kdre.front().im());
-            ir = approx01(t/_periodSmallMult, 0, 0, _kim.front().re(), _kdim.front().im());
-            ii = approx01(t/_periodSmallMult, 0, 0, _kim.front().im(), _kdim.front().im());
+            rr = approx01(t/_periodMin, 0, 0, _kre.front().re(), _kdre.front().re());
+            ri = approx01(t/_periodMin, 0, 0, _kre.front().im(), _kdre.front().im());
+            ir = approx01(t/_periodMin, 0, 0, _kim.front().re(), _kdim.front().im());
+            ii = approx01(t/_periodMin, 0, 0, _kim.front().im(), _kdim.front().im());
             return;
         }
 
-        if(t >= _periodBigMult*100)
+        if(t >= _periodMax*100)
         {
             rr = 0;
             ri = 0;
@@ -69,23 +70,19 @@ namespace sp
             return;
         }
 
-        if(t >= _periodBigMult)
+        if(t >= _periodMax)
         {
-            rr = approx01((t-_periodBigMult)/100, _kre.back().re(), _kdre.back().re(), 0, 0);
-            ri = approx01((t-_periodBigMult)/100, _kre.back().im(), _kdre.back().im(), 0, 0);
-            ir = approx01((t-_periodBigMult)/100, _kim.back().re(), _kdim.back().re(), 0, 0);
-            ii = approx01((t-_periodBigMult)/100, _kim.back().im(), _kdim.back().im(), 0, 0);
+            rr = approx01((t-_periodMax)/100, _kre.back().re(), _kdre.back().re(), 0, 0);
+            ri = approx01((t-_periodMax)/100, _kre.back().im(), _kdre.back().im(), 0, 0);
+            ir = approx01((t-_periodMax)/100, _kim.back().re(), _kdim.back().re(), 0, 0);
+            ii = approx01((t-_periodMax)/100, _kim.back().im(), _kdim.back().im(), 0, 0);
             return;
         }
 
-        real lt = log(t);
-        real _periodLogMin = log(_periodSmallMult);
-        real _periodLogMax = log(_periodBigMult);
-        real _periodLogStep = (_periodLogMax - _periodLogMin)/(_periodSteps-1);
-        std::size_t idx = (lt-_periodLogMin)/_periodLogStep;
+        std::size_t idx = (t-_periodMin)/_periodStep;
         assert(idx<_periodSteps-1);
 
-        real x = (lt-_periodLogStep*idx-_periodLogMin)/_periodLogStep;
+        real x = (t-_periodStep*idx-_periodMin)/_periodStep;
         rr = approx01(x, _kre[idx].re(), _kdre[idx].re(), _kre[idx+1].re(), _kdre[idx+1].re());
         ri = approx01(x, _kre[idx].im(), _kdre[idx].im(), _kre[idx+1].im(), _kdre[idx+1].im());
         ir = approx01(x, _kim[idx].re(), _kdim[idx].re(), _kim[idx+1].re(), _kdim[idx+1].re());
@@ -95,7 +92,7 @@ namespace sp
     std::string KernelTabled::stateFileName()
     {
         char tmp[4096];
-        sprintf(tmp, "kt_state_POW%0.15e_TMIN%0.15e_TMAX%0.15e_TSTEPS%zd.bin", double(_pow), double(_periodSmallMult), double(_periodBigMult), _periodSteps);
+        sprintf(tmp, "kt_state_POW%0.15e_TMIN%0.15e_TMAX%0.15e_TSTEPS%zd.bin", double(_pow), double(_periodMin), double(_periodMax), _periodSteps);
 
         return tmp;
     }
@@ -264,10 +261,10 @@ namespace sp
         _kdre.clear();
         _kdim.clear();
 
-        Convolver c(_pow, _periodSmallMult, _periodBigMult, _periodSteps);
+        Convolver c(_pow, _periodMin, _periodMax, _periodSteps);
 
-        real targetX = _periodBigMult*_pow*2.1;
-        const real sampleStep = _periodSmallMult/20;//20 сэмплов на минимальный период
+        real targetX = _periodMax*_pow*2.5;
+        const real sampleStep = _periodMin/100;//10 сэмплов на минимальный период
         TVReal signal(std::size_t(targetX/sampleStep)+1000);
 
         const std::size_t phasesAmount = 30;
@@ -337,7 +334,7 @@ namespace sp
 
         _kdre[_periodSteps-1] = _kdre[_periodSteps-2];
         _kdim[_periodSteps-1] = _kdim[_periodSteps-2];
-        std::cerr<<"done"<<std::endl;
+        std::cerr<<"kernel done"<<std::endl;
     }
 
 }

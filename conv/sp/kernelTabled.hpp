@@ -12,7 +12,7 @@ namespace sp
         KernelTabled();
         ~KernelTabled();
 
-        void setup(real pow, real periodSmallMult=0.1, real periodBigMult=10, std::size_t periodSteps=1000);
+        void setup(real pow, real periodMin=0.1, real periodMax=10, std::size_t periodSteps=1000);
 
         complex eval(real t, real st, const complex &sv);
 
@@ -27,9 +27,10 @@ namespace sp
 
     private:
         real _pow;
-        real _periodSmallMult;
-        real _periodBigMult;
+        real _periodMin;
+        real _periodMax;
         std::size_t _periodSteps;
+        real _periodStep;
 
     private:
         TVComplex _kre;

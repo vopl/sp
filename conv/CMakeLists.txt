@@ -1,3 +1,6 @@
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native -flto -O3 -g -DNDEBUG -fomit-frame-pointer")
+
+
 project(conv)
 cmake_minimum_required(VERSION 2.8)
 
