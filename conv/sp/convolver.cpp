@@ -181,15 +181,15 @@ namespace sp
         {
             size_t extraSamples = 4;
 
-            std::size_t minLen = std::size_t(pow*4);//по 4 точки на период, иначе fir не справляется
+            std::size_t minLen = std::size_t(pow*4+0.5);//по 4 точки на период, иначе fir не справляется
 
-            std::size_t maxLen = std::size_t(pow*(maxT/signalSampleLength)*2) + 1;
+            std::size_t maxLen = std::size_t(pow*(maxT/signalSampleLength)*2 + 1.5);
             if(maxLen&1)
             {
                 maxLen+=1;
             }
 
-            std::size_t endIdx = std::size_t((targetTime - signalStartTime)/signalSampleLength);
+            std::size_t endIdx = std::size_t((targetTime - signalStartTime)/signalSampleLength+0.5);
             assert(endIdx <= signal.size());
             assert(endIdx > maxLen/2);
 
@@ -206,7 +206,7 @@ namespace sp
                 {
                     if(len >= minLen)
                     {
-                        std::cerr<<len<<"/"<<maxLen<<std::endl;
+                        //std::cerr<<len<<"/"<<maxLen<<std::endl;
                         real bndT = (len+1)/pow/2;
                         lowPassFir(bndT, len, g_firs[(len-minLen)/2]);
                     }
@@ -252,7 +252,7 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void Convolver::execute(PeriodGrid &periodGrid, real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, TVComplex &echo)
+    void Convolver::execute(const PeriodGrid &periodGrid, real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, TVComplex &echo)
     {
         TVReal preparedSignal;
         real preparedSignalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _pow, periodGrid.grid().back(), preparedSignal);
@@ -270,5 +270,15 @@ namespace sp
             echo[i] = executeOne(preparedSignalStartTime, signalSampleLength, preparedSignal, targetTime, periodGrid.grid()[i], _pow);
         }
     }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    complex /*echo*/ Convolver::execute(const real &period, real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime)
+    {
+        TVReal preparedSignal;
+        real preparedSignalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _pow, period, preparedSignal);
+
+        return executeOne(preparedSignalStartTime, signalSampleLength, preparedSignal, targetTime, period, _pow);
+    }
+
 
 }

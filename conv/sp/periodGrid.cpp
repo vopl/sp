@@ -65,7 +65,7 @@ namespace sp
 
     }
 
-    const TVReal &PeriodGrid::grid()
+    const TVReal &PeriodGrid::grid() const
     {
         return _grid;
     }
