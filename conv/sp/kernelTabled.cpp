@@ -7,8 +7,8 @@
 #include <fstream>
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-static const std::size_t phasesAmountForKernelApproximator = 6;//MAGIC
-static const std::size_t samplesOnSignalPeriod = 500;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
+static const std::size_t phasesAmountForKernelApproximator = 4;//MAGIC
+static const std::size_t samplesOnSignalPeriod = 400;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
 static const std::size_t extraValuesInGrid = 2;//сколько дополнительных значений прикрепить к концу таблицы (там значения возле t=1)
 
 
@@ -283,7 +283,6 @@ namespace sp
 
         //линейно по частоте
         t = 1.0/t;
-        t += _step1inf;
 
         std::int64_t idx = std::int64_t((t-_min1inf)/_step1inf);
         if(idx < 0)
