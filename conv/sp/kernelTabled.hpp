@@ -36,15 +36,29 @@ namespace sp
         real _periodMin;
         real _periodMax;
         std::size_t _periodSteps;
-        real _periodStep;
 
-    private:
-        TVComplex _kre;
-        TVComplex _kim;
+    private://01
+        real _min01;
+        real _max01;
+        real _step01;
+        std::size_t _steps01;
+
+        TVComplex _kre01;
+        TVComplex _kim01;
 
         //эдакие виртуальные производные, для каждой точки периода. При построении аппроксимации между двумя точками - их координаты трактуются как 0 и 1
-        TVComplex _kdre;
-        TVComplex _kdim;
+        TVComplex _kdre01;
+        TVComplex _kdim01;
 
+    private://1inf
+        real _min1inf;
+        real _max1inf;
+        real _step1inf;
+        std::size_t _steps1inf;
+
+        TVComplex _kre1inf;
+        TVComplex _kim1inf;
+        TVComplex _kdre1inf;
+        TVComplex _kdim1inf;
     };
 }

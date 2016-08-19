@@ -18,7 +18,7 @@ namespace sp
         PeriodGrid(real periodMin, real periodMax, std::size_t steps, PeriodGridType type);
         ~PeriodGrid();
 
-        const TVReal &grid();
+        const TVReal &grid() const;
 
     private:
         TVReal _grid;

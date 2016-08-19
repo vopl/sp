@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     for(size_t index(0); index<signal.size(); ++index)
     {
         sp::real x = index * sp::g_sampleStep;
-        signal[index] = sin((x-1.5)*sp::g_2pi*200);//ровно посеридине нашей шкалы
+        signal[index] = cos((x-1.5)*sp::g_2pi*200);//ровно посеридине нашей шкалы
 
         //cout << x<<","<<signal[index]<< endl;
 
@@ -118,10 +118,11 @@ int main(int argc, char *argv[])
 
     if(1)
     {
-        sp::PeriodGrid periodGrid(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::frequencyLog);
+        sp::PeriodGrid periodGrid(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::periodLin);
 
         sp::KernelTabled kt;
-        kt.setup(5, 0.001, 100, 100000);
+        kt.setup(5, 0.001, 1000, 20000);
+        //kt.setup(5, 0.00001, 100000, 100000);
 //        sp::Kernel kt(5);
 
 
@@ -129,20 +130,20 @@ int main(int argc, char *argv[])
         sp::Convolver c(POW);
         c.execute(periodGrid, 0, sp::g_sampleStep, signal, 1.5, response);
 
-//        for(size_t i(0); i<periodGrid.grid().size(); ++i)
-//        {
+        for(size_t i(0); i<periodGrid.grid().size(); ++i)
+        {
 
-//            std::cout<<periodGrid.grid()[i]<<", ";
+            std::cout<<periodGrid.grid()[i]<<", ";
 
-//            std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
+            std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
 
-//            response[i] = 0;
-//            response[i] += kt.eval(periodGrid.grid()[i], 1.0/200, sp::complex(0,-1));
-//            std::cout<<response[i].re()<<", "<<response[i].im();
-//            std::cout<<std::endl;
-//        }
+            response[i] = 0;
+            response[i] += kt.eval(periodGrid.grid()[i], 1.0/200, sp::complex(1,0));
+            std::cout<<response[i].re()<<", "<<response[i].im();
+            std::cout<<std::endl;
+        }
 
-//        exit(0);
+        exit(0);
 
         sp::TVReal work;
 

@@ -2,8 +2,16 @@
 #include "sp/convolver.hpp"
 #include "levmar.h"
 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
+
+/////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+static const std::size_t phasesAmountForKernelApproximator = 10;//MAGIC
+static const std::size_t samplesOnSignalPeriod = 1000;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
+static const std::size_t extraValuesInGrid = 2;//сколько дополнительных значений прикрепить к концу таблицы (там значения возле t=1)
+
+
 
 namespace sp
 {
@@ -22,8 +30,17 @@ namespace sp
         _pow = pow;
         _periodMin = periodMin;
         _periodMax = periodMax;
-        _periodSteps = periodSteps;
-        _periodStep = (_periodMax - _periodMin) / (_periodSteps-1);
+        _periodSteps = periodSteps/2;
+
+        _steps01 = _periodSteps;
+        _min01 = _periodMin;
+        _max01 = 1.0;
+        _step01 = (_max01 - _min01)/(_steps01-1);
+
+        _steps1inf = _periodSteps;
+        _min1inf = 1.0/_periodMax;
+        _max1inf = 1.0;
+        _step1inf = (_max1inf - _min1inf)/(_steps1inf-1);
 
         if(!load())
         {
@@ -234,45 +251,51 @@ namespace sp
 
     void KernelTabled::evalKernel(real t, real &rr, real &ri, real &ir, real &ii)
     {
-        real f = -log(t);
-        real fmin = -log(_periodMax);
-        real fmax = -log(_periodMin);
-        real fstep = (fmax-fmin)/(_periodSteps-1);
-
-        if(f >= fmax)
+        if(t<1)
         {
-            rr = 0;
-            ri = 0;
-            ir = 0;
-            ii = 0;
+            //линейно по периоду
+            std::int64_t idx = std::int64_t((t-_min01)/_step01);
+            if(idx < 0)
+            {
+                rr = approx01(t/_min01, 0, 0, _kre01.front().re(), _kdre01.front().re());
+                ri = approx01(t/_min01, 0, 0, _kre01.front().im(), _kdre01.front().im());
+                ir = approx01(t/_min01, 0, 0, _kim01.front().re(), _kdim01.front().im());
+                ii = approx01(t/_min01, 0, 0, _kim01.front().im(), _kdim01.front().im());
+                return;
+            }
+
+            assert(idx < _kre01.size()-1);
+
+            real x = (t-_step01*idx-_min01)/_step01;
+            rr = approx01(x, _kre01[idx].re(), _kdre01[idx].re(), _kre01[idx+1].re(), _kdre01[idx+1].re());
+            ri = approx01(x, _kre01[idx].im(), _kdre01[idx].im(), _kre01[idx+1].im(), _kdre01[idx+1].im());
+            ir = approx01(x, _kim01[idx].re(), _kdim01[idx].re(), _kim01[idx+1].re(), _kdim01[idx+1].re());
+            ii = approx01(x, _kim01[idx].im(), _kdim01[idx].im(), _kim01[idx+1].im(), _kdim01[idx+1].im());
+
             return;
         }
 
-        if(f <= fmin)
+        //линейно по частоте
+        t = 1.0/t;
+
+        std::int64_t idx = std::int64_t((t-_min1inf)/_step1inf);
+        if(idx < 0)
         {
-            rr = 0;
-            ri = 0;
-            ir = 0;
-            ii = 0;
+            rr = approx01(t/_min1inf, 0, 0, _kre1inf.front().re(), _kdre1inf.front().re());
+            ri = approx01(t/_min1inf, 0, 0, _kre1inf.front().im(), _kdre1inf.front().im());
+            ir = approx01(t/_min1inf, 0, 0, _kim1inf.front().re(), _kdim1inf.front().im());
+            ii = approx01(t/_min1inf, 0, 0, _kim1inf.front().im(), _kdim1inf.front().im());
             return;
         }
 
-        int idx = (f-fmin)/fstep;
-        if(idx<0 || idx >= _periodSteps-1)
-        {
-            rr = 0;
-            ri = 0;
-            ir = 0;
-            ii = 0;
-            return;
-        }
-        assert(idx<_periodSteps-1);
+        assert(idx < _kre01.size()-1);
 
-        real x = (f-fstep*idx-fmin)/fstep;
-        rr = approx01(x, _kre[_periodSteps-1-idx].re(), _kdre[_periodSteps-1-idx].re(), _kre[_periodSteps-1-idx-1].re(), _kdre[_periodSteps-1-idx-1].re());
-        ri = approx01(x, _kre[_periodSteps-1-idx].im(), _kdre[_periodSteps-1-idx].im(), _kre[_periodSteps-1-idx-1].im(), _kdre[_periodSteps-1-idx-1].im());
-        ir = approx01(x, _kim[_periodSteps-1-idx].re(), _kdim[_periodSteps-1-idx].re(), _kim[_periodSteps-1-idx-1].re(), _kdim[_periodSteps-1-idx-1].re());
-        ii = approx01(x, _kim[_periodSteps-1-idx].im(), _kdim[_periodSteps-1-idx].im(), _kim[_periodSteps-1-idx-1].im(), _kdim[_periodSteps-1-idx-1].im());
+        real x = (t-_step1inf*idx-_min1inf)/_step1inf;
+        rr = approx01(x, _kre1inf[idx].re(), _kdre1inf[idx].re(), _kre1inf[idx+1].re(), _kdre1inf[idx+1].re());
+        ri = approx01(x, _kre1inf[idx].im(), _kdre1inf[idx].im(), _kre1inf[idx+1].im(), _kdre1inf[idx+1].im());
+        ir = approx01(x, _kim1inf[idx].re(), _kdim1inf[idx].re(), _kim1inf[idx+1].re(), _kdim1inf[idx+1].re());
+        ii = approx01(x, _kim1inf[idx].im(), _kdim1inf[idx].im(), _kim1inf[idx+1].im(), _kdim1inf[idx+1].im());
+
     }
 
     std::string KernelTabled::stateFileName()
@@ -281,6 +304,30 @@ namespace sp
         sprintf(tmp, "kt_state_POW%0.15e_TMIN%0.15e_TMAX%0.15e_TSTEPS%zd.bin", double(_pow), double(_periodMin), double(_periodMax), _periodSteps);
 
         return tmp;
+    }
+
+    namespace
+    {
+        bool loadTable(std::ifstream &in, TVComplex &tbl, std::size_t amount)
+        {
+            tbl.resize(amount);
+
+            std::streamsize bytesAmount = std::streamsize(tbl.size()*sizeof(tbl[0]));
+
+            in.read(reinterpret_cast<char *>(&tbl[0]), bytesAmount);
+            return in.gcount() == bytesAmount;
+        }
+
+        bool saveTable(std::ofstream &out, const TVComplex &tbl)
+        {
+            std::streamsize bytesAmount = std::streamsize(tbl.size()*sizeof(tbl[0]));
+
+            std::size_t pos = out.tellp();
+            out.write(reinterpret_cast<const char *>(&tbl[0]), bytesAmount);
+
+            return out.tellp() == pos + bytesAmount;
+        }
+
     }
 
     bool KernelTabled::load()
@@ -293,37 +340,16 @@ namespace sp
             return false;
         }
 
-        _kre.resize(_periodSteps);
-        _kim.resize(_periodSteps);
-        _kdre.resize(_periodSteps);
-        _kdim.resize(_periodSteps);
+        if(!loadTable(in, _kre01, _steps01+extraValuesInGrid)) return false;
+        if(!loadTable(in, _kim01, _steps01+extraValuesInGrid)) return false;
+        if(!loadTable(in, _kdre01, _steps01+extraValuesInGrid)) return false;
+        if(!loadTable(in, _kdim01, _steps01+extraValuesInGrid)) return false;
 
-        std::streamsize bytesAmount = std::streamsize(_periodSteps*sizeof(complex));
+        if(!loadTable(in, _kre1inf, _steps1inf+extraValuesInGrid)) return false;
+        if(!loadTable(in, _kim1inf, _steps1inf+extraValuesInGrid)) return false;
+        if(!loadTable(in, _kdre1inf, _steps1inf+extraValuesInGrid)) return false;
+        if(!loadTable(in, _kdim1inf, _steps1inf+extraValuesInGrid)) return false;
 
-        in.read(reinterpret_cast<char *>(&_kre[0]), bytesAmount);
-        if(in.gcount() != bytesAmount)
-        {
-            return false;
-        }
-
-        in.read(reinterpret_cast<char *>(&_kim[0]), bytesAmount);
-        if(in.gcount() != bytesAmount)
-        {
-            return false;
-        }
-
-        in.read(reinterpret_cast<char *>(&_kdre[0]), bytesAmount);
-        if(in.gcount() != bytesAmount)
-        {
-            return false;
-        }
-
-        in.read(reinterpret_cast<char *>(&_kdim[0]), bytesAmount);
-        if(in.gcount() != bytesAmount)
-        {
-            return false;
-        }
-        in.close();
         return true;
     }
 
@@ -337,32 +363,16 @@ namespace sp
             return false;
         }
 
-        std::streamsize bytesAmount = std::streamsize(_periodSteps*sizeof(complex));
+        if(!saveTable(out, _kre01)) return false;
+        if(!saveTable(out, _kim01)) return false;
+        if(!saveTable(out, _kdre01)) return false;
+        if(!saveTable(out, _kdim01)) return false;
 
-        out.write(reinterpret_cast<char *>(&_kre[0]), bytesAmount);
-        if(out.tellp() != bytesAmount)
-        {
-            return false;
-        }
+        if(!saveTable(out, _kre1inf)) return false;
+        if(!saveTable(out, _kim1inf)) return false;
+        if(!saveTable(out, _kdre1inf)) return false;
+        if(!saveTable(out, _kdim1inf)) return false;
 
-        out.write(reinterpret_cast<char *>(&_kim[0]), bytesAmount);
-        if(out.tellp() != bytesAmount*2)
-        {
-            return false;
-        }
-
-        out.write(reinterpret_cast<char *>(&_kdre[0]), bytesAmount);
-        if(out.tellp() != bytesAmount*3)
-        {
-            return false;
-        }
-
-        out.write(reinterpret_cast<char *>(&_kdim[0]), bytesAmount);
-        if(out.tellp() != bytesAmount*4)
-        {
-            return false;
-        }
-        out.close();
         return true;
     }
 
@@ -379,13 +389,30 @@ namespace sp
 
             static real levmarOpts[LM_OPTS_SZ] =
             {
-                1e-3,  //LM_INIT_MU,        //mu
+                1e-30,  //LM_INIT_MU,        //mu
                 1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
                 1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
                 1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
             };
 
             real p[2]={1,0};
+
+            {
+                real max = ys[0];
+                std::size_t maxIdx = 0;
+
+                for(std::size_t idx(1); idx<ys.size(); ++idx)
+                {
+                    if(max < ys[idx])
+                    {
+                        max = ys[idx];
+                        maxIdx = idx;
+                    }
+                }
+
+                p[0] = max;
+                p[1] = -g_2pi * maxIdx / ys.size();
+            }
 
             int levmarResult = dlevmar_der(
                         [](double *p, double *hx, int m, int n, void *_levmarParams)->void{
@@ -439,89 +466,91 @@ namespace sp
         }
     }
 
-    void KernelTabled::build()
+    namespace
     {
-        std::cerr<<"build kernel"<<std::endl;
-        _kre.clear();
-        _kim.clear();
-        _kdre.clear();
-        _kdim.clear();
-
-        PeriodGrid periodGrid(_periodMin, _periodMax, _periodSteps, PeriodGridType::frequencyLog);
-        Convolver c(_pow);
-
-        real targetX = _periodMax*_pow*2.5;
-        const real sampleStep = _periodMin/1*10;//10 сэмплов на минимальный период
-        TVReal signal(std::size_t(targetX/sampleStep)+1000);
-
-        const std::size_t phasesAmount = 10;
-
-        std::vector<TVComplex> echos(phasesAmount);
-        for(std::size_t phaseIndex(0); phaseIndex<phasesAmount; ++phaseIndex)
+        void buildValues(std::size_t samplesOnSignalPeriod, real pow, const PeriodGrid &grid, TVComplex &re, TVComplex &im)
         {
-            //fill signal
-            std::cerr<<phaseIndex<<" signal"<<std::endl;
+            std::size_t steps = grid.grid().size();
+            re.resize(steps);
+            im.resize(steps);
 
-//            std::size_t startIdx = (targetX-10.0)/sampleStep;
-//            std::size_t stopIdx = (targetX)/sampleStep+1;
-            std::size_t startIdx = 0;
-            std::size_t stopIdx = signal.size();
-            for(std::size_t sindex(startIdx); sindex<stopIdx; sindex++)
+            Convolver c(pow);
+
+            for(std::size_t periodIndex(0); periodIndex<steps; ++periodIndex)
             {
-                signal[sindex] = cos(g_2pi*(sampleStep*sindex - targetX) + phaseIndex*g_2pi/phasesAmount);
+                const real &period = grid.grid()[periodIndex];
+
+                real targetX = period*pow*2.5;
+                const real sampleStep = period/samplesOnSignalPeriod;
+                TVReal signal(std::size_t(targetX/sampleStep)+1000);
+
+                TVReal hre(phasesAmountForKernelApproximator), him(phasesAmountForKernelApproximator);
+                for(std::size_t phaseIndex(0); phaseIndex<phasesAmountForKernelApproximator; ++phaseIndex)
+                {
+                    std::size_t startIdx = 0;
+                    std::size_t stopIdx = signal.size();
+                    for(std::size_t sindex(startIdx); sindex<stopIdx; sindex++)
+                    {
+                        signal[sindex] = cos(g_2pi*(sampleStep*sindex - targetX) + phaseIndex*g_2pi/phasesAmountForKernelApproximator);
+                    }
+
+                    complex echo = c.execute(period, 0, sampleStep, signal, targetX);
+                    hre[phaseIndex] = echo.re();
+                    him[phaseIndex] = echo.im();
+
+                }
+
+                re[periodIndex] = approxCos(hre);
+                im[periodIndex] = approxCos(him);
+
+                std::cerr<<periodIndex<<"/"<<steps<<std::endl;
+            }
+        }
+
+        void buildDerivatives(TVComplex &v, TVComplex &dv)
+        {
+            std::size_t steps = v.size();
+            dv.resize(steps);
+
+            for(std::size_t idx(1); idx<steps-1; ++idx)
+            {
+                dv[idx] = (v[idx+1] - v[idx-1])/2;
             }
 
-            std::cerr<<phaseIndex<<" echo"<<std::endl;
-            //fill echo
-            c.execute(periodGrid, 0, sampleStep, signal, targetX, echos[phaseIndex]);
+            dv[0] = dv[1];
 
-            //std::cout<<echos[phaseIndex][10].re()<<", "<<echos[phaseIndex][10].im()<<std::endl;
+            dv[steps-1] = dv[steps-2];
         }
 
-//        //проверить отклонение, должно быть на уровне машинной точности
-//        for(std::size_t i(0); i<periodSteps; ++i)
-//        {
-//            real re=0, im=0;
-//            for(std::size_t phaseIndex(0); phaseIndex<phasesAmount; ++phaseIndex)
-//            {
-//                re += echos[phaseIndex][i].re();
-//                im += echos[phaseIndex][i].im();
-//            }
-//            std::cout<<re<<", "<<im<<std::endl;
-//        }
-
-
-        _kre.resize(_periodSteps);
-        _kim.resize(_periodSteps);
-
-        TVReal hre(phasesAmount), him(phasesAmount);
-        for(std::size_t periodIndex(0); periodIndex<_periodSteps; ++periodIndex)
-        {
-            for(std::size_t phaseIndex(0); phaseIndex<phasesAmount; ++phaseIndex)
-            {
-                hre[phaseIndex] = echos[phaseIndex][periodIndex].re();
-                him[phaseIndex] = echos[phaseIndex][periodIndex].im();
-            }
-
-            _kre[periodIndex] = approxCos(hre);
-            _kim[periodIndex] = approxCos(him);
-        }
-
-        _kdre.resize(_periodSteps);
-        _kdim.resize(_periodSteps);
-
-        for(std::size_t periodIndex(1); periodIndex<_periodSteps-1; ++periodIndex)
-        {
-            _kdre[periodIndex] = (_kre[periodIndex+1] - _kre[periodIndex-1])/2;
-            _kdim[periodIndex] = (_kim[periodIndex+1] - _kim[periodIndex-1])/2;
-        }
-
-        _kdre[0] = _kdre[1];
-        _kdim[0] = _kdim[1];
-
-        _kdre[_periodSteps-1] = _kdre[_periodSteps-2];
-        _kdim[_periodSteps-1] = _kdim[_periodSteps-2];
-        std::cerr<<"kernel done"<<std::endl;
     }
 
+    void KernelTabled::build()
+    {
+
+        std::cerr<<"build kernel t1"<<std::endl;
+        //0-1, линейный период
+        {
+            PeriodGrid grid(_min01, _max01+_step01*extraValuesInGrid, _steps01+extraValuesInGrid, PeriodGridType::periodLin);
+
+            buildValues(samplesOnSignalPeriod, _pow, grid, _kre01, _kim01);
+
+            buildDerivatives(_kre01, _kdre01);
+            buildDerivatives(_kim01, _kdim01);
+        }
+
+        std::cerr<<"build kernel t2"<<std::endl;
+        //1-inf линейная частота
+        {
+            PeriodGrid grid(1.0/(1.0+extraValuesInGrid*_step1inf), _periodMax, _steps1inf+extraValuesInGrid, PeriodGridType::frequencyLin);
+
+            buildValues(samplesOnSignalPeriod, _pow, grid, _kre1inf, _kim1inf);
+
+            std::reverse(_kre1inf.begin(), _kre1inf.end());
+            std::reverse(_kim1inf.begin(), _kim1inf.end());
+
+            buildDerivatives(_kre1inf, _kdre1inf);
+            buildDerivatives(_kim1inf, _kdim1inf);
+        }
+        std::cerr<<"kernel done"<<std::endl;
+    }
 }
