@@ -7,8 +7,8 @@
 #include <fstream>
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-static const std::size_t phasesAmountForKernelApproximator = 10;//MAGIC
-static const std::size_t samplesOnSignalPeriod = 1000;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
+static const std::size_t phasesAmountForKernelApproximator = 6;//MAGIC
+static const std::size_t samplesOnSignalPeriod = 500;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
 static const std::size_t extraValuesInGrid = 2;//сколько дополнительных значений прикрепить к концу таблицы (там значения возле t=1)
 
 
@@ -30,14 +30,14 @@ namespace sp
         _pow = pow;
         _periodMin = periodMin;
         _periodMax = periodMax;
-        _periodSteps = periodSteps/2;
+        _periodSteps = periodSteps;
 
-        _steps01 = _periodSteps;
+        _steps01 = _periodSteps/2;
         _min01 = _periodMin;
         _max01 = 1.0;
         _step01 = (_max01 - _min01)/(_steps01-1);
 
-        _steps1inf = _periodSteps;
+        _steps1inf = _periodSteps/2;
         _min1inf = 1.0/_periodMax;
         _max1inf = 1.0;
         _step1inf = (_max1inf - _min1inf)/(_steps1inf-1);
@@ -233,7 +233,7 @@ namespace sp
     {
         real approx01(real x, real y0, real dy0, real y1, real dy1)
         {
-            assert(x>=0 && x<=1);
+            assert(x>=-std::numeric_limits<real>::epsilon()*100 && x<=1.0+std::numeric_limits<real>::epsilon()*100);
 
             //кубическим сплайном по двум точкам с производными
             real x2 = x*x;
@@ -266,6 +266,12 @@ namespace sp
 
             assert(idx < _kre01.size()-1);
 
+//            rr = _kre01[idx].re();
+//            ri = _kre01[idx].im();
+//            ir = _kim01[idx].re();
+//            ii = _kim01[idx].im();
+//            return;
+
             real x = (t-_step01*idx-_min01)/_step01;
             rr = approx01(x, _kre01[idx].re(), _kdre01[idx].re(), _kre01[idx+1].re(), _kdre01[idx+1].re());
             ri = approx01(x, _kre01[idx].im(), _kdre01[idx].im(), _kre01[idx+1].im(), _kdre01[idx+1].im());
@@ -277,6 +283,7 @@ namespace sp
 
         //линейно по частоте
         t = 1.0/t;
+        t += _step1inf;
 
         std::int64_t idx = std::int64_t((t-_min1inf)/_step1inf);
         if(idx < 0)
@@ -288,7 +295,14 @@ namespace sp
             return;
         }
 
-        assert(idx < _kre01.size()-1);
+        assert(idx < _kre1inf.size()-1);
+
+//        rr = _kre1inf[idx].re();
+//        ri = _kre1inf[idx].im();
+//        ir = _kim1inf[idx].re();
+//        ii = _kim1inf[idx].im();
+//        return;
+
 
         real x = (t-_step1inf*idx-_min1inf)/_step1inf;
         rr = approx01(x, _kre1inf[idx].re(), _kdre1inf[idx].re(), _kre1inf[idx+1].re(), _kdre1inf[idx+1].re());
@@ -517,11 +531,9 @@ namespace sp
                 dv[idx] = (v[idx+1] - v[idx-1])/2;
             }
 
-            dv[0] = dv[1];
-
-            dv[steps-1] = dv[steps-2];
+            dv[0] = dv[1]+(dv[2]-dv[3]);
+            dv[steps-1] = dv[steps-2]+(dv[steps-3]-dv[steps-4]);
         }
-
     }
 
     void KernelTabled::build()

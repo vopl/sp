@@ -100,8 +100,8 @@ int main(int argc, char *argv[])
     if(0)
     {
         sp::KernelTabled kt;
-        //kt.setup(10, 0.01, 10, 10000);
-        kt.setup(5, 0.01, 10, 10000);
+        kt.setup(5, 0.1, 10, 100);
+        //kt.setup(5, 0.01, 10, 10000);
 
         sp::Kernel k(5);
 
@@ -118,37 +118,68 @@ int main(int argc, char *argv[])
 
     if(1)
     {
-        sp::PeriodGrid periodGrid(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::periodLin);
-
         sp::KernelTabled kt;
-        kt.setup(5, 0.001, 1000, 20000);
-        //kt.setup(5, 0.00001, 100000, 100000);
-//        sp::Kernel kt(5);
+        //kt.setup(5, 0.1, 10, 1000);
+        kt.setup(5, 0.0001, 10000, 2*200*1000);
+        sp::Kernel k(5);
 
+
+        {
+
+            sp::PeriodGrid periodGridc(0.9/200, 10.0/200, 1000, sp::PeriodGridType::frequencyLin);
+            sp::Convolver c(POW);
+            sp::TVComplex response(sp::g_periodSteps);
+            c.execute(periodGridc, 0, sp::g_sampleStep, signal, 1.5, response);
+
+            sp::PeriodGrid periodGrid(0.9, 10, 1000, sp::PeriodGridType::frequencyLin);
+
+            for(size_t i(0); i<periodGrid.grid().size(); ++i)
+            {
+
+                //std::cout<<periodGrid.grid()[i]<<", ";
+
+//                sp::complex ck = k.eval(periodGrid.grid()[i], 1.0, sp::complex(1,0));
+//                std::cout<<ck.re()<<", "<<ck.im()<<", ";
+
+                sp::complex r = response[i];
+                std::cout<<r.re()<<", "<<r.im()<<", ";
+
+                sp::complex ckt = kt.eval(periodGrid.grid()[i], 1.0, sp::complex(1,0));
+                std::cout<<ckt.re()<<", "<<ckt.im()<<", ";
+
+                std::cout<<std::endl;
+            }
+
+
+            exit(0);
+        }
 
         sp::TVComplex response(sp::g_periodSteps);
+
+        sp::PeriodGrid periodGrid(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::periodLin);
+
         sp::Convolver c(POW);
         c.execute(periodGrid, 0, sp::g_sampleStep, signal, 1.5, response);
 
-        for(size_t i(0); i<periodGrid.grid().size(); ++i)
-        {
+//        for(size_t i(0); i<periodGrid.grid().size(); ++i)
+//        {
 
-            std::cout<<periodGrid.grid()[i]<<", ";
+//            //std::cout<<periodGrid.grid()[i]<<", ";
 
-            std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
+//            //std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
 
-            response[i] = 0;
-            response[i] += kt.eval(periodGrid.grid()[i], 1.0/200, sp::complex(1,0));
-            std::cout<<response[i].re()<<", "<<response[i].im();
-            std::cout<<std::endl;
-        }
+//            response[i] = 0;
+//            response[i] += kt.eval(periodGrid.grid()[i], 1.0/200, sp::complex(1,0));
+//            //std::cout<<response[i].re()<<", "<<response[i].im();
+//            //std::cout<<std::endl;
+//        }
 
-        exit(0);
+//        exit(0);
 
         sp::TVReal work;
 
         //для инициализации спектра нулем - mu=1e-10 лучший. При меньших значениях начинают артифакты появляться, при больших - медленно сходится
-        int iters = 1;
+        int iters = 2;
         //for(int iters(1); iters<200; iters++)
         {
             sp::TVComplex spectr(response.size());

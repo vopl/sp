@@ -160,13 +160,12 @@ namespace sp
             A.resize(n-2);
 
             std::size_t mn = n/2-1;
-            real kaizerBeta = 5;
+            real kaizerBeta = 15;
 
-            A[mn] = q * 1.0;//kaizer(kaizerBeta, mn, n);
+            A[mn] = q;// * kaizer(kaizerBeta, mn, n-2);
             for(std::size_t k(1); k<n/2; k++)
             {
-                //A[mn+k] = A[mn-k] = q* boost::math::sinc_pi(k*w) * kaizer(kaizerBeta, mn+1-k, n);
-                A[mn+k] = A[mn-k] = q* boost::math::sinc_pi(k*w) * kaizer(kaizerBeta, mn+1-k, n-2);
+                A[mn+k] = A[mn-k] = q* boost::math::sinc_pi(k*w) * kaizer(kaizerBeta, mn+k, n-2);
             }
         }
 
@@ -181,7 +180,7 @@ namespace sp
         {
             size_t extraSamples = 4;
 
-            std::size_t minLen = std::size_t(pow*4+0.5);//по 4 точки на период, иначе fir не справляется
+            std::size_t minLen = std::size_t(pow*3+0.5);//по 3 точки на период, иначе fir не справляется
 
             std::size_t maxLen = std::size_t(pow*(maxT/signalSampleLength)*2 + 1.5);
             if(maxLen&1)
@@ -207,7 +206,7 @@ namespace sp
                     if(len >= minLen)
                     {
                         //std::cerr<<len<<"/"<<maxLen<<std::endl;
-                        real bndT = (len+1)/pow/2;
+                        real bndT = 2+(len-1)/pow/2;
                         lowPassFir(bndT, len, g_firs[(len-minLen)/2]);
                     }
                 }
@@ -221,15 +220,18 @@ namespace sp
                 if(len >= minLen)
                 {
 //                    TVReal fir;
-//                    real bndT = (len+1)/pow/2;
+//                    real bndT = 2+(len-1)/pow/2;
 //                    lowPassFir(bndT, len, fir);
 
                     const TVReal &fir = g_firs[(len-minLen)/2];
 
                     real preparedValue = 0;
-                    for(std::size_t i(0); i<fir.size(); i++)
+                    const std::size_t firSize = fir.size();
+
+                    const real *signalPart = &signal[endIdx-firSize];
+                    for(std::size_t i(0); i<firSize; i++)
                     {
-                        preparedValue += signal[endIdx-1-i] * fir[i];
+                        preparedValue += signalPart[i] * fir[i];
                     }
                     preparedSignal[preparedSignal.size()-1-len/2] = preparedValue;
                 }
@@ -257,7 +259,7 @@ namespace sp
         TVReal preparedSignal;
         real preparedSignalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _pow, periodGrid.grid().back(), preparedSignal);
 
-//        std::size_t signalTargetIdx = (targetTime - signalStartTime)/signalSampleLength;
+//        std::size_t signalTargetIdx = (targetTime - signalStartTime)/signalSampleLength+0.5;
 //        for(std::size_t idx(0); idx<preparedSignal.size()-4; ++idx)
 //        {
 //            std::cout<<signal[signalTargetIdx-1-idx]<<", "<<preparedSignal[preparedSignal.size()-1-4-idx]<<std::endl;
@@ -276,6 +278,13 @@ namespace sp
     {
         TVReal preparedSignal;
         real preparedSignalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _pow, period, preparedSignal);
+
+//        std::size_t signalTargetIdx = (targetTime - signalStartTime)/signalSampleLength+0.5;
+//        for(std::size_t idx(0); idx<preparedSignal.size()-4; ++idx)
+//        {
+//            std::cout<<signal[signalTargetIdx-1-idx]<<", "<<preparedSignal[preparedSignal.size()-1-4-idx]<<std::endl;
+//        }
+//        exit(0);
 
         return executeOne(preparedSignalStartTime, signalSampleLength, preparedSignal, targetTime, period, _pow);
     }
