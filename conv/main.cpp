@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
     {
         sp::KernelTabled kt;
         //kt.setup(5, 0.1, 10, 1000);
-        kt.setup(5, 0.0001, 10000, 2*200*1000);
+        kt.setup(5, 0.8, 10.2, 2*2000);
         sp::Kernel k(5);
 
 
