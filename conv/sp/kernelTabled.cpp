@@ -234,16 +234,12 @@ namespace sp
 
     void KernelTabled::evalKernel(real t, real &rr, real &ri, real &ir, real &ii)
     {
-        if(t <= _periodMin)
-        {
-            rr = approx01(t/_periodMin, 0, 0, _kre.front().re(), _kdre.front().re());
-            ri = approx01(t/_periodMin, 0, 0, _kre.front().im(), _kdre.front().im());
-            ir = approx01(t/_periodMin, 0, 0, _kim.front().re(), _kdim.front().im());
-            ii = approx01(t/_periodMin, 0, 0, _kim.front().im(), _kdim.front().im());
-            return;
-        }
+        real f = -log(t);
+        real fmin = -log(_periodMax);
+        real fmax = -log(_periodMin);
+        real fstep = (fmax-fmin)/(_periodSteps-1);
 
-        if(t >= _periodMax*100)
+        if(f >= fmax)
         {
             rr = 0;
             ri = 0;
@@ -252,23 +248,31 @@ namespace sp
             return;
         }
 
-        if(t >= _periodMax)
+        if(f <= fmin)
         {
-            rr = approx01((t-_periodMax)/100, _kre.back().re(), _kdre.back().re(), 0, 0);
-            ri = approx01((t-_periodMax)/100, _kre.back().im(), _kdre.back().im(), 0, 0);
-            ir = approx01((t-_periodMax)/100, _kim.back().re(), _kdim.back().re(), 0, 0);
-            ii = approx01((t-_periodMax)/100, _kim.back().im(), _kdim.back().im(), 0, 0);
+            rr = 0;
+            ri = 0;
+            ir = 0;
+            ii = 0;
             return;
         }
 
-        std::size_t idx = (t-_periodMin)/_periodStep;
+        int idx = (f-fmin)/fstep;
+        if(idx<0 || idx >= _periodSteps-1)
+        {
+            rr = 0;
+            ri = 0;
+            ir = 0;
+            ii = 0;
+            return;
+        }
         assert(idx<_periodSteps-1);
 
-        real x = (t-_periodStep*idx-_periodMin)/_periodStep;
-        rr = approx01(x, _kre[idx].re(), _kdre[idx].re(), _kre[idx+1].re(), _kdre[idx+1].re());
-        ri = approx01(x, _kre[idx].im(), _kdre[idx].im(), _kre[idx+1].im(), _kdre[idx+1].im());
-        ir = approx01(x, _kim[idx].re(), _kdim[idx].re(), _kim[idx+1].re(), _kdim[idx+1].re());
-        ii = approx01(x, _kim[idx].im(), _kdim[idx].im(), _kim[idx+1].im(), _kdim[idx+1].im());
+        real x = (f-fstep*idx-fmin)/fstep;
+        rr = approx01(x, _kre[_periodSteps-1-idx].re(), _kdre[_periodSteps-1-idx].re(), _kre[_periodSteps-1-idx-1].re(), _kdre[_periodSteps-1-idx-1].re());
+        ri = approx01(x, _kre[_periodSteps-1-idx].im(), _kdre[_periodSteps-1-idx].im(), _kre[_periodSteps-1-idx-1].im(), _kdre[_periodSteps-1-idx-1].im());
+        ir = approx01(x, _kim[_periodSteps-1-idx].re(), _kdim[_periodSteps-1-idx].re(), _kim[_periodSteps-1-idx-1].re(), _kdim[_periodSteps-1-idx-1].re());
+        ii = approx01(x, _kim[_periodSteps-1-idx].im(), _kdim[_periodSteps-1-idx].im(), _kim[_periodSteps-1-idx-1].im(), _kdim[_periodSteps-1-idx-1].im());
     }
 
     std::string KernelTabled::stateFileName()
@@ -443,11 +447,11 @@ namespace sp
         _kdre.clear();
         _kdim.clear();
 
-        PeriodGrid periodGrid(_periodMin, _periodMax, _periodSteps, PeriodGridType::periodLin);
+        PeriodGrid periodGrid(_periodMin, _periodMax, _periodSteps, PeriodGridType::frequencyLog);
         Convolver c(_pow);
 
         real targetX = _periodMax*_pow*2.5;
-        const real sampleStep = _periodMin/1;//10 сэмплов на минимальный период
+        const real sampleStep = _periodMin/1*10;//10 сэмплов на минимальный период
         TVReal signal(std::size_t(targetX/sampleStep)+1000);
 
         const std::size_t phasesAmount = 10;
