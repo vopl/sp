@@ -5,7 +5,7 @@
 
 namespace sp
 {
-    using real = double;
+    using real = long double;
 
     using TVReal = std::vector<real>;
 

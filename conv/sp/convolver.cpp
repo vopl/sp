@@ -180,7 +180,7 @@ namespace sp
         {
             size_t extraSamples = 4;
 
-            std::size_t minLen = std::size_t(pow*3+0.5);//по 3 точки на период, иначе fir не справляется
+            std::size_t minLen = std::size_t(pow*10+0.5);//по 10 точки на период, иначе fir не справляется
 
             std::size_t maxLen = std::size_t(pow*(maxT/signalSampleLength)*2 + 1.5);
             if(maxLen&1)
@@ -206,7 +206,7 @@ namespace sp
                     if(len >= minLen)
                     {
                         //std::cerr<<len<<"/"<<maxLen<<std::endl;
-                        real bndT = 2+(len-1)/pow/2;
+                        real bndT = 2+(len-1)/(pow+2)/2;
                         lowPassFir(bndT, len, g_firs[(len-minLen)/2]);
                     }
                 }
@@ -220,7 +220,7 @@ namespace sp
                 if(len >= minLen)
                 {
 //                    TVReal fir;
-//                    real bndT = 2+(len-1)/pow/2;
+//                    real bndT = 2+(len-1)/(pow)/2;
 //                    lowPassFir(bndT, len, fir);
 
                     const TVReal &fir = g_firs[(len-minLen)/2];
@@ -260,9 +260,10 @@ namespace sp
         real preparedSignalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _pow, periodGrid.grid().back(), preparedSignal);
 
 //        std::size_t signalTargetIdx = (targetTime - signalStartTime)/signalSampleLength+0.5;
-//        for(std::size_t idx(0); idx<preparedSignal.size()-4; ++idx)
+//        std::size_t preparedSignalTargetIdx = (targetTime - preparedSignalStartTime)/signalSampleLength+0.5;
+//        for(std::size_t idx(0); idx<preparedSignal.size()-40; ++idx)
 //        {
-//            std::cout<<signal[signalTargetIdx-1-idx]<<", "<<preparedSignal[preparedSignal.size()-1-4-idx]<<std::endl;
+//            std::cout<<signal[signalTargetIdx-idx]<<", "<<preparedSignal[preparedSignalTargetIdx-idx]<<std::endl;
 //        }
 //        exit(0);
 
@@ -280,9 +281,10 @@ namespace sp
         real preparedSignalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _pow, period, preparedSignal);
 
 //        std::size_t signalTargetIdx = (targetTime - signalStartTime)/signalSampleLength+0.5;
-//        for(std::size_t idx(0); idx<preparedSignal.size()-4; ++idx)
+//        std::size_t preparedSignalTargetIdx = (targetTime - preparedSignalStartTime)/signalSampleLength+0.5;
+//        for(std::size_t idx(0); idx<preparedSignal.size()-40; ++idx)
 //        {
-//            std::cout<<signal[signalTargetIdx-1-idx]<<", "<<preparedSignal[preparedSignal.size()-1-4-idx]<<std::endl;
+//            std::cout<<signal[signalTargetIdx-idx]<<", "<<preparedSignal[preparedSignalTargetIdx-idx]<<std::endl;
 //        }
 //        exit(0);
 
