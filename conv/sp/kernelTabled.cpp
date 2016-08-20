@@ -5,17 +5,18 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <set>
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 static const std::size_t phasesAmountForKernelApproximator = 4;//MAGIC
 static const std::size_t samplesOnSignalPeriod = 500;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
-static const std::size_t extraValuesInGrid = 2;//сколько дополнительных значений прикрепить к концу таблицы (там значения возле t=1)
 
 
 
 namespace sp
 {
-    KernelTabled::KernelTabled()
+    KernelTabled::KernelTabled(real pow)
+        : _pow(pow)
     {
 
     }
@@ -23,30 +24,6 @@ namespace sp
     KernelTabled::~KernelTabled()
     {
 
-    }
-
-    void KernelTabled::setup(real pow, real periodMin, real periodMax, std::size_t periodSteps)
-    {
-        _pow = pow;
-        _periodMin = periodMin;
-        _periodMax = periodMax;
-        _periodSteps = periodSteps;
-
-        _steps01 = _periodSteps/2;
-        _min01 = _periodMin;
-        _max01 = 1.0;
-        _step01 = (_max01 - _min01)/(_steps01-1);
-
-        _steps1inf = _periodSteps/2;
-        _min1inf = 1.0/_periodMax;
-        _max1inf = 1.0;
-        _step1inf = (_max1inf - _min1inf)/(_steps1inf-1);
-
-        if(!load())
-        {
-            build();
-            save();
-        }
     }
 
     complex KernelTabled::eval(real t, real st, const complex &sv)
@@ -150,7 +127,7 @@ namespace sp
         size_t esize, const real *et, const complex *ev,//отклик
         size_t ssize, const real *st,       complex *sv,//спектр
         size_t itMax,//макс итераций
-        TVReal &work)
+        std::vector<double> &work)
     {
         LevmarParams params;
         params._et = et;
@@ -158,7 +135,7 @@ namespace sp
         params._st = st;
         params._kernelTabled = this;
 
-        real levmarInfo[LM_INFO_SZ];
+        double levmarInfo[LM_INFO_SZ];
         if(work.size() < LM_DER_WORKSZ(ssize*2, esize*2))
         {
             work.resize(LM_DER_WORKSZ(ssize*2, esize*2));
@@ -181,18 +158,25 @@ namespace sp
 //         std::cout<<"dlevmar_chkjac: "<<errVal<<std::endl;
 //         exit(0);
 
-        static real levmarOpts[LM_OPTS_SZ] =
+        static double levmarOpts[LM_OPTS_SZ] =
         {
-            1e-30,  //LM_INIT_MU,        //mu
+            1e-15,  //LM_INIT_MU,        //mu
             1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
             1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
             1e-20,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
         };
 
+        std::vector<double> d_sv(ssize*2);
+        for(std::size_t i(0); i<ssize; ++i)
+        {
+            d_sv[i*2+0] = sv[i].re();
+            d_sv[i*2+1] = sv[i].im();
+        }
+
         int res = dlevmar_der(
             &evalLevmarFunc,
             &evalLevmarJaco,
-            (real *)sv,
+            &d_sv[0],
             NULL,
             ssize*2,
             esize*2,
@@ -226,181 +210,26 @@ namespace sp
          std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
          //exit(1);
 
+         for(std::size_t i(0); i<ssize; ++i)
+         {
+             sv[i] = complex(d_sv[i*2+0], d_sv[i*2+1]);
+         }
+
         return res;
     }
 
     namespace
     {
-        real approx01(real x, real y0, real dy0, real y1, real dy1)
+        complex approxCos(std::vector<double> &ys)
         {
-            assert(x>=-std::numeric_limits<real>::epsilon()*100 && x<=1.0+std::numeric_limits<real>::epsilon()*100);
-
-            //кубическим сплайном по двум точкам с производными
-            real x2 = x*x;
-            real x3 = x2*x;
-            return  (+2*x3 - 3*x2 + 1)*y0 +
-                    (+1*x3 - 2*x2 + x)*dy0 +
-                    (-2*x3 + 3*x2 + 0)*y1 +
-                    (+1*x3 - 1*x2 + 0)*dy1;
-
-
-//            //линейно
-//            return y0*(1-x) + y1*(x);
-        }
-    }
-
-    void KernelTabled::evalKernel(real t, real &rr, real &ri, real &ir, real &ii)
-    {
-        if(t<1)
-        {
-            //линейно по периоду
-            std::int64_t idx = std::int64_t((t-_min01)/_step01);
-            if(idx < 0)
-            {
-                rr = approx01(t/_min01, 0, 0, _kre01.front().re(), _kdre01.front().re());
-                ri = approx01(t/_min01, 0, 0, _kre01.front().im(), _kdre01.front().im());
-                ir = approx01(t/_min01, 0, 0, _kim01.front().re(), _kdim01.front().im());
-                ii = approx01(t/_min01, 0, 0, _kim01.front().im(), _kdim01.front().im());
-                return;
-            }
-
-            assert(idx < _kre01.size()-1);
-
-//            rr = _kre01[idx].re();
-//            ri = _kre01[idx].im();
-//            ir = _kim01[idx].re();
-//            ii = _kim01[idx].im();
-//            return;
-
-            real x = (t-_step01*idx-_min01)/_step01;
-            rr = approx01(x, _kre01[idx].re(), _kdre01[idx].re(), _kre01[idx+1].re(), _kdre01[idx+1].re());
-            ri = approx01(x, _kre01[idx].im(), _kdre01[idx].im(), _kre01[idx+1].im(), _kdre01[idx+1].im());
-            ir = approx01(x, _kim01[idx].re(), _kdim01[idx].re(), _kim01[idx+1].re(), _kdim01[idx+1].re());
-            ii = approx01(x, _kim01[idx].im(), _kdim01[idx].im(), _kim01[idx+1].im(), _kdim01[idx+1].im());
-
-            return;
-        }
-
-        //линейно по частоте
-        t = 1.0/t;
-
-        std::int64_t idx = std::int64_t((t-_min1inf)/_step1inf);
-        if(idx < 0)
-        {
-            rr = approx01(t/_min1inf, 0, 0, _kre1inf.front().re(), _kdre1inf.front().re());
-            ri = approx01(t/_min1inf, 0, 0, _kre1inf.front().im(), _kdre1inf.front().im());
-            ir = approx01(t/_min1inf, 0, 0, _kim1inf.front().re(), _kdim1inf.front().im());
-            ii = approx01(t/_min1inf, 0, 0, _kim1inf.front().im(), _kdim1inf.front().im());
-            return;
-        }
-
-        assert(idx < _kre1inf.size()-1);
-
-//        rr = _kre1inf[idx].re();
-//        ri = _kre1inf[idx].im();
-//        ir = _kim1inf[idx].re();
-//        ii = _kim1inf[idx].im();
-//        return;
-
-
-        real x = (t-_step1inf*idx-_min1inf)/_step1inf;
-        rr = approx01(x, _kre1inf[idx].re(), _kdre1inf[idx].re(), _kre1inf[idx+1].re(), _kdre1inf[idx+1].re());
-        ri = approx01(x, _kre1inf[idx].im(), _kdre1inf[idx].im(), _kre1inf[idx+1].im(), _kdre1inf[idx+1].im());
-        ir = approx01(x, _kim1inf[idx].re(), _kdim1inf[idx].re(), _kim1inf[idx+1].re(), _kdim1inf[idx+1].re());
-        ii = approx01(x, _kim1inf[idx].im(), _kdim1inf[idx].im(), _kim1inf[idx+1].im(), _kdim1inf[idx+1].im());
-
-    }
-
-    std::string KernelTabled::stateFileName()
-    {
-        char tmp[4096];
-        sprintf(tmp, "kt_state_POW%0.15e_TMIN%0.15e_TMAX%0.15e_TSTEPS%zd.bin", double(_pow), double(_periodMin), double(_periodMax), _periodSteps);
-
-        return tmp;
-    }
-
-    namespace
-    {
-        bool loadTable(std::ifstream &in, TVComplex &tbl, std::size_t amount)
-        {
-            tbl.resize(amount);
-
-            std::streamsize bytesAmount = std::streamsize(tbl.size()*sizeof(tbl[0]));
-
-            in.read(reinterpret_cast<char *>(&tbl[0]), bytesAmount);
-            return in.gcount() == bytesAmount;
-        }
-
-        bool saveTable(std::ofstream &out, const TVComplex &tbl)
-        {
-            std::streamsize bytesAmount = std::streamsize(tbl.size()*sizeof(tbl[0]));
-
-            std::size_t pos = out.tellp();
-            out.write(reinterpret_cast<const char *>(&tbl[0]), bytesAmount);
-
-            return out.tellp() == pos + bytesAmount;
-        }
-
-    }
-
-    bool KernelTabled::load()
-    {
-        //std::cout<<stateFileName()<<std::endl;
-
-        std::ifstream in(stateFileName().c_str(), std::ios::in|std::ios::binary);
-        if(!in)
-        {
-            return false;
-        }
-
-        if(!loadTable(in, _kre01, _steps01+extraValuesInGrid)) return false;
-        if(!loadTable(in, _kim01, _steps01+extraValuesInGrid)) return false;
-        if(!loadTable(in, _kdre01, _steps01+extraValuesInGrid)) return false;
-        if(!loadTable(in, _kdim01, _steps01+extraValuesInGrid)) return false;
-
-        if(!loadTable(in, _kre1inf, _steps1inf+extraValuesInGrid)) return false;
-        if(!loadTable(in, _kim1inf, _steps1inf+extraValuesInGrid)) return false;
-        if(!loadTable(in, _kdre1inf, _steps1inf+extraValuesInGrid)) return false;
-        if(!loadTable(in, _kdim1inf, _steps1inf+extraValuesInGrid)) return false;
-
-        return true;
-    }
-
-    bool KernelTabled::save()
-    {
-        std::ofstream out(stateFileName().c_str(), std::ios::out|std::ios::binary);
-        if(!out)
-        {
-            std::cerr<<"unable to open file: "<<stateFileName();
-            abort();
-            return false;
-        }
-
-        if(!saveTable(out, _kre01)) return false;
-        if(!saveTable(out, _kim01)) return false;
-        if(!saveTable(out, _kdre01)) return false;
-        if(!saveTable(out, _kdim01)) return false;
-
-        if(!saveTable(out, _kre1inf)) return false;
-        if(!saveTable(out, _kim1inf)) return false;
-        if(!saveTable(out, _kdre1inf)) return false;
-        if(!saveTable(out, _kdim1inf)) return false;
-
-        return true;
-    }
-
-    namespace
-    {
-        complex approxCos(TVReal &ys)
-        {
-            real levmarInfo[LM_INFO_SZ];
-            TVReal work;
+            double levmarInfo[LM_INFO_SZ];
+            std::vector<double> work;
             if(work.size() < LM_DIF_WORKSZ(2, ys.size()*2))
             {
                 work.resize(LM_DIF_WORKSZ(2, ys.size()*2));
             }
 
-            static real levmarOpts[LM_OPTS_SZ] =
+            static double levmarOpts[LM_OPTS_SZ] =
             {
                 1e-30,  //LM_INIT_MU,        //mu
                 1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
@@ -408,7 +237,7 @@ namespace sp
                 1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
             };
 
-            real p[2]={1,0};
+            double p[2]={1,0};
 
             {
                 real max = ys[0];
@@ -481,87 +310,128 @@ namespace sp
 
     namespace
     {
-        void buildValues(std::size_t samplesOnSignalPeriod, real pow, const PeriodGrid &grid, TVComplex &re, TVComplex &im)
-        {
-            std::size_t steps = grid.grid().size();
-            re.resize(steps);
-            im.resize(steps);
 
+        void buildValue(std::size_t samplesOnSignalPeriod, real pow, const real &period, complex &re, complex &im)
+        {
             Convolver c(pow);
 
-            for(std::size_t periodIndex(0); periodIndex<steps; ++periodIndex)
+            real targetX = period*pow*2.5;
+            const real sampleStep = period/samplesOnSignalPeriod;
+            TVReal signal(std::size_t(targetX/sampleStep)+1000);
+
+            std::vector<double> hre(phasesAmountForKernelApproximator), him(phasesAmountForKernelApproximator);
+            for(std::size_t phaseIndex(0); phaseIndex<phasesAmountForKernelApproximator; ++phaseIndex)
             {
-                const real &period = grid.grid()[periodIndex];
-
-                real targetX = period*pow*2.5;
-                const real sampleStep = period/samplesOnSignalPeriod;
-                TVReal signal(std::size_t(targetX/sampleStep)+1000);
-
-                TVReal hre(phasesAmountForKernelApproximator), him(phasesAmountForKernelApproximator);
-                for(std::size_t phaseIndex(0); phaseIndex<phasesAmountForKernelApproximator; ++phaseIndex)
+                std::size_t startIdx = 0;
+                std::size_t stopIdx = signal.size();
+                for(std::size_t sindex(startIdx); sindex<stopIdx; sindex++)
                 {
-                    std::size_t startIdx = 0;
-                    std::size_t stopIdx = signal.size();
-                    for(std::size_t sindex(startIdx); sindex<stopIdx; sindex++)
-                    {
-                        signal[sindex] = cos(g_2pi*(sampleStep*sindex - targetX) + phaseIndex*g_2pi/phasesAmountForKernelApproximator);
-                    }
-
-                    complex echo = c.execute(period, 0, sampleStep, signal, targetX);
-                    hre[phaseIndex] = echo.re();
-                    him[phaseIndex] = echo.im();
-
+                    signal[sindex] = cos(g_2pi*(sampleStep*sindex - targetX) + phaseIndex*g_2pi/phasesAmountForKernelApproximator);
                 }
 
-                re[periodIndex] = approxCos(hre);
-                im[periodIndex] = approxCos(him);
+                complex echo = c.execute(period, 0, sampleStep, signal, targetX);
+                hre[phaseIndex] = echo.re();
+                him[phaseIndex] = echo.im();
 
-                std::cerr<<periodIndex<<"/"<<steps<<std::endl;
-            }
-        }
-
-        void buildDerivatives(TVComplex &v, TVComplex &dv)
-        {
-            std::size_t steps = v.size();
-            dv.resize(steps);
-
-            for(std::size_t idx(1); idx<steps-1; ++idx)
-            {
-                dv[idx] = (v[idx+1] - v[idx-1])/2;
             }
 
-            dv[0] = dv[1]+(dv[2]-dv[3]);
-            dv[steps-1] = dv[steps-2]+(dv[steps-3]-dv[steps-4]);
+            re = approxCos(hre);
+            im = approxCos(him);
         }
     }
 
-    void KernelTabled::build()
+    void KernelTabled::evalKernel(real t, real &rr, real &ri, real &ir, real &ii)
     {
+        real key = t;
+        ValuesByPeriod::iterator iter = _valuesByPeriod.find(key);
 
-        std::cerr<<"build kernel t1"<<std::endl;
-        //0-1, линейный период
+        if(_valuesByPeriod.end() == iter)
         {
-            PeriodGrid grid(_min01, _max01+_step01*extraValuesInGrid, _steps01+extraValuesInGrid, PeriodGridType::periodLin);
+            Value v;
+            buildValue(samplesOnSignalPeriod, _pow, t, v._re, v._im);
+            iter = _valuesByPeriod.insert(std::make_pair(key, v)).first;
 
-            buildValues(samplesOnSignalPeriod, _pow, grid, _kre01, _kim01);
-
-            buildDerivatives(_kre01, _kdre01);
-            buildDerivatives(_kim01, _kdim01);
+            std::cout<<"build "<<t<<", "<<_valuesByPeriod.size()<<std::endl;
+        }
+        else
+        {
+            //std::cout<<"already "<<t<<" == "<<real(key)/100000000000<<std::endl;
         }
 
-        std::cerr<<"build kernel t2"<<std::endl;
-        //1-inf линейная частота
-        {
-            PeriodGrid grid(1.0/(1.0+extraValuesInGrid*_step1inf), _periodMax, _steps1inf+extraValuesInGrid, PeriodGridType::frequencyLin);
+        Value &v = iter->second;
 
-            buildValues(samplesOnSignalPeriod, _pow, grid, _kre1inf, _kim1inf);
-
-            std::reverse(_kre1inf.begin(), _kre1inf.end());
-            std::reverse(_kim1inf.begin(), _kim1inf.end());
-
-            buildDerivatives(_kre1inf, _kdre1inf);
-            buildDerivatives(_kim1inf, _kdim1inf);
-        }
-        std::cerr<<"kernel done"<<std::endl;
+        rr = v._re.re();
+        ri = v._re.im();
+        ir = v._im.re();
+        ii = v._im.im();
     }
+
+    std::string KernelTabled::stateFileName()
+    {
+        char tmp[4096];
+        sprintf(tmp, "kt_state_POW%0.15e.bin", double(_pow));
+
+        return tmp;
+    }
+
+    namespace
+    {
+        bool loadTable(std::ifstream &in, TVComplex &tbl, std::size_t amount)
+        {
+            tbl.resize(amount);
+
+            std::streamsize bytesAmount = std::streamsize(tbl.size()*sizeof(tbl[0]));
+
+            in.read(reinterpret_cast<char *>(&tbl[0]), bytesAmount);
+            return in.gcount() == bytesAmount;
+        }
+
+        bool saveTable(std::ofstream &out, const TVComplex &tbl)
+        {
+            std::streamsize bytesAmount = std::streamsize(tbl.size()*sizeof(tbl[0]));
+
+            std::size_t pos = out.tellp();
+            out.write(reinterpret_cast<const char *>(&tbl[0]), bytesAmount);
+
+            return out.tellp() == pos + bytesAmount;
+        }
+
+    }
+
+    bool KernelTabled::load()
+    {
+        //std::cout<<stateFileName()<<std::endl;
+
+        std::ifstream in(stateFileName().c_str(), std::ios::in|std::ios::binary);
+        if(!in)
+        {
+            return false;
+        }
+
+//        if(!loadTable(in, _kre, _periodSteps)) return false;
+//        if(!loadTable(in, _kim, _periodSteps)) return false;
+//        if(!loadTable(in, _kdre, _periodSteps)) return false;
+//        if(!loadTable(in, _kdim, _periodSteps)) return false;
+
+        return true;
+    }
+
+    bool KernelTabled::save()
+    {
+        std::ofstream out(stateFileName().c_str(), std::ios::out|std::ios::binary);
+        if(!out)
+        {
+            std::cerr<<"unable to open file: "<<stateFileName();
+            abort();
+            return false;
+        }
+
+//        if(!saveTable(out, _kre)) return false;
+//        if(!saveTable(out, _kim)) return false;
+//        if(!saveTable(out, _kdre)) return false;
+//        if(!saveTable(out, _kdim)) return false;
+
+        return true;
+    }
+
 }

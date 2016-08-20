@@ -19,7 +19,7 @@ namespace sp
             size_t esize, const real *et, const complex *ev,//отклик
             size_t ssize, const real *st,       complex *sv,//спектр
             size_t itMax,//макс итераций
-            TVReal &work);
+            std::vector<double> &work);
 
     private:
         real _pow;

@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Levenberg - Marquardt non-linear minimization algorithm
 //  Copyright (C) 2004  Manolis Lourakis (lourakis at ics forth gr)
 //  Institute of Computer Science, Foundation for Research & Technology - Hellas
@@ -46,7 +46,7 @@
 #define AX_EQ_B_PLASMA_CHOL LM_ADD_PREFIX(Ax_eq_b_PLASMA_Chol)
 #endif
 
-/* 
+/*
  * This function seeks the parameter vector p that best describes the measurements vector x.
  * More precisely, given a vector function  func : R^m --> R^n with n>=m,
  * it finds p s.t. func(p) ~= x, i.e. the squared second order (i.e. L2) norm of
@@ -57,13 +57,13 @@
  *
  * Returns the number of iterations (>=0) if successful, LM_ERROR if failed
  *
- * For more details, see K. Madsen, H.B. Nielsen and O. Tingleff's lecture notes on 
+ * For more details, see K. Madsen, H.B. Nielsen and O. Tingleff's lecture notes on
  * non-linear least squares at http://www.imm.dtu.dk/pubdb/views/edoc_download.php/3215/pdf/imm3215.pdf
  */
 
 int LEVMAR_DER(
   void (*func)(LM_REAL *p, LM_REAL *hx, int m, int n, void *adata), /* functional relation describing measurements. A p \in R^m yields a \hat{x} \in  R^n */
-  void (*jacf)(LM_REAL *p, LM_REAL *j, int m, int n, void *adata),  /* function to evaluate the Jacobian \part x / \part p */ 
+  void (*jacf)(LM_REAL *p, LM_REAL *j, int m, int n, void *adata),  /* function to evaluate the Jacobian \part x / \part p */
   LM_REAL *p,         /* I/O: initial parameter estimates. On output has the estimated solution */
   LM_REAL *x,         /* I: measurement vector. NULL implies a zero vector */
   int m,              /* I: parameter vector dimension (i.e. #unknowns) */
@@ -73,14 +73,14 @@ int LEVMAR_DER(
                        * stopping thresholds for ||J^T e||_inf, ||Dp||_2 and ||e||_2. Set to NULL for defaults to be used
                        */
   LM_REAL info[LM_INFO_SZ],
-					           /* O: information regarding the minimization. Set to NULL if don't care
+                               /* O: information regarding the minimization. Set to NULL if don't care
                       * info[0]= ||e||_2 at initial p.
                       * info[1-4]=[ ||e||_2, ||J^T e||_inf,  ||Dp||_2, mu/max[J^T J]_ii ], all computed at estimated p.
                       * info[5]= # iterations,
                       * info[6]=reason for terminating: 1 - stopped by small gradient J^T e
                       *                                 2 - stopped by small Dp
                       *                                 3 - stopped by itmax
-                      *                                 4 - singular matrix. Restart from current p with increased mu 
+                      *                                 4 - singular matrix. Restart from current p with increased mu
                       *                                 5 - no further error reduction is possible. Restart with increased mu
                       *                                 6 - stopped by small ||e||_2
                       *                                 7 - stopped by invalid (i.e. NaN or Inf) "func" values. This is a user error
@@ -130,17 +130,17 @@ int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
   }
 
   if(opts){
-	  tau=opts[0];
-	  eps1=opts[1];
-	  eps2=opts[2];
-	  eps2_sq=opts[2]*opts[2];
+      tau=opts[0];
+      eps1=opts[1];
+      eps2=opts[2];
+      eps2_sq=opts[2]*opts[2];
     eps3=opts[3];
   }
   else{ // use default values
-	  tau=LM_CNST(LM_INIT_MU);
-	  eps1=LM_CNST(LM_STOP_THRESH);
-	  eps2=LM_CNST(LM_STOP_THRESH);
-	  eps2_sq=LM_CNST(LM_STOP_THRESH)*LM_CNST(LM_STOP_THRESH);
+      tau=LM_CNST(LM_INIT_MU);
+      eps1=LM_CNST(LM_STOP_THRESH);
+      eps2=LM_CNST(LM_STOP_THRESH);
+      eps2_sq=LM_CNST(LM_STOP_THRESH)*LM_CNST(LM_STOP_THRESH);
     eps3=LM_CNST(LM_STOP_THRESH);
   }
 
@@ -168,7 +168,7 @@ int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
   (*func)(p, hx, m, n, adata); nfev=1;
   /* ### e=x-hx, p_eL2=||e|| */
 #if 1
-  p_eL2=LEVMAR_L2NRMXMY(e, x, hx, n);  
+  p_eL2=LEVMAR_L2NRMXMY(e, x, hx, n);
 #else
   for(i=0, p_eL2=0.0; i<n; ++i){
     e[i]=tmp=x[i]-hx[i];
@@ -211,7 +211,7 @@ int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
        * performance problem.
        *
        * Note that the non-blocking algorithm is faster on small
-       * problems since in this case it avoids the overheads of blocking. 
+       * problems since in this case it avoids the overheads of blocking.
        */
 
       /* looping downwards saves a few computations */
@@ -258,7 +258,7 @@ int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
       }
     }
 
-	  /* Compute ||J^T e||_inf and ||p||^2 */
+      /* Compute ||J^T e||_inf and ||p||^2 */
     for(i=0, p_L2=jacTe_inf=0.0; i<m; ++i){
       if(jacTe_inf < (tmp=FABS(jacTe[i]))) jacTe_inf=tmp;
 
@@ -432,7 +432,7 @@ if(!(k%100)){
 }
 
 
-/* Secant version of the LEVMAR_DER() function above: the Jacobian is approximated with 
+/* Secant version of the LEVMAR_DER() function above: the Jacobian is approximated with
  * the aid of finite differences (forward or central, see the comment for the opts argument)
  */
 int LEVMAR_DIF(
@@ -446,17 +446,17 @@ int LEVMAR_DIF(
                        * scale factor for initial \mu, stopping thresholds for ||J^T e||_inf, ||Dp||_2 and ||e||_2 and
                        * the step used in difference approximation to the Jacobian. Set to NULL for defaults to be used.
                        * If \delta<0, the Jacobian is approximated with central differences which are more accurate
-                       * (but slower!) compared to the forward differences employed by default. 
+                       * (but slower!) compared to the forward differences employed by default.
                        */
   LM_REAL info[LM_INFO_SZ],
-					           /* O: information regarding the minimization. Set to NULL if don't care
+                               /* O: information regarding the minimization. Set to NULL if don't care
                       * info[0]= ||e||_2 at initial p.
                       * info[1-4]=[ ||e||_2, ||J^T e||_inf,  ||Dp||_2, mu/max[J^T J]_ii ], all computed at estimated p.
                       * info[5]= # iterations,
                       * info[6]=reason for terminating: 1 - stopped by small gradient J^T e
                       *                                 2 - stopped by small Dp
                       *                                 3 - stopped by itmax
-                      *                                 4 - singular matrix. Restart from current p with increased mu 
+                      *                                 4 - singular matrix. Restart from current p with increased mu
                       *                                 5 - no further error reduction is possible. Restart with increased mu
                       *                                 6 - stopped by small ||e||_2
                       *                                 7 - stopped by invalid (i.e. NaN or Inf) "func" values. This is a user error
@@ -505,24 +505,24 @@ int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
   }
 
   if(opts){
-	  tau=opts[0];
-	  eps1=opts[1];
-	  eps2=opts[2];
-	  eps2_sq=opts[2]*opts[2];
+      tau=opts[0];
+      eps1=opts[1];
+      eps2=opts[2];
+      eps2_sq=opts[2]*opts[2];
     eps3=opts[3];
-	  delta=opts[4];
+      delta=opts[4];
     if(delta<0.0){
       delta=-delta; /* make positive */
       using_ffdif=0; /* use central differencing */
     }
   }
   else{ // use default values
-	  tau=LM_CNST(LM_INIT_MU);
-	  eps1=LM_CNST(LM_STOP_THRESH);
-	  eps2=LM_CNST(LM_STOP_THRESH);
-	  eps2_sq=LM_CNST(LM_STOP_THRESH)*LM_CNST(LM_STOP_THRESH);
+      tau=LM_CNST(LM_INIT_MU);
+      eps1=LM_CNST(LM_STOP_THRESH);
+      eps2=LM_CNST(LM_STOP_THRESH);
+      eps2_sq=LM_CNST(LM_STOP_THRESH)*LM_CNST(LM_STOP_THRESH);
     eps3=LM_CNST(LM_STOP_THRESH);
-	  delta=LM_CNST(LM_DIFF_DELTA);
+      delta=LM_CNST(LM_DIFF_DELTA);
   }
 
   if(!work){
@@ -608,7 +608,7 @@ int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
          * performance problem.
          *
          * Note that the non-blocking algorithm is faster on small
-         * problems since in this case it avoids the overheads of blocking. 
+         * problems since in this case it avoids the overheads of blocking.
          */
         register int l;
         register LM_REAL alpha, *jaclm, *jacTjacim;
@@ -652,7 +652,7 @@ int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
             jacTe[l]+=jacrow[l]*tmp;
         }
       }
-      
+
       /* Compute ||J^T e||_inf and ||p||^2 */
       for(i=0, p_L2=jacTe_inf=0.0; i<m; ++i){
         if(jacTe_inf < (tmp=FABS(jacTe[i]))) jacTe_inf=tmp;
@@ -831,7 +831,7 @@ if(!(k%100)){
     LEVMAR_COVAR(jacTjac, covar, p_eL2, m, n);
   }
 
-                                                               
+
   if(freework) free(work);
 
 #ifdef LINSOLVERS_RETAIN_MEMORY

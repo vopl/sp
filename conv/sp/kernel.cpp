@@ -200,7 +200,7 @@ namespace sp
         size_t esize, const real *et, const complex *ev,//отклик
         size_t ssize, const real *st,       complex *sv,//спектр
         size_t itMax,//макс итераций
-        TVReal &work)
+        std::vector<double> &work)
     {
         LevmarParams params;
         params._et = et;
@@ -208,7 +208,7 @@ namespace sp
         params._st = st;
         params._pow = _pow;
 
-        real levmarInfo[LM_INFO_SZ];
+        double levmarInfo[LM_INFO_SZ];
         if(work.size() < LM_DER_WORKSZ(ssize*2, esize*2))
         {
             work.resize(LM_DER_WORKSZ(ssize*2, esize*2));
@@ -231,7 +231,7 @@ namespace sp
 //         std::cout<<"dlevmar_chkjac: "<<errVal<<std::endl;
 //         exit(0);
 
-        static real levmarOpts[LM_OPTS_SZ] =
+        static double levmarOpts[LM_OPTS_SZ] =
         {
             1e-10,  //LM_INIT_MU,        //mu
             1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
@@ -239,10 +239,17 @@ namespace sp
             1e-20,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
         };
 
+        std::vector<double> d_sv(ssize*2);
+        for(std::size_t i(0); i<ssize; ++i)
+        {
+            d_sv[i*2+0] = sv[i].re();
+            d_sv[i*2+1] = sv[i].im();
+        }
+
         int res = dlevmar_der(
             &evalLevmarFunc,
             &evalLevmarJaco,
-            (real *)sv,
+            &d_sv[0],
             NULL,
             ssize*2,
             esize*2,
@@ -275,6 +282,11 @@ namespace sp
          std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
          std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
          //exit(1);
+
+         for(std::size_t i(0); i<ssize; ++i)
+         {
+             sv[i] = complex(d_sv[i*2+0], d_sv[i*2+1]);
+         }
 
         return res;
     }
