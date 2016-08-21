@@ -1,4 +1,4 @@
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native -flto -O3 -g -DNDEBUG -fomit-frame-pointer")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native -flto -Ofast -g -DNDEBUG -fomit-frame-pointer")
 
 
 project(conv)
