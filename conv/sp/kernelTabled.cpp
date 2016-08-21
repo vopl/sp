@@ -8,7 +8,7 @@
 #include <set>
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-static const std::size_t phasesAmountForKernelApproximator = 4;//MAGIC
+static const std::size_t phasesAmountForKernelApproximator = 10;//MAGIC
 static const std::size_t samplesOnSignalPeriod = 500;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
 
 
@@ -18,12 +18,15 @@ namespace sp
     KernelTabled::KernelTabled(real pow)
         : _pow(pow)
     {
-
+        load();
     }
 
     KernelTabled::~KernelTabled()
     {
-
+        if(_addedValuesAmount)
+        {
+            save();
+        }
     }
 
     complex KernelTabled::eval(real t, real st, const complex &sv)
@@ -155,7 +158,7 @@ namespace sp
 //             &params,
 //             &err.front());
 //         real errVal = std::accumulate(err.begin(), err.end(), 0.0)/err.size();
-//         std::cout<<"dlevmar_chkjac: "<<errVal<<std::endl;
+//         std::cerr<<"dlevmar_chkjac: "<<errVal<<std::endl;
 //         exit(0);
 
         static double levmarOpts[LM_OPTS_SZ] =
@@ -351,11 +354,16 @@ namespace sp
             buildValue(samplesOnSignalPeriod, _pow, t, v._re, v._im);
             iter = _valuesByPeriod.insert(std::make_pair(key, v)).first;
 
-            std::cout<<"build "<<t<<", "<<_valuesByPeriod.size()<<std::endl;
+            std::cerr<<"add kernel value "<<t<<", "<<_valuesByPeriod.size()<<std::endl;
+
+            if(++_addedValuesAmount >= 10)
+            {
+                save();
+            }
         }
         else
         {
-            //std::cout<<"already "<<t<<" == "<<real(key)/100000000000<<std::endl;
+            //std::cerr<<"already "<<t<<std::endl;
         }
 
         Value &v = iter->second;
@@ -369,68 +377,84 @@ namespace sp
     std::string KernelTabled::stateFileName()
     {
         char tmp[4096];
-        sprintf(tmp, "kt_state_POW%0.15e.bin", double(_pow));
+        sprintf(tmp, "kt_state_POW%0.2f.bin", double(_pow));
 
         return tmp;
     }
 
-    namespace
-    {
-        bool loadTable(std::ifstream &in, TVComplex &tbl, std::size_t amount)
-        {
-            tbl.resize(amount);
-
-            std::streamsize bytesAmount = std::streamsize(tbl.size()*sizeof(tbl[0]));
-
-            in.read(reinterpret_cast<char *>(&tbl[0]), bytesAmount);
-            return in.gcount() == bytesAmount;
-        }
-
-        bool saveTable(std::ofstream &out, const TVComplex &tbl)
-        {
-            std::streamsize bytesAmount = std::streamsize(tbl.size()*sizeof(tbl[0]));
-
-            std::size_t pos = out.tellp();
-            out.write(reinterpret_cast<const char *>(&tbl[0]), bytesAmount);
-
-            return out.tellp() == pos + bytesAmount;
-        }
-
-    }
-
     bool KernelTabled::load()
     {
-        //std::cout<<stateFileName()<<std::endl;
+        std::cerr<<"load kernel: "<<stateFileName()<<"...";
 
         std::ifstream in(stateFileName().c_str(), std::ios::in|std::ios::binary);
         if(!in)
         {
+            std::cerr<<0<<std::endl;
             return false;
         }
 
-//        if(!loadTable(in, _kre, _periodSteps)) return false;
-//        if(!loadTable(in, _kim, _periodSteps)) return false;
-//        if(!loadTable(in, _kdre, _periodSteps)) return false;
-//        if(!loadTable(in, _kdim, _periodSteps)) return false;
+        _valuesByPeriod.clear();
+
+        real t;
+        Value v;
+        while(in)
+        {
+            in.read(reinterpret_cast<char *>(&t), sizeof(t));
+            if(in.gcount() != sizeof(t))
+            {
+                break;
+            }
+
+            in.read(reinterpret_cast<char *>(&v), sizeof(v));
+            if(in.gcount() != sizeof(v))
+            {
+                break;
+            }
+
+            _valuesByPeriod.insert(std::make_pair(t, v));
+        }
+
+        std::cerr<<_valuesByPeriod.size()<<std::endl;
 
         return true;
     }
 
     bool KernelTabled::save()
     {
-        std::ofstream out(stateFileName().c_str(), std::ios::out|std::ios::binary);
+        _addedValuesAmount = 0;
+
+        std::string fname = stateFileName();
+        std::cerr<<"save kernel: "<<fname<<"...";
+        std::ofstream out((fname+".tmp").c_str(), std::ios::out|std::ios::binary);
         if(!out)
         {
-            std::cerr<<"unable to open file: "<<stateFileName();
+            std::cerr<<"unable to open file: "<<fname<<std::endl;
             abort();
             return false;
         }
 
-//        if(!saveTable(out, _kre)) return false;
-//        if(!saveTable(out, _kim)) return false;
-//        if(!saveTable(out, _kdre)) return false;
-//        if(!saveTable(out, _kdim)) return false;
+        for(const auto &vbp : _valuesByPeriod)
+        {
+            if(!out)
+            {
+                std::cerr<<"unable to write file: "<<fname<<std::endl;
+                abort();
+                return false;
+            }
+            out.write(reinterpret_cast<const char *>(&vbp.first), sizeof(vbp.first));
+            out.write(reinterpret_cast<const char *>(&vbp.second), sizeof(vbp.second));
+        }
 
+        out.close();
+
+        if(0 != rename((fname+".tmp").c_str(), (fname).c_str()))
+        {
+            std::cerr<<"unable to rename file: "<<fname<<".tmp -> "<<fname<<std::endl;
+            abort();
+            return false;
+        }
+
+        std::cerr<<_valuesByPeriod.size()<<std::endl;
         return true;
     }
 

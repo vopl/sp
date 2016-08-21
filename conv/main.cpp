@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
         sp::PeriodGrid periodGrid(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::frequencyLog);
 
         sp::Convolver c(POW);
-//        c.execute(periodGrid, 0, sp::g_sampleStep, signal, 1.5, response);
+        //c.execute(periodGrid, 0, sp::g_sampleStep, signal, 1.5, response);
 
         for(size_t i(0); i<periodGrid.grid().size(); ++i)
         {
