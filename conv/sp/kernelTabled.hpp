@@ -42,5 +42,6 @@ namespace sp
 
         using ValuesByPeriod = std::map<real, Value>;
         ValuesByPeriod _valuesByPeriod;
+        std::size_t _addedValuesAmount = 0;
     };
 }
