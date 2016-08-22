@@ -25,7 +25,7 @@ namespace sp
     public:
         void evalKernel(real t, real &rr, real &ri, real &ir, real &ii);
 
-    public:
+    private:
         std::string stateFileName();
         bool load();
         bool save();

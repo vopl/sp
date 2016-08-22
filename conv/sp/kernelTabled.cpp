@@ -9,7 +9,7 @@
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 static const std::size_t phasesAmountForKernelApproximator = 4;//MAGIC
-static const std::size_t samplesOnSignalPeriod = 1000;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
+static const std::size_t samplesOnSignalPeriod = 500;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
 
 
 
@@ -163,7 +163,7 @@ namespace sp
 
         static double levmarOpts[LM_OPTS_SZ] =
         {
-            1e-15,  //LM_INIT_MU,        //mu
+            1e-12,  //LM_INIT_MU,        //mu
             1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
             1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
             1e-20,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
@@ -223,7 +223,7 @@ namespace sp
 
     namespace
     {
-        complex approxCos(std::vector<double> &ys)
+        complex approxCos(TVReal &ys)
         {
             double levmarInfo[LM_INFO_SZ];
             std::vector<double> work;
@@ -259,6 +259,8 @@ namespace sp
                 p[1] = -g_2pi * maxIdx / ys.size();
             }
 
+            std::vector<double> dys(ys.begin(), ys.end());
+
             int levmarResult = dlevmar_der(
                         [](double *p, double *hx, int m, int n, void *_levmarParams)->void{
                             for(int i(0); i<n; i++)
@@ -274,7 +276,7 @@ namespace sp
                             }
                         },
                         &p[0],
-                        &ys[0],
+                        &dys[0],
                         2,
                         ys.size(),
                         50,
@@ -322,7 +324,7 @@ namespace sp
             const real sampleStep = period/samplesOnSignalPeriod;
             TVReal signal(std::size_t(targetX/sampleStep)+1000);
 
-            std::vector<double> hre(phasesAmountForKernelApproximator), him(phasesAmountForKernelApproximator);
+            TVReal hre(phasesAmountForKernelApproximator), him(phasesAmountForKernelApproximator);
             for(std::size_t phaseIndex(0); phaseIndex<phasesAmountForKernelApproximator; ++phaseIndex)
             {
                 std::size_t startIdx = 0;
@@ -345,27 +347,44 @@ namespace sp
 
     void KernelTabled::evalKernel(real t, real &rr, real &ri, real &ir, real &ii)
     {
-        real key = t;
-        ValuesByPeriod::iterator iter = _valuesByPeriod.find(key);
+        ValuesByPeriod::iterator iter = _valuesByPeriod.lower_bound(t);
 
-        if(_valuesByPeriod.end() == iter)
+        static const real maxDelta = std::numeric_limits<real>::epsilon()*100;
+
+        bool found = false;
+
+        if(fabs(iter->first-t) > maxDelta)
         {
-            Value v;
-            buildValue(samplesOnSignalPeriod, _pow, t, v._re, v._im);
-            iter = _valuesByPeriod.insert(std::make_pair(key, v)).first;
+            iter--;
 
-            std::cerr<<"add kernel value "<<t<<", "<<_valuesByPeriod.size()<<std::endl;
-
-            if(++_addedValuesAmount >= 100)
+            if(fabs(iter->first-t) > maxDelta)
             {
-                save();
+                Value v;
+                buildValue(samplesOnSignalPeriod, _pow, t, v._re, v._im);
+                iter = _valuesByPeriod.insert(std::make_pair(t, v)).first;
+
+                std::cerr<<"add kernel value "<<t<<", "<<_valuesByPeriod.size()<<std::endl;
+
+                if(++_addedValuesAmount >= 100)
+                {
+                    save();
+                }
+            }
+            else
+            {
+                found = true;
+                //std::cerr<<"same2 "<<t<<", "<<iter->first<<", "<<fabs(iter->first - t)<<std::endl;
             }
         }
         else
         {
-            //std::cerr<<"already "<<t<<std::endl;
+            found = true;
+            //std::cerr<<"same1 "<<t<<", "<<iter->first<<", "<<fabs(iter->first - t)<<std::endl;
+        }
 
-            if(_addedValuesAmount && ++_addedValuesAmount >= 100)
+        if(found)
+        {
+            if(_addedValuesAmount && (++_addedValuesAmount >= 100))
             {
                 save();
             }
@@ -391,14 +410,22 @@ namespace sp
     {
         std::cerr<<"load kernel: "<<stateFileName()<<"...";
 
+
+        _valuesByPeriod.clear();
+        //на краях добавить значения, чтобы была гарантия наличия +-одного элемента
+        Value zv{0,0};
+        _valuesByPeriod[0] = zv;
+        _valuesByPeriod[-1] = zv;
+
+        _valuesByPeriod[std::numeric_limits<real>::max()/2] = zv;
+        _valuesByPeriod[std::numeric_limits<real>::max()] = zv;
+
         std::ifstream in(stateFileName().c_str(), std::ios::in|std::ios::binary);
         if(!in)
         {
             std::cerr<<0<<std::endl;
             return false;
         }
-
-        _valuesByPeriod.clear();
 
         real t;
         Value v;

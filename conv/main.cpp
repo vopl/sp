@@ -104,7 +104,6 @@ int main(int argc, char *argv[])
         //kt.setup(10, 0.1, 10.0, 100*1000);
         //exit(0);
 
-
         {
 //            sp::Kernel k(5);
 
@@ -138,7 +137,7 @@ int main(int argc, char *argv[])
 
         sp::TVComplex response(sp::g_periodSteps);
 
-        sp::PeriodGrid periodGrid(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::frequencyLog);
+        sp::PeriodGrid periodGrid(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::periodLin);
 
         sp::Convolver c(POW);
         //c.execute(periodGrid, 0, sp::g_sampleStep, signal, 1.5, response);
@@ -161,7 +160,7 @@ int main(int argc, char *argv[])
         std::vector<double> work;
 
         //для инициализации спектра нулем - mu=1e-10 лучший. При меньших значениях начинают артифакты появляться, при больших - медленно сходится
-        int iters = 5;
+        int iters = 1;
         //for(int iters(1); iters<200; iters++)
         {
             sp::TVComplex spectr(response.size());

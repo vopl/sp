@@ -264,32 +264,32 @@ namespace sp
 
 
     //////////////////////////////////////////////////////////////////////////
-    inline const bool operator==(const complex &lhs, const complex &rhs)
+    inline bool operator==(const complex &lhs, const complex &rhs)
     {
         return lhs.re() == rhs.re() && lhs.im() == rhs.im();
     }
 
-    inline const bool operator==(const real &lhs, const complex &rhs)
+    inline bool operator==(const real &lhs, const complex &rhs)
     {
         return lhs == rhs.re() && 0 == rhs.im();
     }
 
-    inline const bool operator==(const complex &lhs, const real &rhs)
+    inline bool operator==(const complex &lhs, const real &rhs)
     {
         return lhs.re() == rhs && lhs.im() == 0;
     }
 
-    inline const bool operator!=(const complex &lhs, const complex &rhs)
+    inline bool operator!=(const complex &lhs, const complex &rhs)
     {
         return !operator==(lhs, rhs);
     }
 
-    inline const bool operator!=(const real &lhs, const complex &rhs)
+    inline bool operator!=(const real &lhs, const complex &rhs)
     {
         return !operator==(lhs, rhs);
     }
 
-    inline const bool operator!=(const complex &lhs, const real &rhs)
+    inline bool operator!=(const complex &lhs, const real &rhs)
     {
         return !operator==(lhs, rhs);
     }
