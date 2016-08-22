@@ -175,82 +175,83 @@ namespace sp
         FirId g_firId{0,0,0};
         std::vector<std::vector<real>> g_firs;
 
-        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        real /*signalStartTime*/ prepareSignal(real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, real pow, real maxT, TVReal &preparedSignal)
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    real /*signalStartTime*/ Convolver::prepareSignal(real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, real pow, real maxT, TVReal &preparedSignal)
+    {
+        size_t extraSamples = 4;
+
+        std::size_t minLen = std::size_t(pow*10+0.5);//по 10 точек на период, иначе fir не справляется
+
+        std::size_t maxLen = std::size_t(pow*(maxT/signalSampleLength)*2 + 1.5);
+        if(maxLen&1)
         {
-            size_t extraSamples = 4;
+            maxLen+=1;
+        }
 
-            std::size_t minLen = std::size_t(pow*10+0.5);//по 10 точек на период, иначе fir не справляется
+        std::size_t endIdx = std::size_t((targetTime - signalStartTime)/signalSampleLength+0.5);
+        assert(endIdx <= signal.size());
+        assert(endIdx > maxLen/2);
 
-            std::size_t maxLen = std::size_t(pow*(maxT/signalSampleLength)*2 + 1.5);
-            if(maxLen&1)
-            {
-                maxLen+=1;
-            }
+        preparedSignal.reserve(maxLen/2 + extraSamples);
+        preparedSignal.resize(maxLen/2);
 
-            std::size_t endIdx = std::size_t((targetTime - signalStartTime)/signalSampleLength+0.5);
-            assert(endIdx <= signal.size());
-            assert(endIdx > maxLen/2);
-
-            preparedSignal.reserve(maxLen/2 + extraSamples);
-            preparedSignal.resize(maxLen/2);
-
-            FirId firId{pow, minLen, maxLen};
-            if(firId != g_firId)
-            {
-                std::cerr<<"make fir"<<std::endl;
-                g_firs.clear();
-                g_firs.resize(maxLen/2);
-                for(std::size_t len(1); len < maxLen; len+=2)
-                {
-                    if(len >= minLen)
-                    {
-                        //std::cerr<<len<<"/"<<maxLen<<std::endl;
-                        real bndT = real(len)/(pow)/2;
-                        lowPassFir(bndT, len, g_firs[(len-minLen)/2]);
-                    }
-                }
-
-                g_firId = firId;
-                std::cerr<<"fir done"<<std::endl;
-            }
-
+        FirId firId{pow, minLen, maxLen};
+        if(firId != g_firId)
+        {
+            std::cerr<<"make fir"<<std::endl;
+            g_firs.clear();
+            g_firs.resize(maxLen/2);
             for(std::size_t len(1); len < maxLen; len+=2)
             {
                 if(len >= minLen)
                 {
+                    //std::cerr<<len<<"/"<<maxLen<<std::endl;
+                    real bndT = real(len)/(pow)/2;
+                    lowPassFir(bndT, len, g_firs[(len-minLen)/2]);
+                }
+            }
+
+            g_firId = firId;
+            std::cerr<<"fir done"<<std::endl;
+        }
+
+        for(std::size_t len(1); len < maxLen; len+=2)
+        {
+            if(len >= minLen)
+            {
 //                    TVReal fir;
 //                    real bndT = real(len)/(pow)/2;
 //                    lowPassFir(bndT, len, fir);
 
-                    const TVReal &fir = g_firs[(len-minLen)/2];
+                const TVReal &fir = g_firs[(len-minLen)/2];
 
-                    real preparedValue = 0;
-                    const std::size_t firSize = fir.size();
+                real preparedValue = 0;
+                const std::size_t firSize = fir.size();
 
-                    const real *signalPart = &signal[endIdx-firSize];
-                    for(std::size_t i(0); i<firSize; i++)
-                    {
-                        preparedValue += signalPart[i] * fir[i];
-                    }
-                    preparedSignal[preparedSignal.size()-1-len/2] = preparedValue;
-                }
-                else
+                const real *signalPart = &signal[endIdx-firSize];
+                for(std::size_t i(0); i<firSize; i++)
                 {
-                    preparedSignal[preparedSignal.size()-1-len/2] = signal[endIdx-1-len/2];
+                    preparedValue += signalPart[i] * fir[i];
                 }
+                preparedSignal[preparedSignal.size()-1-len/2] = preparedValue;
             }
-
-            real preparedSignalStartTime = targetTime - preparedSignal.size()*signalSampleLength;
-
-            for(std::size_t i(0); i<extraSamples; i++)
+            else
             {
-                preparedSignal.push_back(signal[endIdx+i]);
+                preparedSignal[preparedSignal.size()-1-len/2] = signal[endIdx-1-len/2];
             }
-
-            return preparedSignalStartTime;
-
         }
+
+        real preparedSignalStartTime = targetTime - preparedSignal.size()*signalSampleLength;
+
+        for(std::size_t i(0); i<extraSamples; i++)
+        {
+            preparedSignal.push_back(signal[endIdx+i]);
+        }
+
+        return preparedSignalStartTime;
+
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -291,5 +292,20 @@ namespace sp
         return executeOne(preparedSignalStartTime, signalSampleLength, preparedSignal, targetTime, period, _pow);
     }
 
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void Convolver::executeOnPrepared(const PeriodGrid &periodGrid, real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, TVComplex &echo)
+    {
+        echo.resize(periodGrid.grid().size());
+        for(std::size_t i(0); i<periodGrid.grid().size(); i++)
+        {
+            echo[i] = executeOne(signalStartTime, signalSampleLength, signal, targetTime, periodGrid.grid()[i], _pow);
+        }
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    complex /*echo*/ Convolver::executeOnPrepared(const real &period, real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime)
+    {
+        return executeOne(signalStartTime, signalSampleLength, signal, targetTime, period, _pow);
+    }
 
 }
