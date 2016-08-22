@@ -233,7 +233,7 @@ namespace sp
 
         static double levmarOpts[LM_OPTS_SZ] =
         {
-            1e-10,  //LM_INIT_MU,        //mu
+            1e-3,  //LM_INIT_MU,        //mu
             1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
             1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
             1e-20,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
