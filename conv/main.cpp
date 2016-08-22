@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     for(size_t index(0); index<signal.size(); ++index)
     {
         sp::real x = index * sp::g_sampleStep;
-        signal[index] = cos((x-1.5)*sp::g_2pi*200);//ровно посеридине нашей шкалы
+        signal[index] = cos((x-1.5)*sp::g_2pi*800);//ровно посеридине нашей шкалы
 
         //cout << x<<","<<signal[index]<< endl;
 
@@ -100,6 +100,7 @@ int main(int argc, char *argv[])
     if(1)
     {
         sp::KernelTabled kt(POW);
+        sp::Kernel k(POW);
         //kt.setup(5, 0.1, 10, 1000);
         //kt.setup(10, 0.1, 10.0, 100*1000);
         //exit(0);
@@ -137,7 +138,7 @@ int main(int argc, char *argv[])
 
         sp::TVComplex response(sp::g_periodSteps);
 
-        sp::PeriodGrid periodGrid(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::periodLin);
+        sp::PeriodGrid periodGrid(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::frequencyLog);
 
         sp::Convolver c(POW);
         //c.execute(periodGrid, 0, sp::g_sampleStep, signal, 1.5, response);
@@ -145,7 +146,8 @@ int main(int argc, char *argv[])
         for(size_t i(0); i<periodGrid.grid().size(); ++i)
         {
             response[i] = 0;
-            response[i] += kt.eval(periodGrid.grid()[i], 1.0/200, sp::complex(1,0));
+            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[500], sp::complex(1,0));
+            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[510], sp::complex(1,0));
         }
 
 //        std::cout<<"response"<<std::endl;
@@ -160,12 +162,11 @@ int main(int argc, char *argv[])
         std::vector<double> work;
 
         //для инициализации спектра нулем - mu=1e-10 лучший. При меньших значениях начинают артифакты появляться, при больших - медленно сходится
-        int iters = 1;
-        //for(int iters(1); iters<200; iters++)
+        sp::TVComplex spectr(response.size());
+
+        int iters = 15;
+        //for(int iters(1); iters<20; iters++)
         {
-            sp::TVComplex spectr(response.size());
-            //spectr = response;
-            //spectr[97] = sp::complex(1,0);
 
             int res = kt.deconvolve(
                                  response.size(), &periodGrid.grid()[0], &response[0],

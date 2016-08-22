@@ -37,12 +37,21 @@ set(SRC_LIST
     test/scaledData.cpp
 
     test/settings.h
-
 )
 
 include_directories(.)
 
-add_executable(${PROJECT_NAME} ${SRC_LIST})
+
+
+
+aux_source_directory(../DSPFilters/shared/DSPFilters/source DSP_SRC)
+aux_source_directory(../DSPFilters/shared/DSPFilters/include DSP_INC)
+include_directories(../DSPFilters/shared/DSPFilters/include)
+
+
+
+
+add_executable(${PROJECT_NAME} ${SRC_LIST} ${DSP_SRC} ${DSP_INC})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)

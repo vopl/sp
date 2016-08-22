@@ -8,7 +8,7 @@ namespace sp
     //частота в герцах
     static const real g_sampleStep = 1.0L/22000;
 
-    static const real g_periodMax = 1.0L/50;
+    static const real g_periodMax = 1.0L/40;
     static const real g_periodMin = 1.0L/8000;
-    static const long g_periodSteps = 640;//размерность сетки
+    static const long g_periodSteps = 1000;//размерность сетки
 }
