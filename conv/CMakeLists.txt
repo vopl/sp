@@ -44,10 +44,6 @@ include_directories(.)
 
 
 
-aux_source_directory(../DSPFilters/shared/DSPFilters/source DSP_SRC)
-aux_source_directory(../DSPFilters/shared/DSPFilters/include DSP_INC)
-include_directories(../DSPFilters/shared/DSPFilters/include)
-
 
 
 
