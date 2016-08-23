@@ -20,102 +20,112 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolverLevel::update(
-            const real *first, std::size_t firstSize,
-            const real *second, std::size_t secondSize)
+    void SignalConvolverLevel::update(const real *signal, std::size_t signalSize)
     {
-        real totalStopTime = _signalSampleStep * (firstSize + secondSize);
+        real totalStopTime = _signalSampleStep * signalSize;
         real totalStartTime = totalStopTime - _sampleStep*_values.size();
 
-        for(std::size_t valueindex(0); valueindex<_values.size(); ++valueindex)
+        for(std::size_t valueIndex(0); valueIndex<_values.size(); ++valueIndex)
         {
-            real startTime = totalStartTime+_sampleStep*valueindex;
-            real stopTime = totalStartTime+_sampleStep*(valueindex+1);
+            real sum = 0, amount = 0;
 
-            std::size_t signalStartIdx = std::size_t(startTime/_signalSampleStep);
-            std::size_t signalStopIdx = std::size_t(stopTime/_signalSampleStep);
-
-            real firstSample, lastSample;
-
-            real sum = 0;
-            if(signalStopIdx < firstSize)
             {
-                //from first
-                firstSample = first[signalStartIdx];
-                lastSample = first[signalStopIdx];
+                real firstSample0,firstSample1;
+                real lastSample0,lastSample1;
 
-                for(std::size_t signalIndex(signalStartIdx+1); signalIndex<signalStopIdx; ++signalIndex)
-                {
-                    sum += first[signalIndex];
-                }
-            }
-            else if(signalStartIdx >= firstSize)
-            {
-                //from second
-                firstSample = second[signalStartIdx-firstSize];
-                lastSample = second[signalStopIdx-firstSize];
+                real startTime = totalStartTime+_sampleStep*valueIndex;
+                real stopTime = startTime+_sampleStep;
 
-                for(std::size_t signalIndex(signalStartIdx-firstSize+1); signalIndex<signalStopIdx-firstSize; ++signalIndex)
+                std::size_t signalStartIdx = std::size_t(startTime/_signalSampleStep);
+                std::size_t signalStopIdx = std::size_t(stopTime/_signalSampleStep);
+                if(signalStopIdx >= signalSize)
                 {
-                    sum += second[signalIndex];
-                }
-            }
-            else
-            {
-                //from both
-                firstSample = first[signalStartIdx];
-                lastSample = second[signalStopIdx-firstSize];
-
-                for(std::size_t signalIndex(signalStartIdx+1); signalIndex<firstSize; ++signalIndex)
-                {
-                    sum += first[signalIndex];
+                    signalStopIdx--;
                 }
 
-                for(std::size_t signalIndex(0); signalIndex<signalStopIdx-firstSize; ++signalIndex)
+                assert(signalStopIdx < signalSize);
+
+                firstSample0 = signal[signalStartIdx];
+                if(signalStartIdx < signalSize-1)
                 {
-                    sum += second[signalIndex];
+                    firstSample1 = signal[signalStartIdx+1];
+                }
+                else
+                {
+                    firstSample1 = signal[signalStartIdx];
+                }
+
+
+                lastSample0 = signal[signalStopIdx];
+                if(signalStopIdx < signalSize-1)
+                {
+                    lastSample1 = signal[signalStopIdx+1];
+                }
+                else
+                {
+                    lastSample1 = signal[signalStopIdx];
+                }
+
+                if(signalStartIdx < signalStopIdx)
+                {
+                    //from multiple signal samples
+
+                    if(signalStartIdx < signalStopIdx-1)
+                    {
+                        sum += signal[signalStartIdx+1]/2;
+                        for(std::size_t signalIndex(signalStartIdx+2); signalIndex<signalStopIdx-1; ++signalIndex)
+                        {
+                            sum += signal[signalIndex];
+                        }
+                        sum += signal[signalStopIdx]/2;
+                    }
+
+                    amount = signalStopIdx - signalStartIdx - 1;
+
+                    real firstx = (startTime - (signalStartIdx)*_signalSampleStep) / _signalSampleStep;
+                    real lastx = (stopTime - (signalStopIdx)*_signalSampleStep) / _signalSampleStep;
+
+                    firstSample0 = firstSample0 + (firstSample1 - firstSample0)*firstx;
+
+                    real amount1 = 1 - firstx;
+                    sum += amount1 * (firstSample0+firstSample1)/2;
+
+                    lastSample1 = lastSample0 + (lastSample1 - lastSample0)*lastx;
+
+                    real amount2 = lastx;
+
+                    sum += amount2 * (lastSample0+lastSample1)/2;
+
+                    amount += amount1 + amount2;
+                }
+                else
+                {
+                    //from single signal sample
+                    amount = 0;
+
+                    real firstx = (startTime - (signalStartIdx)*_signalSampleStep) / _signalSampleStep;
+                    real lastx = (stopTime - (signalStopIdx)*_signalSampleStep) / _signalSampleStep;
+
+                    firstSample0 = firstSample0 + (firstSample1 - firstSample0)*firstx;
+                    lastSample1 = lastSample0 + (lastSample1 - lastSample0)*lastx;
+
+                    real amount12 = lastx - firstx;
+                    assert(amount12>=0-std::numeric_limits<real>::epsilon()*100000 && amount12<=1+std::numeric_limits<real>::epsilon()*100000);
+
+                    sum += amount12 * (firstSample0+lastSample1)/2;
+                    amount += amount12;
                 }
             }
 
-            real amount;
-
-            if(signalStopIdx == signalStartIdx)
-            {
-                //from single signal sample
-                amount = 0;
-
-                real amount12 = (stopTime - startTime) / _signalSampleStep;
-                assert(amount12>=0-std::numeric_limits<real>::epsilon()*100000 && amount12<=1+std::numeric_limits<real>::epsilon()*100000);
-
-                sum += firstSample * amount12;
-                amount += amount12;
-            }
-            else
-            {
-                //from multiple signal samples
-                amount = signalStopIdx - signalStartIdx - 1;
-
-                real amount1 = ((signalStartIdx+1)*_signalSampleStep - startTime) / _signalSampleStep;
-                assert(amount1>=0-std::numeric_limits<real>::epsilon()*100000 && amount1<=1+std::numeric_limits<real>::epsilon()*100000);
-                sum += firstSample * amount1;
-
-                real amount2 = (stopTime - (signalStopIdx)*_signalSampleStep) / _signalSampleStep;
-                assert(amount2>=0-std::numeric_limits<real>::epsilon()*100000 && amount2<=1+std::numeric_limits<real>::epsilon()*100000);
-                sum += lastSample * amount2;
-
-                amount += amount1 + amount2;
-            }
 
             if(amount>0)
             {
-                _values[valueindex] = sum/amount;
+                _values[valueIndex] = sum/amount;
             }
             else
             {
-                _values[valueindex] = 0;
+                _values[valueIndex] = 0;
             }
-
-            std::cout<<_values[valueindex]<<std::endl;
         }
     }
 

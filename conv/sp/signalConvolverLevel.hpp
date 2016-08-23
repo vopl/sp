@@ -11,9 +11,7 @@ namespace sp
         SignalConvolverLevel(real pow, real period, real signalSampleStep, std::size_t samplesPerPeriod);
         ~SignalConvolverLevel();
 
-        void update(
-                const real *first, std::size_t firstSize,
-                const real *second, std::size_t secondSize);
+        void update(const real *signal, std::size_t signalSize);
 
     private:
         real    _pow;

@@ -41,25 +41,29 @@ namespace sp
         _samplesPushed += amount;
         _dirty = true;
 
+        _signal.linearize();
+
         const real *first = _signal.array_one().first;
         std::size_t firstSize = _signal.array_one().second;
 
-        const real *second = _signal.array_two().first;
-        std::size_t secondSize = _signal.array_two().second;
+//        const real *second = _signal.array_two().first;
+//        std::size_t secondSize = _signal.array_two().second;
+
 
         /*
         что дальше
 
+            избавиться от циклобуфера в пользу простого буфера двойной длины
 
             подготовка фнч
-            обрезка по частоте
+            обрезка по частоте, попробовать через сигмоид переключать сигнал-результат фильтра
             свертка
         */
 
 
         for(std::size_t i(0); i<_levels.size(); ++i)
         {
-            _levels[i]->update(first, firstSize, second, secondSize);
+            _levels[i]->update(first, firstSize);
         }
         exit(0);
 
