@@ -9,7 +9,7 @@
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 static const std::size_t phasesAmountForKernelApproximator = 4;//MAGIC
-static const std::size_t samplesOnSignalPeriod = 400;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
+static const std::size_t samplesOnSignalPeriod = 100;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
 
 
 
@@ -156,7 +156,7 @@ namespace sp
 
         static double levmarOpts[LM_OPTS_SZ] =
         {
-            1e-10,  //LM_INIT_MU,        //mu
+            1e-11,  //LM_INIT_MU,        //mu
             1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
             1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
             1e-16,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.

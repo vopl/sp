@@ -138,12 +138,23 @@ namespace sp
     namespace
     {
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        real kaizer(real beta, int n, int N)
+        real kaizerDenom(real beta)
         {
-            real nom = boost::math::cyl_bessel_i(0, beta*sqrt(1.0-sqr(real(2*n-N+1)/(N-1))));
-            real denom = boost::math::cyl_bessel_i(0, beta);
+            return boost::math::cyl_bessel_i(0, beta);
+        }
+
+        real kaizer(real beta, int n, int N, real denom)
+        {
+            real nom = boost::math::cyl_bessel_i(0, beta*sqrt(1.0L-sqr(real(2*n-N+1)/(N-1))));
 
             return nom / denom;
+        }
+
+        real kaizer(real beta, int n, int N)
+        {
+            real nom = boost::math::cyl_bessel_i(0, beta*sqrt(1.0L-sqr(real(2*n-N+1)/(N-1))));
+
+            return nom / kaizerDenom(beta);
         }
 
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -160,12 +171,13 @@ namespace sp
             A.resize(n-2);
 
             std::size_t mn = n/2-1;
-            real kaizerBeta = 5;
+//            real kaizerBeta = 2;
+//            real kaizerDenominator = kaizerDenom(kaizerBeta);
 
-            A[mn] = q;// * kaizer(kaizerBeta, mn, n-2);
+            A[mn] = q;// * kaizer(kaizerBeta, mn, n-2, kaizerDenominator);
             for(std::size_t k(1); k<n/2; k++)
             {
-                A[mn+k] = A[mn-k] = q* boost::math::sinc_pi(k*w);// * kaizer(kaizerBeta, mn+k, n-2);
+                A[mn+k] = A[mn-k] = q* boost::math::sinc_pi(k*w);// * kaizer(kaizerBeta, mn+k, n-2, kaizerDenominator);
             }
         }
 
@@ -197,35 +209,35 @@ namespace sp
         preparedSignal.reserve(maxLen/2 + extraSamples);
         preparedSignal.resize(maxLen/2);
 
-        FirId firId{pow, minLen, maxLen};
-        if(firId != g_firId)
-        {
-            std::cerr<<"make fir"<<std::endl;
-            g_firs.clear();
-            g_firs.resize(maxLen/2);
-            for(std::size_t len(1); len < maxLen; len+=2)
-            {
-                if(len >= minLen)
-                {
-                    //std::cerr<<len<<"/"<<maxLen<<std::endl;
-                    real bndT = real(len)/(pow*2)/2;
-                    lowPassFir(bndT, len, g_firs[(len-minLen)/2]);
-                }
-            }
+//        FirId firId{pow, minLen, maxLen};
+//        if(firId != g_firId)
+//        {
+//            std::cerr<<"make fir"<<std::endl;
+//            g_firs.clear();
+//            g_firs.resize(maxLen/2);
+//            for(std::size_t len(1); len < maxLen; len+=2)
+//            {
+//                if(len >= minLen)
+//                {
+//                    //std::cerr<<len<<"/"<<maxLen<<std::endl;
+//                    real bndT = real(len)/(pow/2)/2;
+//                    lowPassFir(bndT, len, g_firs[(len-minLen)/2]);
+//                }
+//            }
 
-            g_firId = firId;
-            std::cerr<<"fir done"<<std::endl;
-        }
+//            g_firId = firId;
+//            std::cerr<<"fir done"<<std::endl;
+//        }
 
         for(std::size_t len(1); len < maxLen; len+=2)
         {
             if(len >= minLen)
             {
-//                    TVReal fir;
-//                    real bndT = real(len)/(pow*2)/2;
-//                    lowPassFir(bndT, len, fir);
+                TVReal fir;
+                real bndT = real(len)/(pow/2)/2;
+                lowPassFir(bndT, len, fir);
 
-                const TVReal &fir = g_firs[(len-minLen)/2];
+//                const TVReal &fir = g_firs[(len-minLen)/2];
 
                 real preparedValue = 0;
                 const std::size_t firSize = fir.size();
@@ -262,7 +274,7 @@ namespace sp
 
 //        std::size_t signalTargetIdx = (targetTime - signalStartTime)/signalSampleLength+0.5;
 //        std::size_t preparedSignalTargetIdx = (targetTime - preparedSignalStartTime)/signalSampleLength+0.5;
-//        for(std::size_t idx(0); idx<preparedSignal.size()-preparedSignalTargetIdx-1; ++idx)
+//        for(std::size_t idx(0); idx<preparedSignal.size()-1; ++idx)
 //        {
 //            std::cout<<signal[signalTargetIdx-idx]<<", "<<preparedSignal[preparedSignalTargetIdx-idx]<<std::endl;
 //        }
@@ -283,7 +295,7 @@ namespace sp
 
 //        std::size_t signalTargetIdx = (targetTime - signalStartTime)/signalSampleLength+0.5;
 //        std::size_t preparedSignalTargetIdx = (targetTime - preparedSignalStartTime)/signalSampleLength+0.5;
-//        for(std::size_t idx(0); idx<preparedSignal.size()-preparedSignalTargetIdx-1; ++idx)
+//        for(std::size_t idx(0); idx<preparedSignal.size()-1; ++idx)
 //        {
 //            std::cout<<signal[signalTargetIdx-idx]<<", "<<preparedSignal[preparedSignalTargetIdx-idx]<<std::endl;
 //        }

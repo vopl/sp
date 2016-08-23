@@ -19,6 +19,11 @@ set(SRC_LIST
     sp/convolver.hpp
     sp/convolver.cpp
 
+    sp/signalConvolver.hpp
+    sp/signalConvolver.cpp
+
+    sp/signalConvolverLevel.hpp
+    sp/signalConvolverLevel.cpp
 
     sp/kernel.hpp
     sp/kernel.cpp
