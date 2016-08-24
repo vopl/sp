@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 
     sp::TVReal signal;
 
-    signal.resize(5.1/sp::g_sampleStep);//10 сек
+    signal.resize(std::size_t(5.1/sp::g_sampleStep));//10 сек
     for(size_t index(0); index<signal.size(); ++index)
     {
         sp::real x = index * sp::g_sampleStep;
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
         //sp::Kernel k(POW);
         //kt.setup(5, 0.1, 10, 1000);
         //kt.setup(10, 0.1, 10.0, 100*1000);
-        //exit(0);
+
 
 
         sp::TVComplex response(sp::g_periodSteps);

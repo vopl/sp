@@ -137,15 +137,15 @@ namespace
 
             //assert(std::isfinite(re) && std::isfinite(im));
 
-            hx[i*2+0] = re;
-            hx[i*2+1] = im;
+            hx[i*2+0] = double(re);
+            hx[i*2+1] = double(im);
 
         }
 
         for(int i(0); i<n/2; i++)
         {
-            hx[i*2+0] -= params->_ev[i].re();
-            hx[i*2+1] -= params->_ev[i].im();
+            hx[i*2+0] -= double(params->_ev[i].re());
+            hx[i*2+1] -= double(params->_ev[i].im());
         }
     }
 
@@ -165,11 +165,11 @@ namespace
                 real rr,  ri,  ir,  ii;
                 evalKernel(params->_pow, et/st, rr, ri, ir, ii);
 
-                jx[(i*2+0)*m+j*2+0] = rr;
-                jx[(i*2+0)*m+j*2+1] = -ri;
+                jx[(i*2+0)*m+j*2+0] = double(rr);
+                jx[(i*2+0)*m+j*2+1] = double(-ri);
 
-                jx[(i*2+1)*m+j*2+0] = ir;
-                jx[(i*2+1)*m+j*2+1] = -ii;
+                jx[(i*2+1)*m+j*2+0] = double(ir);
+                jx[(i*2+1)*m+j*2+1] = double(-ii);
             }
         }
     }
@@ -242,8 +242,8 @@ namespace sp
         std::vector<double> d_sv(ssize*2);
         for(std::size_t i(0); i<ssize; ++i)
         {
-            d_sv[i*2+0] = sv[i].re();
-            d_sv[i*2+1] = sv[i].im();
+            d_sv[i*2+0] = double(sv[i].re());
+            d_sv[i*2+1] = double(sv[i].im());
         }
 
         int res = dlevmar_der(
