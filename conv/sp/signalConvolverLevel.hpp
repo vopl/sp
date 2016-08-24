@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.hpp"
+#include "complex.hpp"
 #include <boost/circular_buffer.hpp>
 
 namespace sp
@@ -12,6 +13,8 @@ namespace sp
         ~SignalConvolverLevel();
 
         void update(const real *signal, std::size_t signalSize);
+        void filtrate(const std::vector<TVReal> &firs);
+        complex convolve();
 
     private:
         real    _pow;
@@ -19,6 +22,7 @@ namespace sp
         real    _signalSampleStep;
         real    _sampleStep;
         TVReal  _values;
+        TVReal  _valuesFiltered;
 
     };
 

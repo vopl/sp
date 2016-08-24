@@ -22,7 +22,10 @@ namespace sp
 
         real getTime() const;
 
-        TVComplex /*echo*/ convolve() const;
+        TVComplex /*echo*/ convolve();
+
+    private:
+        void prepareValues();
 
     private:
         real                            _sampleStep = 0;
@@ -32,6 +35,8 @@ namespace sp
 
         using LevelPtr = std::unique_ptr<SignalConvolverLevel>;
         std::vector<LevelPtr> _levels;
+
+        std::vector<TVReal>             _firs;
 
     };
 
