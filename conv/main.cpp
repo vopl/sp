@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 
 
 
-
+    if(0)
     {
         sp::SignalConvolver sc;
 
@@ -79,8 +79,8 @@ int main(int argc, char *argv[])
             }
             exit(0);
         }
+        exit(0);
     }
-    exit(0);
 
 
 
@@ -114,15 +114,17 @@ int main(int argc, char *argv[])
         sp::TVComplex response(sp::g_periodSteps);
 
         sp::PeriodGrid periodGrid(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::frequencyLog);
-        sp::Convolver c(POW);
-        c.execute(periodGrid, 0, sp::g_sampleStep, signal, 1.5, response);
+        sp::SignalConvolver c;
+        c.setup(POW, periodGrid, sp::g_sampleStep, 200);
+        c.pushSignal(&signal[0], signal.size());
+        //response = c.convolve();
 
         for(size_t i(0); i<periodGrid.grid().size(); ++i)
         {
 //            std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
 
             response[i] = 0;
-            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[500], sp::complex(1,0));
+            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[250], sp::complex(1,0));
 
 //            std::cout<<response[i].re()<<", "<<response[i].im();
 //            std::cout<<std::endl;
@@ -133,11 +135,11 @@ int main(int argc, char *argv[])
         std::vector<double> work;
 
         //для инициализации спектра нулем - mu=1e-10 лучший. При меньших значениях начинают артифакты появляться, при больших - медленно сходится
-        sp::TVComplex spectr(response.size());
 
-        int iters = 5;
-        //for(int iters(1); iters<20; iters++)
+        int iters = 30;
+        //for(int iters0(1); iters0<20; iters0++)
         {
+            sp::TVComplex spectr(response.size());
 
             int res = kt.deconvolve(
                                  response.size(), &periodGrid.grid()[0], &response[0],

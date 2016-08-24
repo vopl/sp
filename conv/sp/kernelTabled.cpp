@@ -1,5 +1,6 @@
 #include "sp/kernelTabled.hpp"
-#include "sp/convolver.hpp"
+#include "sp/signalConvolver.hpp"
+#include "sp/math.hpp"
 #include "levmar.h"
 
 #include <algorithm>
@@ -9,7 +10,7 @@
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 static const std::size_t phasesAmountForKernelApproximator = 4;//MAGIC
-static const std::size_t samplesOnSignalPeriod = 100;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
+static const std::size_t samplesOnSignalPeriod = 400;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
 
 
 
@@ -156,10 +157,10 @@ namespace sp
 
         static double levmarOpts[LM_OPTS_SZ] =
         {
-            1e-11,  //LM_INIT_MU,        //mu
+            1e-15,  //LM_INIT_MU,        //mu
             1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
             1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
-            1e-16,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
+            1e-17,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
         };
 
         std::vector<double> d_sv(ssize*2);
@@ -306,38 +307,6 @@ namespace sp
         }
     }
 
-    namespace
-    {
-
-        void buildValue(std::size_t samplesOnSignalPeriod, real pow, const real &period, complex &re, complex &im)
-        {
-            Convolver c(pow);
-
-            real targetX = period*pow*2.5;
-            const real sampleStep = period/samplesOnSignalPeriod;
-            TVReal signal(std::size_t(targetX/sampleStep)+1000);
-
-            TVReal hre(phasesAmountForKernelApproximator), him(phasesAmountForKernelApproximator);
-            for(std::size_t phaseIndex(0); phaseIndex<phasesAmountForKernelApproximator; ++phaseIndex)
-            {
-                std::size_t startIdx = 0;
-                std::size_t stopIdx = signal.size();
-                for(std::size_t sindex(startIdx); sindex<stopIdx; sindex++)
-                {
-                    signal[sindex] = cos(g_2pi*(sampleStep*sindex - targetX) + phaseIndex*g_2pi/phasesAmountForKernelApproximator);
-                }
-
-                complex echo = c.execute(period, 0, sampleStep, signal, targetX);
-                hre[phaseIndex] = echo.re();
-                him[phaseIndex] = echo.im();
-
-            }
-
-            re = approxCos(hre);
-            im = approxCos(him);
-        }
-    }
-
     void KernelTabled::evalKernel(real t, real &rr, real &ri, real &ir, real &ii)
     {
         ValuesByPeriod::iterator iter = _valuesByPeriod.lower_bound(t);
@@ -353,7 +322,7 @@ namespace sp
             if(fabs(iter->first-t) > maxDelta)
             {
                 Value v;
-                buildValue(samplesOnSignalPeriod, _pow, t, v._re, v._im);
+                buildValue(t, v._re, v._im);
                 iter = _valuesByPeriod.insert(std::make_pair(t, v)).first;
 
                 std::cerr<<"add kernel value "<<t<<", "<<_valuesByPeriod.size()<<std::endl;
@@ -389,6 +358,40 @@ namespace sp
         ri = v._re.im();
         ir = v._im.re();
         ii = v._im.im();
+    }
+
+    void KernelTabled::buildValue(const real &period, complex &re, complex &im)
+    {
+        real targetX = period*_pow*2.0;
+        const real sampleStep = period/samplesOnSignalPeriod;
+        TVReal signal(std::size_t(targetX/sampleStep+1.5));
+
+        SignalConvolver c;
+        c.setup(_pow, period, sampleStep, samplesOnSignalPeriod);
+
+
+        TVReal hre(phasesAmountForKernelApproximator), him(phasesAmountForKernelApproximator);
+        for(std::size_t phaseIndex(0); phaseIndex<phasesAmountForKernelApproximator; ++phaseIndex)
+        {
+            std::size_t startIdx = 0;
+            std::size_t stopIdx = signal.size();
+            for(std::size_t sindex(startIdx); sindex<stopIdx; sindex++)
+            {
+                signal[sindex] = cos(g_2pi*(sampleStep*sindex - targetX) + phaseIndex*g_2pi/phasesAmountForKernelApproximator);
+            }
+
+            c.pushSignal(&signal[0], signal.size());
+
+            //complex echo = c.execute(period, 0, sampleStep, signal, targetX);
+            complex echo = c.convolve(period);
+
+            hre[phaseIndex] = echo.re();
+            him[phaseIndex] = echo.im();
+
+        }
+
+        re = approxCos(hre);
+        im = approxCos(him);
     }
 
     std::string KernelTabled::stateFileName()
