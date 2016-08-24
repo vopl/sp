@@ -38,6 +38,16 @@ int main(int argc, char *argv[])
     cout.setf(std::ios::scientific);
 
 
+
+
+
+
+
+
+
+
+
+
     {
         sp::SignalConvolver sc;
 
@@ -48,12 +58,26 @@ int main(int argc, char *argv[])
         {
             sp::real x0 = sc.getTime();
 
-            sp::TVReal signal(1000);
+            sp::TVReal signal(1000000);
             for(size_t index(0); index<signal.size(); ++index)
             {
-                signal[index] = cos((x0 + sp::g_sampleStep*(1+index))*sp::g_2pi*500);
+                signal[index] = cos((x0 + sp::g_sampleStep*(1+index))*sp::g_2pi*500 + 0.5);
             }
             sc.pushSignal(&signal[0], signal.size());
+
+            sp::Convolver c(POW);
+            sp::TVComplex response1;
+            c.execute(periodGrid, 0, sp::g_sampleStep, signal, 1.4, response1);
+
+            sp::TVComplex response2 = sc.convolve();
+            for(size_t i(0); i<response1.size(); ++i)
+            {
+                auto v1 = response1[i];
+                auto v2 = response2[i];
+
+                std::cout<<v1.re()<<", "<<v1.im()<<", "<<v1.a()<<", "<<v2.re()<<", "<<v2.im()<<", "<<v2.a()<<std::endl;
+            }
+            exit(0);
         }
     }
     exit(0);
@@ -75,6 +99,9 @@ int main(int argc, char *argv[])
     }
 
 
+
+
+
     if(1)
     {
         sp::KernelTabled kt(POW);
@@ -87,8 +114,8 @@ int main(int argc, char *argv[])
         sp::TVComplex response(sp::g_periodSteps);
 
         sp::PeriodGrid periodGrid(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::frequencyLog);
-//        sp::Convolver c(POW);
-//        c.execute(periodGrid, 0, sp::g_sampleStep, signal, 1.5, response);
+        sp::Convolver c(POW);
+        c.execute(periodGrid, 0, sp::g_sampleStep, signal, 1.5, response);
 
         for(size_t i(0); i<periodGrid.grid().size(); ++i)
         {
