@@ -1,4 +1,5 @@
-#include "convolver.hpp"
+#include "sp/convolver.hpp"
+#include "sp/types.hpp"
 #include <iostream>
 #include <boost/math/special_functions.hpp>
 

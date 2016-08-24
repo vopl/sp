@@ -2,6 +2,7 @@
 #include "sp/signalConvolverLevel.hpp"
 #include "sp/math.hpp"
 #include <cassert>
+#include <numeric>
 #include <boost/math/special_functions.hpp>
 
 #include <iostream>
@@ -64,7 +65,7 @@ namespace sp
                 A[mn+k] = A[mn-k] = boost::math::sinc_pi(k*w);// * kaizer(kaizerBeta, mn+k, n-2, kaizerDenominator);
             }
 
-            real sum = std::accumulate(A.begin(), A.end(), 0.0L);
+            real sum = std::accumulate(A.begin(), A.end(), real(0));
             for(real &v : A)
             {
                 v /= sum;

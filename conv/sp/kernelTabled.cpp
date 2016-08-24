@@ -88,8 +88,8 @@ namespace sp
 
                 //assert(std::isfinite(re) && std::isfinite(im));
 
-                hx[i*2+0] = re - params->_ev[i].re();
-                hx[i*2+1] = im - params->_ev[i].im();
+                hx[i*2+0] = double(re - params->_ev[i].re());
+                hx[i*2+1] = double(im - params->_ev[i].im());
             }
         }
 
@@ -109,11 +109,11 @@ namespace sp
                     real rr,  ri,  ir,  ii;
                     params->_kernelTabled->evalKernel(et/st, rr, ri, ir, ii);
 
-                    jx[(i*2+0)*m+j*2+0] = rr;
-                    jx[(i*2+0)*m+j*2+1] = -ri;
+                    jx[(i*2+0)*m+j*2+0] = double(rr);
+                    jx[(i*2+0)*m+j*2+1] = double(-ri);
 
-                    jx[(i*2+1)*m+j*2+0] = ir;
-                    jx[(i*2+1)*m+j*2+1] = -ii;
+                    jx[(i*2+1)*m+j*2+0] = double(ir);
+                    jx[(i*2+1)*m+j*2+1] = double(-ii);
                 }
             }
         }
@@ -166,8 +166,8 @@ namespace sp
         std::vector<double> d_sv(ssize*2);
         for(std::size_t i(0); i<ssize; ++i)
         {
-            d_sv[i*2+0] = sv[i].re();
-            d_sv[i*2+1] = sv[i].im();
+            d_sv[i*2+0] = double(sv[i].re());
+            d_sv[i*2+1] = double(sv[i].im());
         }
 
         int res = dlevmar_der(
@@ -231,27 +231,10 @@ namespace sp
                 1e-30,  //LM_INIT_MU,        //mu
                 1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
                 1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
-                1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
+                1e-20,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
             };
 
-            double p[2]={1,0};
-
-            {
-                real max = ys[0];
-                std::size_t maxIdx = 0;
-
-                for(std::size_t idx(1); idx<ys.size(); ++idx)
-                {
-                    if(max < ys[idx])
-                    {
-                        max = ys[idx];
-                        maxIdx = idx;
-                    }
-                }
-
-                p[0] = max;
-                p[1] = -g_2pi * maxIdx / ys.size();
-            }
+            double p[2]={0,0};
 
             std::vector<double> dys(ys.begin(), ys.end());
 
@@ -259,14 +242,16 @@ namespace sp
                         [](double *p, double *hx, int m, int n, void *_levmarParams)->void{
                             for(int i(0); i<n; i++)
                             {
-                                hx[i] = p[0]*cos(g_2pi*i/n + p[1]);
+                                hx[i] = double(p[0]*cos(g_pi/2*i/n) - p[1]*sin(g_pi/2*i/n));
+
+                                int k = 1;
                             }
                         },
                         [](double *p, double *jx, int m, int n, void *_levmarParams){
                             for(int i(0); i<n; i++)
                             {
-                                jx[i*2+0] = cos(g_2pi*i/n + p[1]);
-                                jx[i*2+1] = -p[0]*sin(g_2pi*i/n + p[1]);
+                                jx[i*2+0] = double(cos(g_pi/2*i/n));
+                                jx[i*2+1] = double(-sin(g_pi/2*i/n));
                             }
                         },
                         &p[0],
@@ -301,9 +286,9 @@ namespace sp
 //            std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
 //            std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
 //            std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
-//            exit(1);
+//            //exit(1);
 
-            return complex(p[0],p[1],CAP);
+            return complex(p[0],p[1]);
         }
     }
 
@@ -377,7 +362,7 @@ namespace sp
             std::size_t stopIdx = signal.size();
             for(std::size_t sindex(startIdx); sindex<stopIdx; sindex++)
             {
-                signal[sindex] = cos(g_2pi*(sampleStep*sindex - targetX) + phaseIndex*g_2pi/phasesAmountForKernelApproximator);
+                signal[sindex] = cos(g_2pi*(sampleStep*sindex - targetX) + phaseIndex*g_pi/2/phasesAmountForKernelApproximator);
             }
 
             c.pushSignal(&signal[0], signal.size());
@@ -409,7 +394,7 @@ namespace sp
 
         _valuesByPeriod.clear();
         //на краях добавить значения, чтобы была гарантия наличия +-одного элемента
-        Value zv{0,0};
+        Value zv;
         _valuesByPeriod[0] = zv;
         _valuesByPeriod[-1] = zv;
 

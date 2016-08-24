@@ -347,7 +347,7 @@ namespace sp
     {
         return complex(lhs.re()*rhs,  lhs.im()*rhs);
     }
-    
+
     inline const complex operator*(const real &lhs, const complex &rhs)
     {
         return complex(lhs*rhs.re(),  lhs*rhs.im());
@@ -358,12 +358,12 @@ namespace sp
     {
         return complex(lhs) /= rhs;
     }
-    
+
     inline const complex operator/(const real &lhs, const complex &rhs)
     {
         return complex(lhs) /= rhs;
     }
-    
+
     inline const complex operator/(const complex &lhs, const real &rhs)
     {
         return complex(lhs.re()/rhs, lhs.im()/rhs);
