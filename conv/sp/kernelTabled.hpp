@@ -26,6 +26,9 @@ namespace sp
         void evalKernel(real t, real &rr, real &ri, real &ir, real &ii);
 
     private:
+        void buildValue(const real &period, complex &re, complex &im);
+
+    private:
         std::string stateFileName();
         bool load();
         bool save();

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "types.hpp"
-#include "complex.hpp"
+#include "sp/types.hpp"
+#include "sp/complex.hpp"
 #include <boost/circular_buffer.hpp>
 
 namespace sp

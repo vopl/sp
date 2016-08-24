@@ -1,8 +1,8 @@
-#include "signalConvolver.hpp"
-#include "signalConvolverLevel.hpp"
+#include "sp/signalConvolver.hpp"
+#include "sp/signalConvolverLevel.hpp"
+#include "sp/math.hpp"
 #include <cassert>
 #include <boost/math/special_functions.hpp>
-#include "sp/math.hpp"
 
 #include <iostream>
 
@@ -73,13 +73,34 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void SignalConvolver::setup(real pow, real maxPeriod, real sampleStep, std::size_t samplesPerPeriod)
+    {
+        _pow = pow;
+        _signalSampleStep = sampleStep;
+        _samplesPushed = 0;
+        _samplesPerPeriod = samplesPerPeriod;
+
+        _signal.clear();
+        _signal.resize(std::size_t(maxPeriod*_pow*2/_signalSampleStep+0.5) + 10);
+
+        _dirty = true;
+
+        _firs.resize(std::size_t(_samplesPerPeriod*_pow + 0.5));
+
+        for(std::size_t firIdx(0); firIdx<_firs.size(); ++firIdx)
+        {
+            std::size_t firLen = (firIdx*2)+3;
+
+            real bndT = real(firLen-1)/(_pow/2)/2;
+
+            lowPassFir(bndT, firLen, _firs[firIdx]);
+        }
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void SignalConvolver::setup(real pow, const PeriodGrid &periodGrid, real sampleStep, std::size_t samplesPerPeriod)
     {
-        _sampleStep = sampleStep;
-        _samplesPushed = 0;
-        _signal.clear();
-        _signal.resize(std::size_t(periodGrid.grid().back()*pow*2/_sampleStep+0.5) + 10);
-        _dirty = true;
+        setup(pow, periodGrid.grid().back(), sampleStep, samplesPerPeriod);
 
         _levels.resize(periodGrid.grid().size());
 
@@ -87,26 +108,14 @@ namespace sp
         {
             LevelPtr &l = _levels[i];
 
-            l.reset(new SignalConvolverLevel(pow, periodGrid.grid()[i], sampleStep, samplesPerPeriod));
+            l.reset(new SignalConvolverLevel(pow, periodGrid.grid()[i], _signalSampleStep, _samplesPerPeriod));
         }
-
-        _firs.resize(std::size_t(samplesPerPeriod*pow + 0.5));
-
-        for(std::size_t firIdx(0); firIdx<_firs.size(); ++firIdx)
-        {
-            std::size_t firLen = (firIdx*2)+3;
-
-            real bndT = real(firLen-1)/(pow/2)/2;
-
-            lowPassFir(bndT, firLen, _firs[firIdx]);
-        }
-        //exit(0);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void SignalConvolver::pushSignal(const real *samples, std::size_t amount)
     {
-        for(std::size_t i(amount-1); i<amount; --i)
+        for(std::size_t i(0); i<amount; ++i)
         {
             _signal.push_front(samples[i]);
         }
@@ -118,7 +127,7 @@ namespace sp
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     real SignalConvolver::getTime() const
     {
-        return _sampleStep * _samplesPushed;
+        return _signalSampleStep * _samplesPushed;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -128,7 +137,6 @@ namespace sp
         что дальше
 
             обрезка по частоте, попробовать через сигмоид переключать сигнал-результат фильтра
-            свертка
         */
 
         prepareValues();
@@ -143,6 +151,18 @@ namespace sp
         return res;
     }
 
+    complex /*echo*/ SignalConvolver::convolve(real period)
+    {
+        const real *signal = _signal.linearize();
+        std::size_t signalSize = _signal.size();
+
+        SignalConvolverLevel level(_pow, period, _signalSampleStep, _samplesPerPeriod);
+        level.update(signal, signalSize);
+        level.filtrate(_firs);
+
+        return level.convolve();
+    }
+
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void SignalConvolver::prepareValues()
     {
@@ -153,14 +173,12 @@ namespace sp
 
         _dirty = false;
 
-        _signal.linearize();
-
-        const real *first = _signal.array_one().first;
-        std::size_t firstSize = _signal.array_one().second;
+        const real *signal = _signal.linearize();
+        std::size_t signalSize = _signal.size();
 
         for(std::size_t i(0); i<_levels.size(); ++i)
         {
-            _levels[i]->update(first, firstSize);
+            _levels[i]->update(signal, signalSize);
             _levels[i]->filtrate(_firs);
         }
     }

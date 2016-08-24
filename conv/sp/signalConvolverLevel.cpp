@@ -1,5 +1,5 @@
-#include "signalConvolverLevel.hpp"
-#include "math.hpp"
+#include "sp/signalConvolverLevel.hpp"
+#include "sp/math.hpp"
 #include <cassert>
 #include <iostream>
 

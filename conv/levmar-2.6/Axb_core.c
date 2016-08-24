@@ -508,7 +508,8 @@ int info, nrhs=1;
       exit(1);
     }
     else{
-      fprintf(stderr, RCAT(RCAT(RCAT("LAPACK error: the leading minor of order %d is not positive definite,\nthe factorization could not be completed for ", POTF2) "/", POTRF) " in ", AX_EQ_B_CHOL) "()\n", info);
+      //забаню пока, вроде не сильно влияет но сыпет текстом
+      //fprintf(stderr, RCAT(RCAT(RCAT("LAPACK error: the leading minor of order %d is not positive definite,\nthe factorization could not be completed for ", POTF2) "/", POTRF) " in ", AX_EQ_B_CHOL) "()\n", info);
 #ifndef LINSOLVERS_RETAIN_MEMORY
       free(buf);
 #endif
