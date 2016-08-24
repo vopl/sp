@@ -115,16 +115,18 @@ int main(int argc, char *argv[])
 
         sp::PeriodGrid periodGrid(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::frequencyLog);
         sp::SignalConvolver c;
-        c.setup(POW, periodGrid, sp::g_sampleStep, 200);
+        c.setup(POW, periodGrid, sp::g_sampleStep, 500);
         c.pushSignal(&signal[0], signal.size());
-        //response = c.convolve();
+        response = c.convolve();
 
         for(size_t i(0); i<periodGrid.grid().size(); ++i)
         {
 //            std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
 
-            response[i] = 0;
-            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[250], sp::complex(1,0));
+//            response[i] = 0;
+
+//            sp::real t1 = (periodGrid.grid()[200] + periodGrid.grid()[201])/2;
+//            response[i] += kt.eval(periodGrid.grid()[i], t1, sp::complex(1,0));
 
 //            std::cout<<response[i].re()<<", "<<response[i].im();
 //            std::cout<<std::endl;
@@ -136,7 +138,7 @@ int main(int argc, char *argv[])
 
         //для инициализации спектра нулем - mu=1e-10 лучший. При меньших значениях начинают артифакты появляться, при больших - медленно сходится
 
-        int iters = 30;
+        int iters = 20;
         //for(int iters0(1); iters0<20; iters0++)
         {
             sp::TVComplex spectr(response.size());
