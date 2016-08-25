@@ -44,7 +44,7 @@ namespace sp
         }
 
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        void lowPassFir(
+        void lowPassHalfFir(
             real bndT,
             std::size_t n,
             TVReal &A)
@@ -53,55 +53,62 @@ namespace sp
 
             n+=2;
             n |= 1;
-            A.resize(n-2);
-
             std::size_t mn = n/2-1;
+            A.resize(mn+1);
 //            real kaizerBeta = 10;
 //            real kaizerDenominator = kaizerDenom(kaizerBeta);
 
             A[mn] = 1;// * kaizer(kaizerBeta, mn, n-2, kaizerDenominator);
+            real sum = A[mn]/2;
             for(std::size_t k(1); k<n/2; k++)
             {
-                A[mn+k] = A[mn-k] = boost::math::sinc_pi(k*w);// * kaizer(kaizerBeta, mn+k, n-2, kaizerDenominator);
+                A[mn-k] = boost::math::sinc_pi(k*w);// * kaizer(kaizerBeta, mn+k, n-2, kaizerDenominator);
+                sum += A[mn-k];
             }
 
-            real sum = std::accumulate(A.begin(), A.end(), real(0));
             for(real &v : A)
             {
-                v /= sum;
+                v /= sum*2;
             }
         }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolver::setup(real pow, real maxPeriod, real sampleStep, std::size_t samplesPerPeriod)
+    void SignalConvolver::setupFirs(real pow, std::size_t samplesPerPeriod)
     {
         _pow = pow;
-        _signalSampleStep = sampleStep;
-        _samplesPushed = 0;
         _samplesPerPeriod = samplesPerPeriod;
 
-        _signal.clear();
-        _signal.resize(std::size_t(maxPeriod*_pow*2/_signalSampleStep+0.5) + 10);
+        _halfFirs.resize(std::size_t(_samplesPerPeriod*_pow + 0.5));
 
-        _dirty = true;
-
-        _firs.resize(std::size_t(_samplesPerPeriod*_pow + 0.5));
-
-        for(std::size_t firIdx(0); firIdx<_firs.size(); ++firIdx)
+        for(std::size_t firIdx(0); firIdx<_halfFirs.size(); ++firIdx)
         {
             std::size_t firLen = (firIdx*2)+3;
 
-            real bndT = real(firLen-1)/(_pow/2)/2;
+            real bndT = (real(firLen)-1.0L)/(_pow/*/2*/)/2;
 
-            lowPassFir(bndT, firLen, _firs[firIdx]);
+            lowPassHalfFir(bndT, firLen, _halfFirs[firIdx]);
         }
     }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void SignalConvolver::setupSignal(real maxPeriod, real sampleStep)
+    {
+        _signalSampleStep = sampleStep;
+        _signalSamplesPushed = 0;
+
+        //_signal.clear();
+        _signal.resize(std::size_t(maxPeriod*_pow*2/_signalSampleStep+0.5) + 1);
+
+        _dirty = true;
+    }
+
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void SignalConvolver::setup(real pow, const PeriodGrid &periodGrid, real sampleStep, std::size_t samplesPerPeriod)
     {
-        setup(pow, periodGrid.grid().back(), sampleStep, samplesPerPeriod);
+        setupFirs(pow, samplesPerPeriod);
+        setupSignal(periodGrid.grid().back(), sampleStep);
 
         _levels.resize(periodGrid.grid().size());
 
@@ -116,11 +123,19 @@ namespace sp
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void SignalConvolver::pushSignal(const real *samples, std::size_t amount)
     {
-        for(std::size_t i(0); i<amount; ++i)
+        if(amount >= _signal.size())
         {
-            _signal.push_front(samples[i]);
+            std::copy(samples+amount-_signal.size(), samples+amount, _signal.begin());
+            std::reverse(_signal.begin(), _signal.end());
         }
-        _samplesPushed += amount;
+        else
+        {
+            std::move(_signal.begin(), _signal.end()-amount, _signal.begin()+amount);
+            std::copy(samples, samples+amount, _signal.begin());
+            std::reverse(_signal.begin(), _signal.begin()+amount);
+        }
+
+        _signalSamplesPushed += amount;
         _dirty = true;
     }
 
@@ -128,7 +143,7 @@ namespace sp
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     real SignalConvolver::getTime() const
     {
-        return _signalSampleStep * _samplesPushed;
+        return _signalSampleStep * _signalSamplesPushed;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -154,12 +169,12 @@ namespace sp
 
     complex /*echo*/ SignalConvolver::convolve(real period)
     {
-        const real *signal = _signal.linearize();
+        const real *signal = &_signal[0];
         std::size_t signalSize = _signal.size();
 
         SignalConvolverLevel level(_pow, period, _signalSampleStep, _samplesPerPeriod);
         level.update(signal, signalSize);
-        level.filtrate(_firs);
+        level.filtrate(_halfFirs);
 
         return level.convolve();
     }
@@ -174,13 +189,13 @@ namespace sp
 
         _dirty = false;
 
-        const real *signal = _signal.linearize();
+        const real *signal = &_signal[0];
         std::size_t signalSize = _signal.size();
 
         for(std::size_t i(0); i<_levels.size(); ++i)
         {
             _levels[i]->update(signal, signalSize);
-            _levels[i]->filtrate(_firs);
+            _levels[i]->filtrate(_halfFirs);
         }
     }
 }

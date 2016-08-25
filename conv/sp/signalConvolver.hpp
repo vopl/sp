@@ -3,7 +3,6 @@
 #include "sp/periodGrid.hpp"
 #include "sp/complex.hpp"
 
-#include <boost/circular_buffer.hpp>
 #include <memory>
 
 namespace sp
@@ -16,7 +15,8 @@ namespace sp
         ~SignalConvolver();
 
 
-        void setup(real pow, real maxPeriod, real sampleStep, std::size_t samplesPerPeriod);
+        void setupFirs(real pow, std::size_t samplesPerPeriod);
+        void setupSignal(real sampleStep, real maxPeriod);
         void setup(real pow, const PeriodGrid &periodGrid, real sampleStep, std::size_t samplesPerPeriod);
 
         void pushSignal(const real *samples, std::size_t amount);
@@ -32,15 +32,15 @@ namespace sp
     private:
         real                            _pow = 0;
         real                            _signalSampleStep = 0;
-        std::size_t                     _samplesPushed = 0;
+        std::size_t                     _signalSamplesPushed = 0;
         std::size_t                     _samplesPerPeriod = 0;
-        boost::circular_buffer<real>    _signal;
+        TVReal                          _signal;
         bool                            _dirty = true;
 
         using LevelPtr = std::unique_ptr<SignalConvolverLevel>;
         std::vector<LevelPtr> _levels;
 
-        std::vector<TVReal>             _firs;
+        std::vector<TVReal>             _halfFirs;
 
     };
 

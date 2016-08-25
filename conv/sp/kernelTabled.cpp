@@ -1,5 +1,4 @@
 #include "sp/kernelTabled.hpp"
-#include "sp/signalConvolver.hpp"
 #include "sp/math.hpp"
 #include "levmar.h"
 
@@ -9,8 +8,8 @@
 #include <set>
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-static const std::size_t phasesAmountForKernelApproximator = 4;//MAGIC
-static const std::size_t samplesOnSignalPeriod = 500;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
+static const std::size_t phasesAmountForKernelApproximator = 2;//MAGIC
+static const std::size_t samplesOnSignalPeriod = 10000;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
 
 
 
@@ -20,6 +19,7 @@ namespace sp
         : _pow(pow)
     {
         load();
+        _sc.setupFirs(_pow, samplesOnSignalPeriod);
     }
 
     KernelTabled::~KernelTabled()
@@ -160,7 +160,7 @@ namespace sp
             1e-40,  //LM_INIT_MU,        //mu
             1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
             1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
-            1e-27,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
+            1e-20,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
         };
 
         std::vector<double> d_sv(ssize*2);
@@ -351,9 +351,7 @@ namespace sp
         const real sampleStep = period/samplesOnSignalPeriod;
         TVReal signal(std::size_t(targetX/sampleStep+1.5));
 
-        SignalConvolver c;
-        c.setup(_pow, period, sampleStep, samplesOnSignalPeriod);
-
+        _sc.setupSignal(period, sampleStep);
 
         TVReal hre(phasesAmountForKernelApproximator), him(phasesAmountForKernelApproximator);
         for(std::size_t phaseIndex(0); phaseIndex<phasesAmountForKernelApproximator; ++phaseIndex)
@@ -365,10 +363,9 @@ namespace sp
                 signal[sindex] = cos(g_2pi*(sampleStep*sindex - targetX) + phaseIndex*g_pi/2/phasesAmountForKernelApproximator);
             }
 
-            c.pushSignal(&signal[0], signal.size());
+            _sc.pushSignal(&signal[0], signal.size());
 
-            //complex echo = c.execute(period, 0, sampleStep, signal, targetX);
-            complex echo = c.convolve(period);
+            complex echo = _sc.convolve(period);
 
             hre[phaseIndex] = echo.re();
             him[phaseIndex] = echo.im();
@@ -382,7 +379,7 @@ namespace sp
     std::string KernelTabled::stateFileName()
     {
         char tmp[4096];
-        sprintf(tmp, "kt_state_POW%0.2f.bin", double(_pow));
+        sprintf(tmp, "kt_state_POW%0.2f_%zd.bin", double(_pow), size_t(samplesOnSignalPeriod));
 
         return tmp;
     }

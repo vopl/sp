@@ -2,6 +2,7 @@
 
 #include "sp/types.hpp"
 #include "sp/complex.hpp"
+#include "sp/signalConvolver.hpp"
 #include <string>
 #include <map>
 
@@ -35,6 +36,8 @@ namespace sp
 
     private:
         real _pow;
+
+        SignalConvolver _sc;
 
     private:
         struct Value
