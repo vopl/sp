@@ -102,23 +102,32 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolverLevel::filtrate(const std::vector<TVReal> &firs)
+    void SignalConvolverLevel::filtrate(const std::vector<TVReal> &halfFirs)
     {
         _valuesFiltered[0] = _values[0];
 
         for(std::size_t index(0); index<_valuesFiltered.size()-1; ++index)
         {
-            const TVReal &fir = firs[index];
-            const std::size_t firSize = fir.size();
-
-            real sum = 0;
-            for(std::size_t i(0); i<firSize-1; i++)
+//            if(index < std::size_t(_pow*2+2.5))
+//            {
+//                _valuesFiltered[index+1] = _values[index+1];
+//            }
+//            else
             {
-                real h1 = _values[i] * fir[i];
-                real h2 = _values[i+1] * fir[i+1];
-                sum += (h1+h2)/2;
+                const TVReal &halfFir = halfFirs[index];
+                const std::size_t halfFirSize = halfFir.size();
+                assert(halfFirSize>=2);
+                const std::size_t firSize = (halfFirSize-1)*2+1;
+
+                real sum = 0;
+                sum += (_values[0] + _values[firSize-1]) * halfFir[0] / 2;
+                for(std::size_t i(1); i<halfFirSize; ++i)
+                {
+                    sum += (_values[i] + _values[firSize-1-i]) * halfFir[i];
+                }
+
+                _valuesFiltered[index+1] = sum;
             }
-            _valuesFiltered[index+1] = sum;
         }
 
 //        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
