@@ -108,7 +108,7 @@ namespace sp
 
         for(std::size_t index(0); index<_valuesFiltered.size()-1; ++index)
         {
-//            if(index < std::size_t(_pow*2+2.5))
+//            if(index < std::size_t(_pow*3+2.5))
 //            {
 //                _valuesFiltered[index+1] = _values[index+1];
 //            }
@@ -121,21 +121,22 @@ namespace sp
 
                 real sum = 0;
                 sum += (_values[0] + _values[firSize-1]) * halfFir[0] / 2;
-                for(std::size_t i(1); i<halfFirSize; ++i)
+                for(std::size_t i(1); i<halfFirSize-1; ++i)
                 {
-                    sum += (_values[i] + _values[firSize-1-i]) * halfFir[i];
+                    sum += (_values[i] + _values[firSize-i]) * halfFir[i];
                 }
+                sum += _values[halfFirSize-1] * halfFir[halfFirSize-1];
 
                 _valuesFiltered[index+1] = sum;
             }
         }
 
-//        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
-//        {
-//            std::cout<<_values[index]<<", "<<_valuesFiltered[index]<<std::endl;
-//        }
+        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
+        {
+            std::cout<<_values[index]<<", "<<_valuesFiltered[index]<<std::endl;
+        }
 
-//        exit(0);
+        exit(0);
     }
 
     namespace

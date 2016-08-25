@@ -50,26 +50,28 @@ namespace sp
             TVReal &A)
         {
             real w = g_2pi/bndT;
+            real q = 2/bndT;
 
             n+=2;
             n |= 1;
             std::size_t mn = n/2-1;
             A.resize(mn+1);
-//            real kaizerBeta = 10;
-//            real kaizerDenominator = kaizerDenom(kaizerBeta);
 
-            A[mn] = 1;// * kaizer(kaizerBeta, mn, n-2, kaizerDenominator);
-            real sum = A[mn]/2;
+            real kaizerBeta = 10;
+            real kaizerDenominator = kaizerDenom(kaizerBeta);
+
+            A[mn] = q;
+            //real sum = A[mn]/2;
             for(std::size_t k(1); k<n/2; k++)
             {
-                A[mn-k] = boost::math::sinc_pi(k*w);// * kaizer(kaizerBeta, mn+k, n-2, kaizerDenominator);
-                sum += A[mn-k];
+                A[mn-k] = q * boost::math::sinc_pi(k*w) * kaizer(kaizerBeta, mn+k, n-2, kaizerDenominator);
+                //sum += A[mn-k];
             }
 
-            for(real &v : A)
-            {
-                v /= sum*2;
-            }
+//            for(real &v : A)
+//            {
+//                v /= sum*2;
+//            }
         }
     }
 
@@ -85,7 +87,7 @@ namespace sp
         {
             std::size_t firLen = (firIdx*2)+3;
 
-            real bndT = (real(firLen)-1.0L)/(_pow/*/2*/)/2;
+            real bndT = (real(firLen))/(_pow/*/2*/)/2;
 
             lowPassHalfFir(bndT, firLen, _halfFirs[firIdx]);
         }
@@ -98,7 +100,7 @@ namespace sp
         _signalSamplesPushed = 0;
 
         //_signal.clear();
-        _signal.resize(std::size_t(maxPeriod*_pow*2/_signalSampleStep+0.5) + 1);
+        _signal.resize(std::size_t(maxPeriod*_pow*2/_signalSampleStep+0.5) + 2);
 
         _dirty = true;
     }

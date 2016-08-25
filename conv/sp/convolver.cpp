@@ -159,7 +159,7 @@ namespace sp
         }
 
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        void lowPassHalfFir(
+        void lowPassFir(
             real bndT,
             std::size_t n,
             TVReal &A)
@@ -236,7 +236,7 @@ namespace sp
             {
                 TVReal fir;
                 real bndT = real(len)/(pow/2)/2;
-                lowPassHalfFir(bndT, len, fir);
+                lowPassFir(bndT, len, fir);
 
 //                const TVReal &fir = g_firs[(len-minLen)/2];
 

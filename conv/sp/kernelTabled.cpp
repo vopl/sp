@@ -9,7 +9,8 @@
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 static const std::size_t phasesAmountForKernelApproximator = 2;//MAGIC
-static const std::size_t samplesOnSignalPeriod = 10000;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
+static const std::size_t samplesOnSignalPeriod = 50000;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
+static const std::size_t samplesOnLevelPeriod = 2500;
 
 
 
@@ -19,7 +20,7 @@ namespace sp
         : _pow(pow)
     {
         load();
-        _sc.setupFirs(_pow, samplesOnSignalPeriod);
+        _sc.setupFirs(_pow, samplesOnLevelPeriod);
     }
 
     KernelTabled::~KernelTabled()
@@ -347,8 +348,8 @@ namespace sp
 
     void KernelTabled::buildValue(const real &period, complex &re, complex &im)
     {
-        real targetX = period*_pow*2.0;
         const real sampleStep = period/samplesOnSignalPeriod;
+        real targetX = period*_pow*2.0+sampleStep*2;
         TVReal signal(std::size_t(targetX/sampleStep+1.5));
 
         _sc.setupSignal(period, sampleStep);
@@ -379,7 +380,7 @@ namespace sp
     std::string KernelTabled::stateFileName()
     {
         char tmp[4096];
-        sprintf(tmp, "kt_state_POW%0.2f_%zd.bin", double(_pow), size_t(samplesOnSignalPeriod));
+        sprintf(tmp, "kt_state_POW%0.2f_%zd_%zd.bin", double(_pow), size_t(samplesOnSignalPeriod), size_t(samplesOnLevelPeriod));
 
         return tmp;
     }
