@@ -13,7 +13,7 @@ namespace sp
         ~SignalConvolverLevel();
 
         void update(const real *signal, std::size_t signalSize);
-        void filtrate(const std::vector<TVReal> &firs);
+        void filtrate(const std::vector<std::vector<float> > &firs);
         complex convolve();
 
     private:

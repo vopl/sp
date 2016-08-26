@@ -40,7 +40,7 @@ namespace sp
         using LevelPtr = std::unique_ptr<SignalConvolverLevel>;
         std::vector<LevelPtr> _levels;
 
-        std::vector<TVReal>             _halfFirs;
+        std::vector<std::vector<float>> _halfFirs;
 
     };
 

@@ -47,7 +47,7 @@ namespace sp
         void lowPassHalfFir(
             real bndT,
             std::size_t n,
-            TVReal &A)
+            std::vector<float> &A)
         {
             real w = g_2pi/bndT;
             real q = 1;//2/bndT;
@@ -73,7 +73,7 @@ namespace sp
                 sum += v;
             }
 
-            for(real &v : A)
+            for(auto &v : A)
             {
                 v /= sum*2;
             }
@@ -91,7 +91,7 @@ namespace sp
         void lowPassFir(
             real bndT,
             std::size_t n,
-            TVReal &A)
+            std::vector<float> &A)
         {
             real w = g_2pi/bndT;
             real q = 1;//2/bndT;
@@ -114,7 +114,7 @@ namespace sp
                 sum += v;
             }
 
-            for(real &v : A)
+            for(auto &v : A)
             {
                 v /= sum*2;
             }
