@@ -10,7 +10,7 @@
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 static const std::size_t phasesAmountForKernelApproximator = 2;//MAGIC
 static const std::size_t samplesOnSignalPeriod = 50000;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
-static const std::size_t samplesOnLevelPeriod  = 4000;
+static const std::size_t samplesOnLevelPeriod  = 800;
 
 
 
@@ -66,8 +66,8 @@ namespace sp
             for(int i(0); i<n/2; i++)
             {
                 real et = params->_et[i];
-                real re = 0;
-                real im = 0;
+                Summator<real> re = 0;
+                Summator<real> im = 0;
 
                 for(int j(0); j<m/2; j++)
                 {
@@ -88,8 +88,11 @@ namespace sp
 
                 //assert(std::isfinite(re) && std::isfinite(im));
 
-                hx[i*2+0] = double(re - params->_ev[i].re());
-                hx[i*2+1] = double(im - params->_ev[i].im());
+                re += -params->_ev[i].re();
+                im += -params->_ev[i].im();
+
+                hx[i*2+0] = double(re);
+                hx[i*2+1] = double(im);
             }
         }
 

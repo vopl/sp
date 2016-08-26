@@ -18,6 +18,18 @@ namespace sp
     using TVReal = std::vector<real>;
 
     /////////-/////////-/////////-/////////-/////////-/////////-/////////-/////////-
+    inline double fabs(double x) {return ::fabs(x);}
+    inline double sqrt(double x) {return ::sqrt(x);}
+
+    inline double cos(double x) {return ::cos(x);}
+    inline double sin(double x) {return ::sin(x);}
+
+    inline double exp(double x) {return ::exp(x);}
+    inline double log(double x) {return ::log(x);}
+
+    inline double atan2(double x, double y) {return ::atan2(x, y);}
+
+    /////////-/////////-/////////-/////////-/////////-/////////-/////////-/////////-
     inline long double fabs(long double x) {return ::fabsl(x);}
     inline long double sqrt(long double x) {return ::sqrtl(x);}
 

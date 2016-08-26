@@ -47,7 +47,7 @@ namespace sp
         void lowPassHalfFir(
             real bndT,
             std::size_t n,
-            std::vector<float> &A)
+            std::vector<real> &A)
         {
             real w = g_2pi/bndT;
             real q = 1;//2/bndT;
@@ -57,60 +57,19 @@ namespace sp
             std::size_t mn = n/2-1;
             A.resize(mn+1);
 
-            real kaizerBeta = 10;
-            real kaizerDenominator = kaizerDenom(kaizerBeta);
+//            real kaizerBeta = 10;
+//            real kaizerDenominator = kaizerDenom(kaizerBeta);
 
             A[mn] = q;
-            real sum = A[mn]/2;
+            Summator<real> sum = A[mn]/2;
             for(std::size_t k(1); k<n/2; k++)
             {
 
                 real x = k*w;
                 //real v = q * sin(x)/(x);// * kaizer(kaizerBeta, mn+k, n-2, kaizerDenominator);
-                real v = q * boost::math::sinc_pi(k*w);// * kaizer(kaizerBeta, mn+k, n-2, kaizerDenominator);
+                real v = q * boost::math::sinc_pi(x);// * kaizer(kaizerBeta, mn+k, n-2, kaizerDenominator);
 
                 A[mn-k] = v;
-                sum += v;
-            }
-
-            for(auto &v : A)
-            {
-                v /= sum*2;
-            }
-
-//            if(440<n)
-//            {
-//                for(std::size_t i(0); i<A.size(); i++)
-//                {
-//                    std::cout<<A[i]<<std::endl;
-//                }
-//                exit(0);
-//            }
-        }
-
-        void lowPassFir(
-            real bndT,
-            std::size_t n,
-            std::vector<float> &A)
-        {
-            real w = g_2pi/bndT;
-            real q = 1;//2/bndT;
-
-            n+=2;
-            n |= 1;
-            std::size_t mn = n/2-1;
-            A.resize(n-2);
-
-            A[mn] = q;
-            real sum = A[mn]/2;
-            for(std::size_t k(1); k<n/2; k++)
-            {
-
-                real x = k*w;
-                //real v = q * sin(x)/(x);// * kaizer(kaizerBeta, mn+k, n-2, kaizerDenominator);
-                real v = q * boost::math::sinc_pi(k*w);// * kaizer(kaizerBeta, mn+k, n-2, kaizerDenominator);
-
-                A[mn-k] = A[mn+k] = v;
                 sum += v;
             }
 
@@ -127,14 +86,12 @@ namespace sp
         _pow = pow;
         _samplesPerPeriod = samplesPerPeriod;
 
-        _halfFirs.resize(std::size_t(_samplesPerPeriod*_pow + 0.5) /*test*/ *2);
+        _halfFirs.resize(std::size_t(_samplesPerPeriod*_pow + 0.5));
 
         for(std::size_t firIdx(0); firIdx<_halfFirs.size(); ++firIdx)
         {
             std::size_t firLen = (firIdx*2)+3;
-
-            real bndT = (real(firLen-1))/(_pow/*/2*/)/2;
-
+            real bndT = (real(firLen-1))/(_pow/2)/2;
             lowPassHalfFir(bndT, firLen, _halfFirs[firIdx]);
 
 //            if(firIdx>50)

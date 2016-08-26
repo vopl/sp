@@ -27,10 +27,10 @@ namespace
         TReal _9 =  ( 4*pi*pow*tw*_5 ) ;
         TReal _7 =  ( _1*_2 ) ;
         TReal _8 =  ( _1*_4 ) ;
-        TReal _12 = cos ( _7 ) ;
-        TReal _10 = sin ( _7 ) ;
-        TReal _13 = cos ( _8 ) ;
-        TReal _11 = sin ( _8 ) ;
+        TReal _12 = sp::cos ( _7 ) ;
+        TReal _10 = sp::sin ( _7 ) ;
+        TReal _13 = sp::cos ( _8 ) ;
+        TReal _11 = sp::sin ( _8 ) ;
         TReal _16 =  ( _0*_12 ) ;
         TReal _17 =  ( _3*_13 ) ;
         TReal _15 =  ( _3*_11 ) ;
@@ -45,11 +45,11 @@ namespace
 
         rr=_20/_9;ri=_21/_9;ir=-_22/_9;ii=_23/_9;
 
-        if(fabs(_9)<1e-7)
+        if(sp::fabs(_9)<1e-7)
         {
-            TReal _0 = sin ( 4*pi*pow*tw ) ;
+            TReal _0 = sp::sin ( 4*pi*pow*tw ) ;
             TReal _1 =  ( 8*pi*pow*ts ) ;
-            TReal _2 = cos ( 4*pi*pow*tw ) ;
+            TReal _2 = sp::cos ( 4*pi*pow*tw ) ;
             TReal _4 =  ( _2-1 ) ;
             TReal _3 =  ( _0+4*pi*pow*tw ) ;
             TReal _5 =  ( _0-4*pi*pow*tw ) ;
