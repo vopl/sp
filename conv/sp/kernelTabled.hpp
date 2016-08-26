@@ -34,10 +34,13 @@ namespace sp
         bool load();
         bool save();
 
+        SignalConvolver &getSignalConvolver();
+
     private:
         real _pow;
 
-        SignalConvolver _sc;
+        using SignalConvolverPtr = std::unique_ptr<SignalConvolver>;
+        SignalConvolverPtr _scp;
 
     private:
         struct Value

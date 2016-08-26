@@ -10,7 +10,7 @@
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 static const std::size_t phasesAmountForKernelApproximator = 2;//MAGIC
 static const std::size_t samplesOnSignalPeriod = 50000;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
-static const std::size_t samplesOnLevelPeriod = 2500;
+static const std::size_t samplesOnLevelPeriod  = 2000;
 
 
 
@@ -20,7 +20,6 @@ namespace sp
         : _pow(pow)
     {
         load();
-        _sc.setupFirs(_pow, samplesOnLevelPeriod);
     }
 
     KernelTabled::~KernelTabled()
@@ -352,7 +351,8 @@ namespace sp
         real targetX = period*_pow*2.0+sampleStep*2;
         TVReal signal(std::size_t(targetX/sampleStep+1.5));
 
-        _sc.setupSignal(period, sampleStep);
+        SignalConvolver &sc = getSignalConvolver();
+        sc.setupSignal(period, sampleStep);
 
         TVReal hre(phasesAmountForKernelApproximator), him(phasesAmountForKernelApproximator);
         for(std::size_t phaseIndex(0); phaseIndex<phasesAmountForKernelApproximator; ++phaseIndex)
@@ -364,9 +364,9 @@ namespace sp
                 signal[sindex] = cos(g_2pi*(sampleStep*sindex - targetX) + phaseIndex*g_pi/2/phasesAmountForKernelApproximator);
             }
 
-            _sc.pushSignal(&signal[0], signal.size());
+            sc.pushSignal(&signal[0], signal.size());
 
-            complex echo = _sc.convolve(period);
+            complex echo = sc.convolve(period);
 
             hre[phaseIndex] = echo.re();
             him[phaseIndex] = echo.im();
@@ -467,6 +467,17 @@ namespace sp
 
         std::cerr<<_valuesByPeriod.size()<<std::endl;
         return true;
+    }
+
+    SignalConvolver &KernelTabled::getSignalConvolver()
+    {
+        if(!_scp)
+        {
+            _scp.reset(new SignalConvolver);
+            _scp->setupFirs(_pow, samplesOnLevelPeriod);
+        }
+
+        return *_scp;
     }
 
 }
