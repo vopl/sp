@@ -108,12 +108,23 @@ namespace sp
 
         for(std::size_t index(0); index<_valuesFiltered.size()-1; ++index)
         {
-//            if(index < std::size_t(_pow*3+2.5))
-//            {
-//                _valuesFiltered[index+1] = _values[index+1];
-//            }
-//            else
+            if(0)
             {
+                assert(index*2 < halfFirs.size());
+                const TVReal &fir = halfFirs[index];
+                const std::size_t firSize = fir.size();
+
+                real sum = 0;
+                for(std::size_t i(0); i<firSize-1; ++i)
+                {
+                    sum += _values[i] * fir[i];
+                }
+                _valuesFiltered[index+1] = sum;
+            }
+
+            if(1)
+            {
+                assert(index < halfFirs.size());
                 const TVReal &halfFir = halfFirs[index];
                 const std::size_t halfFirSize = halfFir.size();
                 assert(halfFirSize>=2);
@@ -123,7 +134,7 @@ namespace sp
                 sum += (_values[0] + _values[firSize-1]) * halfFir[0] / 2;
                 for(std::size_t i(1); i<halfFirSize-1; ++i)
                 {
-                    sum += (_values[i] + _values[firSize-i]) * halfFir[i];
+                    sum += (_values[i] + _values[firSize-1-i]) * halfFir[i];
                 }
                 sum += _values[halfFirSize-1] * halfFir[halfFirSize-1];
 
@@ -131,12 +142,12 @@ namespace sp
             }
         }
 
-        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
-        {
-            std::cout<<_values[index]<<", "<<_valuesFiltered[index]<<std::endl;
-        }
+//        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
+//        {
+//            std::cout<<_values[index]<<", "<<_valuesFiltered[index]<<std::endl;
+//        }
 
-        exit(0);
+//        exit(0);
     }
 
     namespace

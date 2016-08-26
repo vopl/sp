@@ -85,9 +85,9 @@ int main(int argc, char *argv[])
         //kt.setup(5, 0.1, 10, 1000);
         //kt.setup(10, 0.1, 10.0, 100*1000);
 
-        чето с фиром
-        kt.eval(90, 1, sp::complex(1,0));
-        exit(0);
+        //чето с фиром
+//        kt.eval(200, 1, sp::complex(1,0));
+//        exit(0);
 
 
 
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 
             //sp::real t1 = (periodGrid.grid()[300] + periodGrid.grid()[300])/2;
 
-            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[350], sp::complex(1,0));
+            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[450], sp::complex(1,0));
 
 
 //            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[300], sp::complex(1,0));
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 
         //для инициализации спектра нулем - mu=1e-10 лучший. При меньших значениях начинают артифакты появляться, при больших - медленно сходится
 
-        int iters = 2;
+        int iters = 20;
         //for(int iters0(1); iters0<20; iters0++)
         {
             sp::TVComplex spectr(response.size());
