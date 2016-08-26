@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
         //sp::Kernel kt(POW);
 
         //чето с фиром
-//        kt.eval(200, 1, sp::complex(1,0));
+//        kt.eval(60, 1, sp::complex(1,0));
 //        exit(0);
 
 
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 
             //sp::real t1 = (periodGrid.grid()[300] + periodGrid.grid()[300])/2;
 
-            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[350], sp::complex(1,0));
+            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[50], sp::complex(1,0));
 
 
 //            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[300], sp::complex(1,0));

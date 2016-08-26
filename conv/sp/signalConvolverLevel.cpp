@@ -34,7 +34,8 @@ namespace sp
 
             assert(signalStopIdx < signalSize-1);
 
-            real sum(0), amount(0);
+            Summator<real> sum;
+            real amount = 0;
 
             real firstSampleStart = signal[signalStartIdx];
             real firstSampleStop = signal[signalStartIdx+1];
@@ -102,35 +103,28 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolverLevel::filtrate(const std::vector<std::vector<float>> &halfFirs)
+    void SignalConvolverLevel::filtrate(const std::vector<std::vector<real>> &halfFirs)
     {
+
+
         _valuesFiltered[0] = _values[0];
 
         for(std::size_t index(0); index<_valuesFiltered.size()-1; ++index)
         {
-            if(0)
+            if(index < std::size_t(_pow + 1.5))//попробовать без этого
             {
-                assert(index*2 < halfFirs.size());
-                const std::vector<float> &fir = halfFirs[index];
-                const std::size_t firSize = fir.size();
-
-                real sum = 0;
-                for(std::size_t i(0); i<firSize-1; ++i)
-                {
-                    sum += _values[i] * fir[i];
-                }
-                _valuesFiltered[index+1] = sum;
+                _valuesFiltered[index+1] = _values[index+1];
+                continue;
             }
 
-            if(1)
             {
                 assert(index < halfFirs.size());
-                const std::vector<float> &halfFir = halfFirs[index];
+                const std::vector<real> &halfFir = halfFirs[index];
                 const std::size_t halfFirSize = halfFir.size();
                 assert(halfFirSize>=2);
                 const std::size_t firSize = (halfFirSize-1)*2+1;
 
-                real sum = 0;
+                Summator<real> sum = 0;
                 sum += (_values[0] + _values[firSize-1]) * halfFir[0] / 2;
                 for(std::size_t i(1); i<halfFirSize-1; ++i)
                 {
@@ -162,6 +156,7 @@ namespace sp
 
             real re, im;
             {
+                //TODO упростить
                 const real _1 =  ( 2*pi*x1 ) ;
                 const real _3 =  ( 4*pi_p_2*x1-4*pi_p_2*x0 ) ;
                 const real _0 =  ( 2*pi*t*x1-2*pi*t*x0 ) ;
@@ -188,13 +183,13 @@ namespace sp
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     complex SignalConvolverLevel::convolve()
     {
-        const real step0 = 1.0L / _pow;
+        const real step0 = 1 / _pow;
 
         real period_m1 = _period /(1.0-step0/2);
         real period_p1 = _period /(1.0+step0/2);
 
-        complex res_m1;
-        complex res_p1;
+        Summator<complex> res_m1;
+        Summator<complex> res_p1;
 
         for(std::size_t index(0); index<_valuesFiltered.size()-1; ++index)
         {
@@ -205,7 +200,7 @@ namespace sp
             real y1 = _valuesFiltered[index+1];
 
             res_m1 += evalSegment(period_m1, x0, y0, x1, y1);
-            res_p1 += evalSegment(period_p1, x0, y0, x1, y1);
+            res_p1 + evalSegment(period_p1, x0, y0, x1, y1);
         }
 
         return (res_p1*(1.0+step0/2) - res_m1*(1.0-step0/2)) / (_period * _pow);
