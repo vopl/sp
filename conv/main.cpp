@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
         //sp::Kernel kt(POW);
 
         //чето с фиром
-//        kt.eval(60, 1, sp::complex(1,0));
+//        kt.eval(.63456, 1, sp::complex(.23452,1.3456));
 //        exit(0);
 
 
@@ -103,15 +103,19 @@ int main(int argc, char *argv[])
 
             //sp::real t1 = (periodGrid.grid()[300] + periodGrid.grid()[300])/2;
 
-            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[50], sp::complex(1,0));
+            for(std::size_t k(0); k<401; k+=2)
+            {
+                response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[k], sp::complex(0,1));
+            }
 
 
-//            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[300], sp::complex(1,0));
-//            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[310], sp::complex(1,0));
-//            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[320], sp::complex(1,0));
-//            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[330], sp::complex(1,0));
-//            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[340], sp::complex(1,0));
-//            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[350], sp::complex(1,0));
+
+//            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[200], sp::complex(1,0));
+//            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[210], sp::complex(1,0));
+//            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[220], sp::complex(1,0));
+//            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[230], sp::complex(1,0));
+//            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[240], sp::complex(1,0));
+//            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[250], sp::complex(1,0));
 
 //            std::cout<<response[i].re()<<", "<<response[i].im();
 //            std::cout<<std::endl;
@@ -121,21 +125,21 @@ int main(int argc, char *argv[])
 
         std::vector<double> work;
 
-        //для инициализации спектра нулем - mu=1e-10 лучший. При меньших значениях начинают артифакты появляться, при больших - медленно сходится
+        sp::PeriodGrid spectrPeriods(periodGrid.grid()[0], periodGrid.grid()[400], 401, sp::PeriodGridType::frequencyLog);
 
         int iters = 20;
         //for(int iters0(1); iters0<20; iters0++)
         {
-            sp::TVComplex spectr(response.size());
+            sp::TVComplex spectr(spectrPeriods.grid().size());
 
             int res = kt.deconvolve(
                                  response.size(), &periodGrid.grid()[0], &response[0],
-                                 spectr.size(), &periodGrid.grid()[0], &spectr[0],
+                                 spectr.size(), &spectrPeriods.grid()[0], &spectr[0],
                                  iters,
                                  work);
 
             cerr<<iters<<": "<<res<<endl;
-            for(size_t i(0); i<sp::g_periodSteps; ++i)
+            for(size_t i(0); i<spectr.size(); ++i)
             {
                 std::cout<<spectr[i].re()<<", "<<spectr[i].im()<<std::endl;
             }

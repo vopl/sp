@@ -148,34 +148,85 @@ namespace sp
     {
         complex evalSegment(real period, real x0, real y0, real x1, real y1)
         {
-            const real pi = g_pi;
-            const real pi_p_2 = pi*pi;
+            const real pi2 = g_2pi;
+            const real pi2_p_2 = pi2*pi2;
 
             const real t = period;
             const real t_p_2 = t*t;
 
+            const real x1_minus_x0 = x1-x0;
+
+            const real pi2_mul_t = pi2*t;
+
             real re, im;
             {
-                //TODO упростить
-                const real _1 =  ( 2*pi*x1 ) ;
-                const real _3 =  ( 4*pi_p_2*x1-4*pi_p_2*x0 ) ;
-                const real _0 =  ( 2*pi*t*x1-2*pi*t*x0 ) ;
-                const real _2 =  ( 2*pi*x0 ) ;
-                const real _4 =  ( 2*pi*t*x0-2*pi*t*x1 ) ;
-                const real _6 = cos ( _1/t ) ;
-                const real _8 = sin ( _2/t ) ;
-                const real _5 = sin ( _1/t ) ;
-                const real _7 = cos ( _2/t ) ;
-                const real _10 =  ( -t_p_2*_6-2*pi*t*_8*x1+2*pi*t*x0*_8+t_p_2*_7 ) ;
-                const real _9 =  ( _0*_5+t_p_2*_6-t_p_2*_7 ) ;
-                const real _11 =  ( t_p_2*_5+_4*_6-t_p_2*_8 ) ;
-                const real _12 =  ( -t_p_2*_5+2*pi*t*_7*x1+t_p_2*_8-2*pi*t*x0*_7 ) ;
-                const real _13 =  ( _9*y1+_10*y0 ) ;
-                const real _14 =  ( _11*y1+_12*y0 ) ;
-                //expr
+                const real _0_1 =  pi2/t;
 
-                re = _13/_3;im = _14/_3;
+
+                const real _4_1 = x1*_0_1;
+                const real _4_2 = x0*_0_1;
+
+                const real _6 = cos ( _4_1 ) ;
+                const real _8 = sin ( _4_2 ) ;
+                const real _5 = sin ( _4_1 ) ;
+                const real _7 = cos ( _4_2 ) ;
+
+
+
+
+
+                const real _0 =  pi2_mul_t * ( x1_minus_x0 ) ;
+
+                const real _7_2 = t_p_2*(_7-_6);
+                const real _9  =  ( _0*_5 - _7_2 ) ;
+                const real _10 =  ( _8*_0 - _7_2 ) ;
+                const real _13 =  ( _9*y1 - _10*y0 ) ;
+
+                const real _3 =  pi2_p_2 * ( x1_minus_x0 ) ;
+                re = _13/_3;
+
+                const real _9_1 = t_p_2*(_5-_8);
+                const real _11 =  ( _9_1 -_0*_6 ) ;
+                const real _12 =  ( _9_1 -_7*_0 ) ;
+                const real _14 =  ( _11*y1 - _12*y0 ) ;
+
+                im = _14/_3;
             }
+
+
+//            real re2, im2;
+//            {
+//                const real pi = g_pi;
+//                const real pi_p_2 = pi*pi;
+
+//                //TODO упростить
+//                const real _1 =  ( 2*pi*x1 ) ;
+//                const real _3 =  ( 4*pi_p_2*x1-4*pi_p_2*x0 ) ;
+//                const real _0 =  ( 2*pi*t*x1-2*pi*t*x0 ) ;
+//                const real _2 =  ( 2*pi*x0 ) ;
+//                const real _4 =  ( 2*pi*t*x0-2*pi*t*x1 ) ;
+//                const real _6 = cos ( _1/t ) ;
+//                const real _8 = sin ( _2/t ) ;
+//                const real _5 = sin ( _1/t ) ;
+//                const real _7 = cos ( _2/t ) ;
+//                const real _10 =  ( -t_p_2*_6-2*pi*t*_8*x1+2*pi*t*x0*_8+t_p_2*_7 ) ;
+//                const real _9 =  ( _0*_5+t_p_2*_6-t_p_2*_7 ) ;
+//                const real _11 =  ( t_p_2*_5+_4*_6-t_p_2*_8 ) ;
+//                const real _12 =  ( -t_p_2*_5+2*pi*t*_7*x1+t_p_2*_8-2*pi*t*x0*_7 ) ;
+//                const real _13 =  ( _9*y1+_10*y0 ) ;
+//                const real _14 =  ( _11*y1+_12*y0 ) ;
+//                //expr
+
+//                re2 = _13/_3;im2 = _14/_3;
+//            }
+
+//            if(fabs(re-re2) > 1e-12 || fabs(im-im2) > 1e-12)
+//            {
+//                std::cerr<<fabs(re-re2)<<", "<<fabs(im-im2)<<std::endl;
+//                exit(0);
+//            }
+
+
 
             return complex(re, im);
         }
