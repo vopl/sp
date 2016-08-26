@@ -10,7 +10,7 @@
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 static const std::size_t phasesAmountForKernelApproximator = 2;//MAGIC
 static const std::size_t samplesOnSignalPeriod = 50000;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
-static const std::size_t samplesOnLevelPeriod  = 2000;
+static const std::size_t samplesOnLevelPeriod  = 4000;
 
 
 

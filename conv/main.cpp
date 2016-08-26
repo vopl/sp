@@ -81,9 +81,7 @@ int main(int argc, char *argv[])
     if(1)
     {
         sp::KernelTabled kt(POW);
-        //sp::Kernel k(POW);
-        //kt.setup(5, 0.1, 10, 1000);
-        //kt.setup(10, 0.1, 10.0, 100*1000);
+        //sp::Kernel kt(POW);
 
         //чето с фиром
 //        kt.eval(200, 1, sp::complex(1,0));
@@ -105,7 +103,7 @@ int main(int argc, char *argv[])
 
             //sp::real t1 = (periodGrid.grid()[300] + periodGrid.grid()[300])/2;
 
-            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[450], sp::complex(1,0));
+            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[350], sp::complex(1,0));
 
 
 //            response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[300], sp::complex(1,0));

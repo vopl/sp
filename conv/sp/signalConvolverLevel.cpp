@@ -102,7 +102,7 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolverLevel::filtrate(const std::vector<TVReal> &halfFirs)
+    void SignalConvolverLevel::filtrate(const std::vector<std::vector<float>> &halfFirs)
     {
         _valuesFiltered[0] = _values[0];
 
@@ -111,7 +111,7 @@ namespace sp
             if(0)
             {
                 assert(index*2 < halfFirs.size());
-                const TVReal &fir = halfFirs[index];
+                const std::vector<float> &fir = halfFirs[index];
                 const std::size_t firSize = fir.size();
 
                 real sum = 0;
@@ -125,7 +125,7 @@ namespace sp
             if(1)
             {
                 assert(index < halfFirs.size());
-                const TVReal &halfFir = halfFirs[index];
+                const std::vector<float> &halfFir = halfFirs[index];
                 const std::size_t halfFirSize = halfFir.size();
                 assert(halfFirSize>=2);
                 const std::size_t firSize = (halfFirSize-1)*2+1;
