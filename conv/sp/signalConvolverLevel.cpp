@@ -26,18 +26,8 @@ namespace sp
     {
         for(std::size_t valueIndex(0); valueIndex<_values.size(); ++valueIndex)
         {
-            //real startTime = _sampleStep*valueIndex;
-            //real stopTime = startTime+_sampleStep;
-
-            //TODO: двинуть не назад а вперед, тогда не случится уполовинивание первого кадра
-            real startTime = _sampleStep*(real(valueIndex)-real(0.5));//первый кадр не полный, только половина, чтобы центры сэмплов не плыли
+            real startTime = _sampleStep*valueIndex;
             real stopTime = startTime+_sampleStep;
-
-            if(!valueIndex)
-            {
-                startTime = 0;
-            }
-
 
             std::size_t signalStartIdx = std::size_t(startTime/_signalSampleStep);
             std::size_t signalStopIdx = std::size_t(stopTime/_signalSampleStep);
