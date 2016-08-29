@@ -9,8 +9,8 @@
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 static const std::size_t phasesAmountForKernelApproximator = 2;//MAGIC
-static const std::size_t samplesOnSignalPeriod = 20000;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
-static const std::size_t samplesOnLevelPeriod  = 1000;
+static const std::size_t samplesOnSignalPeriod = 400000;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
+static const std::size_t samplesOnLevelPeriod  = 200;
 
 
 
@@ -163,7 +163,7 @@ namespace sp
             1e-40,  //LM_INIT_MU,        //mu
             1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
             1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
-            1e-20,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
+            1e-30,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
         };
 
         std::vector<double> d_sv(ssize*2);
@@ -299,15 +299,15 @@ namespace sp
     {
         ValuesByPeriod::iterator iter = _valuesByPeriod.lower_bound(t);
 
-        static const real maxDelta = std::numeric_limits<real>::epsilon()*100;
+        static const real maxDelta = std::numeric_limits<real>::epsilon()*10;
 
         bool found = false;
 
-        if(fabs(iter->first-t) > maxDelta)
+        if(fabs(iter->first/t-1) > maxDelta)
         {
             iter--;
 
-            if(fabs(iter->first-t) > maxDelta)
+            if(fabs(iter->first/t-1) > maxDelta)
             {
                 Value v;
                 buildValue(t, v._re, v._im);

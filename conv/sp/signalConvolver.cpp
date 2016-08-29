@@ -91,7 +91,7 @@ namespace sp
         for(std::size_t firIdx(0); firIdx<_halfFirs.size(); ++firIdx)
         {
             std::size_t firLen = (firIdx*2)+3;
-            real bndT = (real(firLen-1))/(_pow/2)/2;
+            real bndT = (real(firLen-1))/(_pow)/2;
             lowPassHalfFir(bndT, firLen, _halfFirs[firIdx]);
 
 //            if(firIdx>50)

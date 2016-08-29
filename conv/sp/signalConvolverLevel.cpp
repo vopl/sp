@@ -26,8 +26,18 @@ namespace sp
     {
         for(std::size_t valueIndex(0); valueIndex<_values.size(); ++valueIndex)
         {
-            real startTime = _sampleStep*valueIndex;
+            //real startTime = _sampleStep*valueIndex;
+            //real stopTime = startTime+_sampleStep;
+
+            //TODO: двинуть не назад а вперед, тогда не случится уполовинивание первого кадра
+            real startTime = _sampleStep*(real(valueIndex)-real(0.5));//первый кадр не полный, только половина, чтобы центры сэмплов не плыли
             real stopTime = startTime+_sampleStep;
+
+            if(!valueIndex)
+            {
+                startTime = 0;
+            }
+
 
             std::size_t signalStartIdx = std::size_t(startTime/_signalSampleStep);
             std::size_t signalStopIdx = std::size_t(stopTime/_signalSampleStep);
@@ -236,11 +246,12 @@ namespace sp
     {
         const real step0 = 1 / _pow;
 
-        real period_m1 = _period /(1.0-step0/2);
-        real period_p1 = _period /(1.0+step0/2);
+//        real period_m1 = _period /(1.0-step0/2);
+//        real period_p1 = _period /(1.0+step0/2);
 
-        Summator<complex> res_m1;
-        Summator<complex> res_p1;
+        Summator<complex> res;
+//        Summator<complex> res_m1;
+//        Summator<complex> res_p1;
 
         for(std::size_t index(0); index<_valuesFiltered.size()-1; ++index)
         {
@@ -250,11 +261,13 @@ namespace sp
             real y0 = _valuesFiltered[index];
             real y1 = _valuesFiltered[index+1];
 
-            res_m1 += evalSegment(period_m1, x0, y0, x1, y1);
-            res_p1 + evalSegment(period_p1, x0, y0, x1, y1);
+            res += evalSegment(_period, x0, y0, x1, y1);
+//            res_m1 += evalSegment(period_m1, x0, y0, x1, y1);
+//            res_p1 += evalSegment(period_p1, x0, y0, x1, y1);
         }
 
-        return (res_p1*(1.0+step0/2) - res_m1*(1.0-step0/2)) / (_period * _pow);
+        return res / (_period * _pow);
+        //return (res_p1*(1.0+step0/2) - res_m1*(1.0-step0/2)) / (_period * _pow);
     }
 
 }
