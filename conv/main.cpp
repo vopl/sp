@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
         sp::real x = index * sp::g_sampleStep;
         signal[index] = 0;
 
-        for(std::size_t k(10); k<700; k+=10)
+        for(std::size_t k(0); k<800; k+=4)
         {
             signal[index] += cos((x-1.5)*sp::g_2pi/periodGrid.grid()[k]);
         }
@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
 
         sp::TVComplex response(sp::g_periodSteps);
         sp::SignalConvolver c;
-        c.setup(POW, periodGrid, sp::g_sampleStep, 200);
+        c.setup(POW, periodGrid, sp::g_sampleStep, 400);
 
         std::cerr<<"push signal"<<std::endl;
         c.pushSignal(&signal[0], signal.size());
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 
 //            //sp::real t1 = (periodGrid.grid()[300] + periodGrid.grid()[300])/2;
 
-//            for(std::size_t k(0); k<850; k+=4)
+//            for(std::size_t k(0); k<800; k+=4)
 //            {
 //                response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[k], sp::complex(0,1));
 //            }
@@ -122,12 +122,12 @@ int main(int argc, char *argv[])
 
         std::vector<double> work;
 
-        sp::PeriodGrid spectrPeriods(periodGrid.grid()[0], periodGrid.grid()[850], 426, sp::PeriodGridType::frequencyLog);
+        sp::PeriodGrid spectrPeriods(periodGrid.grid()[0], periodGrid.grid()[800], 401, sp::PeriodGridType::frequencyLog);
         //sp::PeriodGrid spectrPeriods(1.0/8000, 1.0/40, 1000, sp::PeriodGridType::frequencyLog);
 
         std::cerr<<"sfMin: "<<1.0/spectrPeriods.grid().back()<<", sfMax: "<<1.0/spectrPeriods.grid().front()<<std::endl;
 
-        int iters = 4;
+        int iters = 10;
         //for(int iters0(1); iters0<20; iters0++)
         {
             sp::TVComplex spectr(spectrPeriods.grid().size());
