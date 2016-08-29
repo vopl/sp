@@ -48,27 +48,20 @@ int main(int argc, char *argv[])
 
 
 
+    std::cerr<<"make signal"<<std::endl;
     sp::TVReal signal;
 
     signal.resize(std::size_t(sp::g_periodMax*POW*2/sp::g_sampleStep+1));//чтобы уместился максимальный период
     for(size_t index(0); index<signal.size(); ++index)
     {
         sp::real x = index * sp::g_sampleStep;
-        signal[index] =
-//                cos((x-1.5)*sp::g_2pi/periodGrid.grid()[200]) +
-//                cos((x-1.5)*sp::g_2pi/periodGrid.grid()[210]) +
-//                cos((x-1.5)*sp::g_2pi/periodGrid.grid()[220]) +
-//                cos((x-1.5)*sp::g_2pi/periodGrid.grid()[230]) +
-//                cos((x-1.5)*sp::g_2pi/periodGrid.grid()[240]) +
-//                cos((x-1.5)*sp::g_2pi/periodGrid.grid()[250]) +
-//                cos((x-1.5)*sp::g_2pi/periodGrid.grid()[260]) +
-//                cos((x-1.5)*sp::g_2pi/periodGrid.grid()[270]) +
-//                cos((x-1.5)*sp::g_2pi/periodGrid.grid()[280]) +
-//                cos((x-1.5)*sp::g_2pi/periodGrid.grid()[290]) +
-//                cos((x-1.5)*sp::g_2pi/periodGrid.grid()[300]) +
+        signal[index] = 0;
 
-                cos((x-1.5)*sp::g_2pi/periodGrid.grid()[450]) +
-                0;
+        for(std::size_t k(10); k<700; k+=10)
+        {
+            signal[index] += cos((x-1.5)*sp::g_2pi/periodGrid.grid()[k]);
+        }
+
 
         //cout << x<<","<<signal[index]<< endl;
 
@@ -91,22 +84,26 @@ int main(int argc, char *argv[])
 
         sp::TVComplex response(sp::g_periodSteps);
         sp::SignalConvolver c;
-        //c.setup(POW, periodGrid, sp::g_sampleStep, 400);
-        //c.pushSignal(&signal[0], signal.size());
-        //response = c.convolve();
+        c.setup(POW, periodGrid, sp::g_sampleStep, 200);
+
+        std::cerr<<"push signal"<<std::endl;
+        c.pushSignal(&signal[0], signal.size());
+
+        std::cerr<<"convolve signal"<<std::endl;
+        response = c.convolve();
 
         for(size_t i(0); i<periodGrid.grid().size(); ++i)
         {
 //            std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
 
-            response[i] = 0;
+//            response[i] = 0;
 
-            //sp::real t1 = (periodGrid.grid()[300] + periodGrid.grid()[300])/2;
+//            //sp::real t1 = (periodGrid.grid()[300] + periodGrid.grid()[300])/2;
 
-            for(std::size_t k(0); k<401; k+=2)
-            {
-                response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[k], sp::complex(0,1));
-            }
+//            for(std::size_t k(0); k<850; k+=4)
+//            {
+//                response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[k], sp::complex(0,1));
+//            }
 
 
 
@@ -125,9 +122,12 @@ int main(int argc, char *argv[])
 
         std::vector<double> work;
 
-        sp::PeriodGrid spectrPeriods(periodGrid.grid()[0], periodGrid.grid()[400], 401, sp::PeriodGridType::frequencyLog);
+        sp::PeriodGrid spectrPeriods(periodGrid.grid()[0], periodGrid.grid()[850], 426, sp::PeriodGridType::frequencyLog);
+        //sp::PeriodGrid spectrPeriods(1.0/8000, 1.0/40, 1000, sp::PeriodGridType::frequencyLog);
 
-        int iters = 20;
+        std::cerr<<"sfMin: "<<1.0/spectrPeriods.grid().back()<<", sfMax: "<<1.0/spectrPeriods.grid().front()<<std::endl;
+
+        int iters = 4;
         //for(int iters0(1); iters0<20; iters0++)
         {
             sp::TVComplex spectr(spectrPeriods.grid().size());
