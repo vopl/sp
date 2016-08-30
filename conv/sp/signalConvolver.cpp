@@ -175,6 +175,7 @@ namespace sp
 
         for(std::size_t i(0); i<_levels.size(); ++i)
         {
+            std::cerr<<"convolve level "<<i<<std::endl;
             res[i] = _levels[i]->convolve();
         }
 
@@ -208,7 +209,9 @@ namespace sp
 
         for(std::size_t i(0); i<_levels.size(); ++i)
         {
+            std::cerr<<"update level "<<i<<std::endl;
             _levels[i]->update(signal, signalSize);
+            std::cerr<<"filtrate level "<<i<<std::endl;
             _levels[i]->filtrate(_halfFirs);
         }
     }

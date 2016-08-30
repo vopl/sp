@@ -87,60 +87,53 @@ namespace sp
         //6 point 5th order 32x
 
         //[xStart, xStop]
-        real integrate(real xStart, real xStop, const real y[6])
+        real integrate(real xStart, real xStop, const real *y)
         {
-            real even1 = y[3]+y[2];
-            real even2 = y[4]+y[1];
-            real even3 = y[5]+y[0];
+            assert(0);
+//            real even1 = y[3]+y[2];
+//            real even2 = y[4]+y[1];
+//            real even3 = y[5]+y[0];
 
-            real odd1 = y[3]-y[2];
-            real odd2 = y[4]-y[1];
-            real odd3 = y[5]-y[0];
+//            real odd1 = y[3]-y[2];
+//            real odd2 = y[4]-y[1];
+//            real odd3 = y[5]-y[0];
 
-            real c0 = even1* 0.42685983409379380  + even2* 0.07238123511170030 + even3*0.00075893079450573;
-            real c1 = odd1 * 0.35831772348893259  + odd2 * 0.20451644554758297 + odd3 *0.00562658797241955;
-            real c2 = even1*-0.217009177221292431 + even2* 0.20051376594086157 + even3*0.01649541128040211;
-            real c3 = odd1 *-0.25112715343740988  + odd2 * 0.04223025992200458 + odd3 *0.02488727472995134;
-            real c4 = even1* 0.04166946673533273  + even2*-0.06250420114356986 + even3*0.02083473440841799;
-            real c5 = odd1 * 0.08349799235675044  + odd2 *-0.04174912841630993 + odd3 *0.00834987866042734;
 
-            real xStart1 = xStart;
+//            real c0 = even1* 0.42685983409379380  + even2* 0.07238123511170030 + even3*0.00075893079450573;
+//            real c1 = odd1 * 0.35831772348893259  + odd2 * 0.20451644554758297 + odd3 *0.00562658797241955;
+//            real c2 = even1*-0.217009177221292431 + even2* 0.20051376594086157 + even3*0.01649541128040211;
+//            real c3 = odd1 *-0.25112715343740988  + odd2 * 0.04223025992200458 + odd3 *0.02488727472995134;
+//            real c4 = even1* 0.04166946673533273  + even2*-0.06250420114356986 + even3*0.02083473440841799;
+//            real c5 = odd1 * 0.08349799235675044  + odd2 *-0.04174912841630993 + odd3 *0.00834987866042734;
 
-            real xStart2 = xStart1*xStart1;
-            real xStart3 = xStart2*xStart1;
-            real xStart4 = xStart3*xStart1;
-            real xStart5 = xStart4*xStart1;
-            real xStart6 = xStart5*xStart1;
+            real even1 = y[1]+y[0], odd1 = y[1]-y[0];
+            real even2 = y[2]+y[-1], odd2 = y[2]-y[-1];
+            real even3 = y[3]+y[-2], odd3 = y[3]-y[-2];
+            real c0 = even1*0.42685983409379380 + even2*0.07238123511170030 + even3*0.00075893079450573;
+            real c1 = odd1*0.35831772348893259 + odd2*0.20451644554758297 + odd3*0.00562658797241955;
+            real c2 = even1*-0.217009177221292431 + even2*0.20051376594086157 + even3*0.01649541128040211;
+            real c3 = odd1*-0.25112715343740988 + odd2*0.04223025992200458 + odd3*0.02488727472995134;
+            real c4 = even1*0.04166946673533273 + even2*-0.06250420114356986 + even3*0.02083473440841799;
+            real c5 = odd1*0.08349799235675044 + odd2*-0.04174912841630993 + odd3*0.00834987866042734;
 
-            real xStop1 = xStop;
 
-            real xStop2 = xStop1*xStop1;
-            real xStop3 = xStop2*xStop1;
-            real xStop4 = xStop3*xStop1;
-            real xStop5 = xStop4*xStop1;
-            real xStop6 = xStop5*xStop1;
+            assert(xStart>=0 && xStart<=1);
+            assert(xStop>=0 && xStop<=1);
+            assert(xStart<=xStop);
 
-            return
-                    (
-                        +(80*c5)*xStop6
-                        +(96*c4-240*c5)*xStop5
-                        +(300*c5-240*c4+120*c3)*xStop4
-                        +(-200*c5+240*c4-240*c3+160*c2)*xStop3
-                        +(75*c5-120*c4+180*c3-240*c2+240*c1)*xStop2
-                        +(-15*c5+30*c4-60*c3+120*c2-240*c1+480*c0)*xStop1
+            real z = xStart-0.5;
+            real a = ((((c5*z+c4)*z+c3)*z+c2)*z+c1)*z + c0;
 
-                        +(-80*c5)*xStart6
-                        +(240*c5-96*c4)*xStart5
-                        +(-300*c5+240*c4-120*c3)*xStart4
-                        +(200*c5-240*c4+240*c3-160*c2)*xStart3
-                        +(-75*c5+120*c4-180*c3+240*c2-240*c1)*xStart2
-                        +(15*c5-30*c4+60*c3-120*c2+240*c1-480*c0)*xStart
-                    )/480;
+            z = xStop-0.5;
+            real b = ((((c5*z+c4)*z+c3)*z+c2)*z+c1)*z + c0;
+
+            return (b-a)/(xStop-xStart);
         }
 
         //[0, 1]
-        real integrate(const real y[6])
+        real integrate(const real *y)
         {
+            return 0;
             real even1 = y[3]+y[2];
             real even2 = y[4]+y[1];
             real even3 = y[5]+y[0];
@@ -149,6 +142,7 @@ namespace sp
 //            real odd2 = y[4]-y[1];
 //            real odd3 = y[5]-y[0];
 
+/*
             real c0 = even1* 0.42685983409379380  + even2* 0.07238123511170030 + even3*0.00075893079450573;
 //            real c1 = odd1 * 0.35831772348893259  + odd2 * 0.20451644554758297 + odd3 *0.00562658797241955;
             real c2 = even1*-0.217009177221292431 + even2* 0.20051376594086157 + even3*0.01649541128040211;
@@ -158,27 +152,55 @@ namespace sp
 
             return
                     c4/80+c2/12+c0;
+*/
+
+            Summator<real> res(0);
+
+            res += even1 * (real(0.42685983409379380L) + real(-0.217009177221292431L/12) + real( 0.04166946673533273L/80));
+            res += even2 * (real(0.07238123511170030L) + real( 0.20051376594086157L /12) + real(-0.06250420114356986L/80));
+            res += even3 * (real(0.00075893079450573L) + real( 0.01649541128040211L /12) + real( 0.02083473440841799L/80));
+
+            return res;
         }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void SignalConvolverLevel::update(const real *signal, std::size_t signalSize)
     {
+
+#define LINEAR 0
+
         for(std::size_t valueIndex(0); valueIndex<_values.size(); ++valueIndex)
         {
-            real startTime = _sampleStep*valueIndex + 3*_signalSampleStep;
+#if LINEAR
+            real startTime = _sampleStep*valueIndex;
+#else
+            real startTime = _sampleStep*valueIndex;// + 2*_signalSampleStep;
+#endif
             real stopTime = startTime+_sampleStep;
 
             std::size_t signalStartIdx = std::size_t(startTime/_signalSampleStep);
             std::size_t signalStopIdx = std::size_t(stopTime/_signalSampleStep);
 
-            assert(signalStartIdx > 0);
+#if LINEAR
+            assert(signalStartIdx >= 0);
             assert(signalStopIdx < signalSize-1);
+#else
+            if(signalStartIdx<5)
+            {
+                _values[valueIndex] = 0;
+                continue;
+                signalStartIdx += 1;
+                signalStopIdx += 1;
+            }
+
+            assert(signalStartIdx >= 0+2);
+            assert(signalStopIdx < signalSize-1-4);
+#endif
 
             Summator<real> sum;
             real amount = 0;
 
-#define LINEAR 0
 
 #if LINEAR
             real firstSampleStart = signal[signalStartIdx];
@@ -204,54 +226,54 @@ namespace sp
                 sum += amount12 * (firstSampleStart+lastSampleStop)/2;
                 amount = amount12;
 #else
-                sum += integrate(first01x, last01x, signal+signalStartIdx-3);
+                sum += integrate(first01x, last01x, signal+signalStartIdx);
                 amount = last01x - first01x;
 #endif
 
             }
             else
             {
-                //from multiple signal samples
+//                //from multiple signal samples
 
-                if(signalStartIdx < signalStopIdx-1)
-                {
-#if LINEAR
-                    sum += signal[signalStartIdx+1]/2;
-                    for(std::size_t signalIndex(signalStartIdx+2); signalIndex<signalStopIdx; ++signalIndex)
-                    {
-                        sum += signal[signalIndex];
-                    }
-                    sum += signal[signalStopIdx]/2;
-#else
-                    for(std::size_t signalIndex(signalStartIdx+1); signalIndex<signalStopIdx; ++signalIndex)
-                    {
-                        sum += integrate(signal+signalIndex-3);
-                    }
-#endif
-                }
-                amount = signalStopIdx - signalStartIdx - 1;
+//                if(signalStartIdx < signalStopIdx-1)
+//                {
+//#if LINEAR
+//                    sum += signal[signalStartIdx+1]/2;
+//                    for(std::size_t signalIndex(signalStartIdx+2); signalIndex<signalStopIdx; ++signalIndex)
+//                    {
+//                        sum += signal[signalIndex];
+//                    }
+//                    sum += signal[signalStopIdx]/2;
+//#else
+//                    for(std::size_t signalIndex(signalStartIdx+1); signalIndex<signalStopIdx; ++signalIndex)
+//                    {
+//                        sum += integrate(signal+signalIndex-2);
+//                    }
+//#endif
+//                }
+//                amount = signalStopIdx - signalStartIdx - 1;
 
-                real first01x = (startTime - (signalStartIdx)*_signalSampleStep) / _signalSampleStep;
-#if LINEAR
-                firstSampleStart = firstSampleStart + (firstSampleStop - firstSampleStart)*first01x;
-                real amount1 = 1 - first01x;
-                sum += amount1 * (firstSampleStart+firstSampleStop)/2;
-                amount += amount1;
-#else
-                sum += integrate(first01x, 1, signal+signalStartIdx-3);
-                amount += 1 - first01x;
-#endif
+//                real first01x = (startTime - (signalStartIdx)*_signalSampleStep) / _signalSampleStep;
+//#if LINEAR
+//                firstSampleStart = firstSampleStart + (firstSampleStop - firstSampleStart)*first01x;
+//                real amount1 = 1 - first01x;
+//                sum += amount1 * (firstSampleStart+firstSampleStop)/2;
+//                amount += amount1;
+//#else
+//                sum += integrate(first01x, 1, signal+signalStartIdx-2);
+//                amount += 1 - first01x;
+//#endif
 
-                real last01x = (stopTime - (signalStopIdx)*_signalSampleStep) / _signalSampleStep;
-#if LINEAR
-                lastSampleStop = lastSampleStart + (lastSampleStop - lastSampleStart)*last01x;
-                real amount2 = last01x;
-                sum += amount2 * (lastSampleStart+lastSampleStop)/2;
-                amount += amount2;
-#else
-                sum += integrate(0, last01x, signal+signalStopIdx-3);
-                amount += last01x;
-#endif
+//                real last01x = (stopTime - (signalStopIdx)*_signalSampleStep) / _signalSampleStep;
+//#if LINEAR
+//                lastSampleStop = lastSampleStart + (lastSampleStop - lastSampleStart)*last01x;
+//                real amount2 = last01x;
+//                sum += amount2 * (lastSampleStart+lastSampleStop)/2;
+//                amount += amount2;
+//#else
+//                sum += integrate(0, last01x, signal+signalStopIdx-2);
+//                amount += last01x;
+//#endif
 
 
             }
@@ -265,9 +287,9 @@ namespace sp
                 _values[valueIndex] = 0;
             }
 
-            //std::cout<<_values[valueIndex]<<std::endl;
+            std::cout<<_values[valueIndex]<<std::endl;
         }
-        //exit(0);
+        exit(0);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
