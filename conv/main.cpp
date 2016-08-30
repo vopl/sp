@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     std::cerr<<"make signal"<<std::endl;
     sp::TVReal signal;
 
-    signal.resize(std::size_t(sp::g_periodMax*POW*2/sp::g_sampleStep+1));//чтобы уместился максимальный период
+    signal.resize(std::size_t(sp::g_periodMax*POW*2.2/sp::g_sampleStep+1));//чтобы уместился максимальный период
     for(size_t index(0); index<signal.size(); ++index)
     {
         sp::real x = index * sp::g_sampleStep;
@@ -76,21 +76,21 @@ int main(int argc, char *argv[])
         sp::KernelTabled kt(POW);
         //sp::Kernel kt(POW);
 
-        //чето с фиром
-//        kt.eval(.63456, 1, sp::complex(.23452,1.3456));
+//        //чето с фиром
+//        kt.eval(34.56, 1, sp::complex(.23452,1.3456));
 //        exit(0);
 
 
 
         sp::TVComplex response(sp::g_periodSteps);
         sp::SignalConvolver c;
-        c.setup(POW, periodGrid, sp::g_sampleStep, 800);
+        c.setup(POW, periodGrid, sp::g_sampleStep, 1000);
 
-        std::cerr<<"push signal"<<std::endl;
-        c.pushSignal(&signal[0], signal.size());
+//        std::cerr<<"push signal"<<std::endl;
+//        c.pushSignal(&signal[0], signal.size());
 
-        std::cerr<<"convolve signal"<<std::endl;
-        response = c.convolve();
+//        std::cerr<<"convolve signal"<<std::endl;
+//        response = c.convolve();
 
         for(size_t i(0); i<periodGrid.grid().size(); ++i)
         {
@@ -100,10 +100,10 @@ int main(int argc, char *argv[])
 
 //            //sp::real t1 = (periodGrid.grid()[300] + periodGrid.grid()[300])/2;
 
-//            for(std::size_t k(0); k<800; k+=4)
-//            {
-//                response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[k], sp::complex(0,1));
-//            }
+            for(std::size_t k(0); k<800; k+=4)
+            {
+                response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[k], sp::complex(0,1));
+            }
 
 
 
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
 
         std::cerr<<"sfMin: "<<1.0/spectrPeriods.grid().back()<<", sfMax: "<<1.0/spectrPeriods.grid().front()<<std::endl;
 
-        int iters = 10;
+        int iters = 5;
         //for(int iters0(1); iters0<20; iters0++)
         {
             sp::TVComplex spectr(spectrPeriods.grid().size());

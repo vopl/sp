@@ -9,8 +9,8 @@
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 static const std::size_t phasesAmountForKernelApproximator = 2;//MAGIC
-static const std::size_t samplesOnSignalPeriod = 640000;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
-static const std::size_t samplesOnLevelPeriod  =    800;
+static const std::size_t samplesOnSignalPeriod = 1000000;//MAGIC сколько сэмплов сигнала брать на период при построении ядра. Больше-лучше
+static const std::size_t samplesOnLevelPeriod  =    1000;
 
 
 
@@ -161,9 +161,9 @@ namespace sp
         static double levmarOpts[LM_OPTS_SZ] =
         {
             1e-40,  //LM_INIT_MU,        //mu
-            1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
-            1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
-            1e-30,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
+            1e-140,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
+            1e-140,  //LM_STOP_THRESH,    //||Dp||_2 and
+            1e-140,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
         };
 
         std::vector<double> d_sv(ssize*2);
@@ -351,7 +351,7 @@ namespace sp
     void KernelTabled::buildValue(const real &period, complex &re, complex &im)
     {
         const real sampleStep = period/samplesOnSignalPeriod;
-        real targetX = period*_pow*2.0+sampleStep*2;
+        real targetX = period*_pow*2.0+sampleStep*3 + 10*period/samplesOnLevelPeriod;
         TVReal signal(std::size_t(targetX/sampleStep+1.5));
 
         SignalConvolver &sc = getSignalConvolver();

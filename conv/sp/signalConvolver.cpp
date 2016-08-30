@@ -112,7 +112,7 @@ namespace sp
         _signalSamplesPushed = 0;
 
         //_signal.clear();
-        _signal.resize(std::size_t(maxPeriod*_pow*2/_signalSampleStep+0.5) + 2);
+        _signal.resize(std::size_t(maxPeriod*_pow*2/_signalSampleStep+0.5) + 7);
 
         _dirty = true;
     }
