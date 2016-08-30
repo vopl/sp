@@ -57,7 +57,7 @@ namespace sp
             std::size_t mn = n/2-1;
             A.resize(mn+1);
 
-//            real kaizerBeta = 10;
+//            real kaizerBeta = 2;
 //            real kaizerDenominator = kaizerDenom(kaizerBeta);
 
             A[mn] = q;
