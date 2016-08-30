@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
             sp::real x = index * sp::g_sampleStep;
             signal[index] = 0;
 
-            for(std::size_t k(0); k<1; k+=4)
+            for(std::size_t k(0); k<800; k+=4)
             {
                 signal[index] += cos((x-1.5)*sp::g_2pi/periodGrid.grid()[k]);
             }
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         sp::TVComplex response(sp::g_periodSteps);
         sp::SignalConvolver c;
-        c.setup(POW, periodGrid, sp::g_sampleStep, 400);
+        c.setup(POW, periodGrid, sp::g_sampleStep, 800);
 
         std::cerr<<"push signal"<<std::endl;
         c.pushSignal(&signal[0], signal.size());
