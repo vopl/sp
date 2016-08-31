@@ -98,12 +98,12 @@ namespace sp
             real odd3 = y[5]-y[0];
 
 
-            real c0 = even1* 0.42685983409379380  + even2* 0.07238123511170030 + even3*0.00075893079450573;
-            real c1 = odd1 * 0.35831772348893259  + odd2 * 0.20451644554758297 + odd3 *0.00562658797241955;
-            real c2 = even1*-0.217009177221292431 + even2* 0.20051376594086157 + even3*0.01649541128040211;
-            real c3 = odd1 *-0.25112715343740988  + odd2 * 0.04223025992200458 + odd3 *0.02488727472995134;
-            real c4 = even1* 0.04166946673533273  + even2*-0.06250420114356986 + even3*0.02083473440841799;
-            real c5 = odd1 * 0.08349799235675044  + odd2 *-0.04174912841630993 + odd3 *0.00834987866042734;
+            real c0 = even1* real( 0.42685983409379380L)  + even2* real( 0.07238123511170030L) + even3* real( 0.00075893079450573L);
+            real c1 = odd1 * real( 0.35831772348893259L)  + odd2 * real( 0.20451644554758297L) + odd3 * real( 0.00562658797241955L);
+            real c2 = even1* real(-0.217009177221292431L) + even2* real( 0.20051376594086157L) + even3* real( 0.01649541128040211L);
+            real c3 = odd1 * real(-0.25112715343740988L)  + odd2 * real( 0.04223025992200458L) + odd3 * real( 0.02488727472995134L);
+            real c4 = even1* real( 0.04166946673533273L)  + even2* real(-0.06250420114356986L) + even3* real( 0.02083473440841799L);
+            real c5 = odd1 * real( 0.08349799235675044L)  + odd2 * real(-0.04174912841630993L) + odd3 * real( 0.00834987866042734L);
 
 
 //            assert(xStart>=0 && xStart<=1);
@@ -123,9 +123,21 @@ namespace sp
             real xStop6 = xStop5*xStop;
 
             return
-                    (80*c5*xStop6+(96*c4-240*c5)*xStop5+(300*c5-240*c4+120*c3)*xStop4+(-200*c5+240*c4-240*c3+160*c2)*xStop3+(75*c5-120*c4+180*c3-240*c2+240*c1)*xStop2+
-                    (-15*c5+30*c4-60*c3+120*c2-240*c1+480*c0)*xStop-80*c5*xStart6+(240*c5-96*c4)*xStart5+(-300*c5+240*c4-120*c3)*xStart4+(200*c5-240*c4+240*c3-160*c2)*xStart3+
-                    (-75*c5+120*c4-180*c3+240*c2-240*c1)*xStart2+(15*c5-30*c4+60*c3-120*c2+240*c1-480*c0)*xStart)/480;
+                    (
+                        +(80*c5)*xStop6
+                        +(-240*c5+96*c4)*xStop5
+                        +(300*c5-240*c4+120*c3)*xStop4
+                        +(-200*c5+240*c4-240*c3+160*c2)*xStop3
+                        +(75*c5-120*c4+180*c3-240*c2+240*c1)*xStop2
+                        +(-15*c5+30*c4-60*c3+120*c2-240*c1+480*c0)*xStop
+
+                        +(-80*c5)*xStart6
+                        +(240*c5-96*c4)*xStart5
+                        +(-300*c5+240*c4-120*c3)*xStart4
+                        +(200*c5-240*c4+240*c3-160*c2)*xStart3
+                        +(-75*c5+120*c4-180*c3+240*c2-240*c1)*xStart2
+                        +(15*c5-30*c4+60*c3-120*c2+240*c1-480*c0)*xStart
+                    )/480;
         }
 
         //[0, 1]
@@ -269,35 +281,51 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolverLevel::update(const real *signal, std::size_t signalSize)
+    void SignalConvolverLevel::update(const real *signal, std::size_t signalSize, SignalApproxType sat)
     {
-        for(std::size_t valueIndex(0); valueIndex<_values.size(); ++valueIndex)
+        switch(sat)
         {
-            real startTime = _sampleStep*valueIndex;// + 2*_signalSampleStep;
-            real stopTime = startTime+_sampleStep;
+        case SignalApproxType::linear:
+            for(std::size_t valueIndex(0); valueIndex<_values.size(); ++valueIndex)
+            {
+                real startTime = _sampleStep*valueIndex;
+                real stopTime = startTime+_sampleStep;
 
-            std::size_t signalStartIdx = std::size_t(startTime/_signalSampleStep);
-            std::size_t signalStopIdx = std::size_t(stopTime/_signalSampleStep);
+                std::size_t signalStartIdx = std::size_t(startTime/_signalSampleStep);
+                std::size_t signalStopIdx = std::size_t(stopTime/_signalSampleStep);
 
-//            if(signalStartIdx < 2)
-//            {
-//                signalStartIdx++;
-//                signalStopIdx++;
-//            }
+                assert(signalStartIdx >= 0);
+                assert(signalStopIdx < signalSize-1);
 
-//            assert(signalStartIdx >= 2);
-//            assert(signalStopIdx < signalSize-1-3);
+                _values[valueIndex] = updateOneLinear(signal, signalSize, startTime, stopTime, signalStartIdx, signalStopIdx);
+            }
+            break;
 
-//            if(signalStartIdx<2)
-//            {
-//                _values[valueIndex] = updateOneLinear(signal, signalSize, startTime, stopTime, signalStartIdx, signalStopIdx);
-//            }
-//            else
-//            {
-//                _values[valueIndex] = updateOnePoly(signal, signalSize, startTime, stopTime, signalStartIdx, signalStopIdx);
-//            }
+        case SignalApproxType::poly6p5o32x:
+            for(std::size_t valueIndex(0); valueIndex<_values.size(); ++valueIndex)
+            {
+                real startTime = _sampleStep*valueIndex+ 2*_signalSampleStep;
+                real stopTime = startTime+_sampleStep;
 
-            _values[valueIndex] = updateOneLinear(signal, signalSize, startTime, stopTime, signalStartIdx, signalStopIdx);
+                std::size_t signalStartIdx = std::size_t(startTime/_signalSampleStep);
+                std::size_t signalStopIdx = std::size_t(stopTime/_signalSampleStep);
+
+                if(signalStartIdx < 2)
+                {
+                    signalStartIdx++;
+                    signalStopIdx++;
+                }
+
+                assert(signalStartIdx >= 2);
+                assert(signalStopIdx < signalSize-1-3);
+
+                _values[valueIndex] = updateOnePoly(signal, signalSize, startTime, stopTime, signalStartIdx, signalStopIdx);
+            }
+            break;
+
+//        default:
+//            assert(0);
+//            abort();
         }
 
 //        for(const auto &v: _values)
@@ -317,11 +345,11 @@ namespace sp
 
         for(std::size_t index(0); index<_valuesFiltered.size()-1; ++index)
         {
-            if(index < std::size_t(_pow + 1.5))//попробовать без этого
-            {
-                _valuesFiltered[index+1] = _values[index+1];
-                continue;
-            }
+//            if(index < std::size_t(_pow + 2.5))//попробовать без этого
+//            {
+//                _valuesFiltered[index+1] = _values[index+1];
+//                continue;
+//            }
 
             {
                 assert(index < halfFirs.size());

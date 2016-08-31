@@ -57,8 +57,8 @@ namespace sp
             std::size_t mn = n/2-1;
             A.resize(mn+1);
 
-//            real kaizerBeta = 2;
-//            real kaizerDenominator = kaizerDenom(kaizerBeta);
+            real kaizerBeta = 5;
+            real kaizerDenominator = kaizerDenom(kaizerBeta);
 
             A[mn] = q;
             Summator<real> sum = A[mn]/2;
@@ -67,7 +67,7 @@ namespace sp
 
                 real x = k*w;
                 //real v = q * sin(x)/(x);// * kaizer(kaizerBeta, mn+k, n-2, kaizerDenominator);
-                real v = q * boost::math::sinc_pi(x);// * kaizer(kaizerBeta, mn+k, n-2, kaizerDenominator);
+                real v = q * boost::math::sinc_pi(x) * kaizer(kaizerBeta, int(mn+k), int(n-2), kaizerDenominator);
 
                 A[mn-k] = v;
                 sum += v;
@@ -106,7 +106,7 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolver::setupSignal(real maxPeriod, real sampleStep)
+    void SignalConvolver::setupSignal(real maxPeriod, real sampleStep, SignalApproxType sat)
     {
         _signalSampleStep = sampleStep;
         _signalSamplesPushed = 0;
@@ -114,15 +114,17 @@ namespace sp
         //_signal.clear();
         _signal.resize(std::size_t(maxPeriod*_pow*2/_signalSampleStep+0.5) + 7);
 
+        _sat = sat;
+
         _dirty = true;
     }
 
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolver::setup(real pow, const PeriodGrid &periodGrid, real sampleStep, std::size_t samplesPerPeriod)
+    void SignalConvolver::setup(real pow, const PeriodGrid &periodGrid, real sampleStep, std::size_t samplesPerPeriod, SignalApproxType sat)
     {
         setupFirs(pow, samplesPerPeriod);
-        setupSignal(periodGrid.grid().back(), sampleStep);
+        setupSignal(periodGrid.grid().back(), sampleStep, sat);
 
         _levels.resize(periodGrid.grid().size());
 
@@ -188,7 +190,7 @@ namespace sp
         std::size_t signalSize = _signal.size();
 
         SignalConvolverLevel level(_pow, period, _signalSampleStep, _samplesPerPeriod);
-        level.update(signal, signalSize);
+        level.update(signal, signalSize, _sat);
         level.filtrate(_halfFirs);
 
         return level.convolve();
@@ -211,7 +213,7 @@ namespace sp
             for(std::size_t i(0); i<_levels.size(); ++i)
             {
                 std::cerr<<"update level "<<i<<std::endl;
-                _levels[i]->update(signal, signalSize);
+                _levels[i]->update(signal, signalSize, _sat);
             }
         }
 

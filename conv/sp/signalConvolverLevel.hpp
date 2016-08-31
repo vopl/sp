@@ -2,7 +2,7 @@
 
 #include "sp/types.hpp"
 #include "sp/complex.hpp"
-#include <boost/circular_buffer.hpp>
+#include "sp/signalConvolver.hpp"
 
 namespace sp
 {
@@ -12,7 +12,7 @@ namespace sp
         SignalConvolverLevel(real pow, real period, real signalSampleStep, std::size_t samplesPerPeriod);
         ~SignalConvolverLevel();
 
-        void update(const real *signal, std::size_t signalSize);
+        void update(const real *signal, std::size_t signalSize, SignalApproxType sat);
         void filtrate(const std::vector<std::vector<real> > &firs);
         complex convolve();
 
