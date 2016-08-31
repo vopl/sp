@@ -204,15 +204,22 @@ namespace sp
 
         _dirty = false;
 
-        const real *signal = &_signal[0];
-        std::size_t signalSize = _signal.size();
+        {
+            const real *signal = &_signal[0];
+            std::size_t signalSize = _signal.size();
+
+            for(std::size_t i(0); i<_levels.size(); ++i)
+            {
+                std::cerr<<"update level "<<i<<std::endl;
+                _levels[i]->update(signal, signalSize);
+            }
+        }
 
         for(std::size_t i(0); i<_levels.size(); ++i)
         {
-            std::cerr<<"update level "<<i<<std::endl;
-            _levels[i]->update(signal, signalSize);
             std::cerr<<"filtrate level "<<i<<std::endl;
             _levels[i]->filtrate(_halfFirs);
         }
+
     }
 }

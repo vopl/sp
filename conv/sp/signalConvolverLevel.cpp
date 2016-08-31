@@ -273,23 +273,31 @@ namespace sp
     {
         for(std::size_t valueIndex(0); valueIndex<_values.size(); ++valueIndex)
         {
-            real startTime = _sampleStep*valueIndex;
+            real startTime = _sampleStep*valueIndex;// + 2*_signalSampleStep;
             real stopTime = startTime+_sampleStep;
 
             std::size_t signalStartIdx = std::size_t(startTime/_signalSampleStep);
             std::size_t signalStopIdx = std::size_t(stopTime/_signalSampleStep);
 
-            assert(signalStartIdx >= 0);
-            assert(signalStopIdx < signalSize-1-4);
+//            if(signalStartIdx < 2)
+//            {
+//                signalStartIdx++;
+//                signalStopIdx++;
+//            }
 
-            if(signalStartIdx<2)
-            {
-                _values[valueIndex] = updateOneLinear(signal, signalSize, startTime, stopTime, signalStartIdx, signalStopIdx);
-            }
-            else
-            {
-                _values[valueIndex] = updateOnePoly(signal, signalSize, startTime, stopTime, signalStartIdx, signalStopIdx);
-            }
+//            assert(signalStartIdx >= 2);
+//            assert(signalStopIdx < signalSize-1-3);
+
+//            if(signalStartIdx<2)
+//            {
+//                _values[valueIndex] = updateOneLinear(signal, signalSize, startTime, stopTime, signalStartIdx, signalStopIdx);
+//            }
+//            else
+//            {
+//                _values[valueIndex] = updateOnePoly(signal, signalSize, startTime, stopTime, signalStartIdx, signalStopIdx);
+//            }
+
+            _values[valueIndex] = updateOneLinear(signal, signalSize, startTime, stopTime, signalStartIdx, signalStopIdx);
         }
 
 //        for(const auto &v: _values)

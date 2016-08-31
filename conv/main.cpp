@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         sp::TVComplex response(sp::g_periodSteps);
         sp::SignalConvolver c;
-        c.setup(POW, periodGrid, sp::g_sampleStep, 800);
+        c.setup(POW, periodGrid, sp::g_sampleStep, 100);
 
         std::cerr<<"push signal"<<std::endl;
         c.pushSignal(&signal[0], signal.size());
