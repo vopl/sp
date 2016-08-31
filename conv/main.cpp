@@ -87,8 +87,8 @@ int main(int argc, char *argv[])
         sp::KernelTabled kt(POW);
         //sp::Kernel kt(POW);
 
-        //чето с фиром
-//        kt.eval(0.56, 1, sp::complex(.23452,1.3456));
+//        //чето с фиром
+//        kt.eval(30, 1, sp::complex(.23452,1.3456));
 //        exit(0);
 
 
@@ -101,11 +101,14 @@ int main(int argc, char *argv[])
         for(size_t index(0); index<signal.size(); ++index)
         {
             sp::real x = index * sp::g_sampleStep;
+            sp::real xTarget = (signal.size()-2)*sp::g_sampleStep;
+
             signal[index] = 0;
 
             for(std::size_t k(0); k<800; k+=4)
             {
-                signal[index] += cos((x-1.5)*sp::g_2pi/periodGrid.grid()[k]);
+                sp::real t = periodGrid.grid()[k];
+                signal[index] += sin((x-xTarget)*sp::g_2pi/t);
             }
 
 
@@ -117,7 +120,7 @@ int main(int argc, char *argv[])
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         sp::TVComplex response(sp::g_periodSteps);
         sp::SignalConvolver c;
-        c.setup(POW, periodGrid, sp::g_sampleStep, 100);
+        c.setup(POW, periodGrid, sp::g_sampleStep, 50, sp::SignalApproxType::poly6p5o32x);
 
         std::cerr<<"push signal"<<std::endl;
         c.pushSignal(&signal[0], signal.size());
