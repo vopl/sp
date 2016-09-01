@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    PeriodGrid echoPeriods(1.0/22000, 1.0/10, 1000, PeriodGridType::frequencyLog);
+    PeriodGrid echoPeriods(1.0/20000, 1.0/10, 1000, PeriodGridType::frequencyLog);
     cout<<"efmin: "<<(1.0/echoPeriods.grid().back())<<", efmax: "<<(1.0/echoPeriods.grid().front())<<", efcount: "<<echoPeriods.grid().size()<<endl;
 
     PeriodGrid spectrPeriods(echoPeriods.grid()[0], echoPeriods.grid()[798], 400, PeriodGridType::frequencyLog);
