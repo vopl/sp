@@ -1,17 +1,17 @@
 #include <iostream>
+#include <fstream>
 #include <boost/program_options.hpp>
 
-#include "sp/config.hpp"
 #include "sp/math.hpp"
-#include "sp/kernel.hpp"
 #include "sp/kernelTabled.hpp"
-#include "sp/convolver.hpp"
 #include "sp/periodGrid.hpp"
 #include "sp/signalConvolver.hpp"
 
-#include "test/scaledData.h"
+#include "sp/loadWav.hpp"
+#include "sp/spectrStore.hpp"
 
 using namespace std;
+using namespace sp;
 
 
 
@@ -21,20 +21,17 @@ using namespace std;
 
 
 
-int main0(int argc, char *argv[])
-{
     /*
      * параметры ядра
      * pow
      * splp - samples per leveled period = 800
      * sspls - signal samples per leveled sample = 800
      *
-     * сетка периода
-     * fmin, fmax, fcount, fscaletype
+     * сетка периода отклика
+     * efmin, efmax, efcount, efscaletype
      *
-     * подсетки отклика и спектра
-     * efstart, efstop
-     * sfstart, sfstop
+     * сетка периода спектра
+     * sfmin, sfmax, sfcount, sfscaletype
      *
      *
      * входной файл (wav моно, отфильтрованый, в высоком разрешении)
@@ -47,11 +44,6 @@ int main0(int argc, char *argv[])
      * sout
      */
 
-    return 0;
-}
-
-
-
 
 
 
@@ -61,125 +53,112 @@ int main0(int argc, char *argv[])
 #define POW 10.0
 
 
+
 int main(int argc, char *argv[])
 {
-    cout.precision(20);
-    cout.setf(std::ios::scientific);
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    std::string wavFName = "/home/vopl/tmp/13/start.wav";
+    TVReal samples;
+    uint32_t sps;
 
-
-
-
-
-
-
-
-    sp::PeriodGrid echoPeriods(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::frequencyLog);
-    std::cerr<<"efmin: "<<(1.0/echoPeriods.grid().back())<<", efmax: "<<(1.0/echoPeriods.grid().front())<<", efcount: "<<echoPeriods.grid().size()<<std::endl;
-
-    sp::PeriodGrid spectrPeriods(echoPeriods.grid()[0], echoPeriods.grid()[1600], 801, sp::PeriodGridType::frequencyLog);
-    std::cerr<<"sfmin: "<<1.0/spectrPeriods.grid().back()<<", sfmax: "<<1.0/spectrPeriods.grid().front()<<", sfcount: "<<spectrPeriods.grid().size()<<std::endl;
-
-    //exit(0);
-
-
-
-
-
-
-
-
-    if(1)
+    if(!loadWav(wavFName, samples, sps))
     {
-        sp::KernelTabled kt(POW);
-        //sp::Kernel kt(POW);
-
-//        //чето с фиром
-//        kt.eval(30, 1, sp::complex(.23452,1.3456));
-//        exit(0);
-
-
-
-//        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-//        std::cerr<<"make signal"<<std::endl;
-//        sp::TVReal signal;
-
-//        signal.resize(std::size_t(sp::g_periodMax*POW*2.2/sp::g_sampleStep+1));//чтобы уместился максимальный период
-//        for(size_t index(0); index<signal.size(); ++index)
-//        {
-//            sp::real x = index * sp::g_sampleStep;
-//            sp::real xTarget = (signal.size()-2)*sp::g_sampleStep;
-
-//            signal[index] = 0;
-
-//            for(std::size_t k(0); k<1600; k+=8)
-//            {
-//                sp::real t = periodGrid.grid()[k];
-//                signal[index] += sin((x-xTarget)*sp::g_2pi/t);
-//            }
-
-
-//            //cout << x<<","<<signal[index]<< endl;
-
-//        }
-
-
-        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        sp::TVComplex response(sp::g_periodSteps);
-        sp::SignalConvolver c;
-        c.setup(POW, echoPeriods, sp::g_sampleStep, 400, sp::SignalApproxType::poly6p5o32x);
-
-//        std::cerr<<"push signal"<<std::endl;
-//        c.pushSignal(&signal[0], signal.size());
-
-//        std::cerr<<"convolve signal"<<std::endl;
-//        response = c.convolve();
-
-
-
-
-        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        for(size_t i(0); i<echoPeriods.grid().size(); ++i)
-        {
-//            std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
-
-
-            std::cerr<<"mk echo #"<<i<<std::endl;
-
-            response[i] = 0;
-            for(std::size_t k(0); k<1600; k+=8)
-            {
-                //std::cerr<<(echoPeriods.grid()[i]/echoPeriods.grid()[k])<<std::endl;
-                response[i] += kt.eval(echoPeriods.grid()[i], echoPeriods.grid()[k], sp::complex(0,1));
-            }
-
-
-
-//            std::cout<<response[i].re()<<", "<<response[i].im();
-//            std::cout<<std::endl;
-        }
-
-//        exit(0);
-
-        std::cerr<<"deconvolve"<<std::endl;
-        std::vector<double> work;
-        int iters = 6;
-        //for(int iters0(1); iters0<20; iters0++)
-        {
-            sp::TVComplex spectr(spectrPeriods.grid().size());
-
-            int res = kt.deconvolve(
-                                 response.size(), &echoPeriods.grid()[0], &response[0],
-                                 spectr.size(), &spectrPeriods.grid()[0], &spectr[0],
-                                 iters,
-                                 work);
-
-            cerr<<iters<<": "<<res<<endl;
-            for(size_t i(0); i<spectr.size(); ++i)
-            {
-                std::cout<<spectr[i].re()<<", "<<spectr[i].im()<<std::endl;
-            }
-        }
+        cerr<<"unable to load wav file"<<endl;
+        return -1;
     }
+
+    cout<<"wav loaded: "<<samples.size()<<" samples at "<<sps<<"Hz ("<<sp::real(samples.size())/sps<<" sec)"<<endl;
+
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    PeriodGrid echoPeriods(1.0/22000, 1.0/10, 1000, PeriodGridType::frequencyLog);
+    cout<<"efmin: "<<(1.0/echoPeriods.grid().back())<<", efmax: "<<(1.0/echoPeriods.grid().front())<<", efcount: "<<echoPeriods.grid().size()<<endl;
+
+    PeriodGrid spectrPeriods(echoPeriods.grid()[0], echoPeriods.grid()[798], 400, PeriodGridType::frequencyLog);
+    cout<<"sfmin: "<<1.0/spectrPeriods.grid().back()<<", sfmax: "<<1.0/spectrPeriods.grid().front()<<", sfcount: "<<spectrPeriods.grid().size()<<endl;
+
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    SpectrStore echoStore1(wavFName+".echo1", echoPeriods.grid());
+    SpectrStore spectrStore(wavFName+".spectr", spectrPeriods.grid());
+
+    if(
+       echoStore1.framesPushed() == std::size_t(-1) ||
+       echoStore1.framesPushed() != spectrStore.framesPushed())
+    {
+        cerr<<"spectr stores are inconsistent: "<<echoStore1.framesPushed()<<" vs "<<spectrStore.framesPushed()<<endl;
+        return -1;
+    }
+
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    sp::real framesPerSecond = 100;
+    const size_t samplesPerFrame = size_t(sps/framesPerSecond);
+    cout<<"samplesPerFrame: "<<samplesPerFrame<<endl;
+
+    framesPerSecond = sp::real(samplesPerFrame)/sps;
+    cout<<"framesPerSecond: "<<framesPerSecond<<endl;
+
+    const size_t framesAmount = (samples.size()-2)/samplesPerFrame;//2 extra samples for poly signal approximator
+    cout<<"framesAmount: "<<framesAmount<<endl;
+
+    size_t frameIndex = echoStore1.framesPushed();
+
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    SignalConvolver convolver;
+    convolver.setup(10, echoPeriods, sp::real(1)/sps, 200, SignalApproxType::poly6p5o32x);
+
+    convolver.pushSignal(&samples[0], 2);//2 extra samples for poly signal approximator
+    size_t sampleIndex = 2;
+
+    if(frameIndex)
+    {
+        convolver.pushSignal(&samples[sampleIndex], samplesPerFrame*frameIndex);
+        sampleIndex += samplesPerFrame*frameIndex;
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    KernelTabled k(10);
+
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    TVComplex echo1, echo2;
+    TVComplex spectr(spectrPeriods.grid().size());
+
+    std::vector<double> kwork;
+    for(; frameIndex<framesAmount; ++frameIndex)
+    {
+        cout<<"frame "<<frameIndex<<"/"<<framesAmount<<" ("<<sp::real(sampleIndex-2)/sps<<" sec, "<<sp::real(frameIndex*100)/framesAmount<<"%) ";
+        cout.flush();
+
+        convolver.pushSignal(&samples[sampleIndex], samplesPerFrame);
+        sampleIndex += samplesPerFrame;
+
+        cout<<"c";
+        cout.flush();
+
+        echo1 = convolver.convolve();
+
+        cout<<"d";
+        cout.flush();
+
+        std::fill(spectr.begin(), spectr.end(), sp::real(0));
+
+        std::size_t iters = 6;
+        sp::real error = 0;
+        k.deconvolve(
+            echo1.size(), &echoPeriods.grid()[0], &echo1[0],
+            spectr.size(), &spectrPeriods.grid()[0], &spectr[0],
+            iters,
+            error,
+            kwork);
+        cout<<" iters: "<<iters<<", error: "<<error<<endl;
+
+        echoStore1.pushFrames(echo1);
+        spectrStore.pushFrames(spectr);
+    }
+
 
     return 0;
 }

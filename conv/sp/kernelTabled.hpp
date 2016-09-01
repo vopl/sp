@@ -17,10 +17,11 @@ namespace sp
 
         complex eval(real t, real st, const complex &sv);
 
-        int deconvolve(
+        void deconvolve(
             size_t esize, const real *et, const complex *ev,//отклик
             size_t ssize, const real *st,       complex *sv,//спектр
-            size_t itMax,//макс итераций
+            size_t &iters,//макс итераций
+            real &error,
             std::vector<double> &work);
 
     public:
