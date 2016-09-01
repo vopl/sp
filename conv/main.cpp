@@ -79,14 +79,14 @@ int main(int argc, char *argv[])
 
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    SpectrStore echoStore1(wavFName+".echo1", echoPeriods.grid());
+    SpectrStore echoStore(wavFName+".echo", echoPeriods.grid());
     SpectrStore spectrStore(wavFName+".spectr", spectrPeriods.grid());
 
     if(
-       echoStore1.framesPushed() == std::size_t(-1) ||
-       echoStore1.framesPushed() != spectrStore.framesPushed())
+       echoStore.framesPushed() == std::size_t(-1) ||
+       echoStore.framesPushed() != spectrStore.framesPushed())
     {
-        cerr<<"spectr stores are inconsistent: "<<echoStore1.framesPushed()<<" vs "<<spectrStore.framesPushed()<<endl;
+        cerr<<"spectr stores are inconsistent: "<<echoStore.framesPushed()<<" vs "<<spectrStore.framesPushed()<<endl;
         return -1;
     }
 
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
     const size_t framesAmount = (samples.size()-2)/samplesPerFrame;//2 extra samples for poly signal approximator
     cout<<"framesAmount: "<<framesAmount<<endl;
 
-    size_t frameIndex = echoStore1.framesPushed();
+    size_t frameIndex = echoStore.framesPushed();
 
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    TVComplex echo1, echo2;
+    TVComplex echo;
     TVComplex spectr(spectrPeriods.grid().size());
 
     std::vector<double> kwork;
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
         cout<<"c";
         cout.flush();
 
-        echo1 = convolver.convolve();
+        echo = convolver.convolve();
 
         cout<<"d";
         cout.flush();
@@ -148,14 +148,14 @@ int main(int argc, char *argv[])
         std::size_t iters = 6;
         sp::real error = 0;
         k.deconvolve(
-            echo1.size(), &echoPeriods.grid()[0], &echo1[0],
+            echo.size(), &echoPeriods.grid()[0], &echo[0],
             spectr.size(), &spectrPeriods.grid()[0], &spectr[0],
             iters,
             error,
             kwork);
         cout<<" iters: "<<iters<<", error: "<<error<<endl;
 
-        echoStore1.pushFrames(echo1);
+        echoStore.pushFrames(echo);
         spectrStore.pushFrames(spectr);
     }
 
