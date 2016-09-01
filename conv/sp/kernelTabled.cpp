@@ -10,7 +10,7 @@
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 static const std::size_t phasesAmountForKernelApproximator = 2;//MAGIC
 static const std::size_t samplesPerLevelSample = 10000;
-static const std::size_t samplesPerLevelPeriod =   400;
+static const std::size_t samplesPerLevelPeriod =   200;
 
 
 
@@ -123,11 +123,12 @@ namespace sp
     }
 
     //////////////////////////////////////////////////////////////////////////
-    int KernelTabled::deconvolve(
-        size_t esize, const real *et, const complex *ev,//отклик
-        size_t ssize, const real *st,       complex *sv,//спектр
-        size_t itMax,//макс итераций
-        std::vector<double> &work)
+    void KernelTabled::deconvolve(
+            size_t esize, const real *et, const complex *ev, //отклик
+            size_t ssize, const real *st,       complex *sv, //спектр
+            size_t &iters, //макс итераций
+            real &error,
+            std::vector<double> &work)
     {
         LevmarParams params;
         params._et = et;
@@ -140,9 +141,6 @@ namespace sp
         {
             work.resize(LM_DER_WORKSZ(ssize*2, esize*2));
         }
-
-        assert(sizeof(double) == sizeof(complex)/2);//хак Complex[n] используется как double[n*2]
-
 
 //         TVReal err(size*2);
 //         params._ev = NULL;
@@ -163,7 +161,7 @@ namespace sp
             1e-40,  //LM_INIT_MU,        //mu
             1e-140,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
             1e-140,  //LM_STOP_THRESH,    //||Dp||_2 and
-            1e-140,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
+            1e-20,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
         };
 
         std::vector<double> d_sv(ssize*2);
@@ -180,42 +178,43 @@ namespace sp
             NULL,
             ssize*2,
             esize*2,
-            itMax,
+            iters,
             levmarOpts,
             levmarInfo,
             &work[0],
             NULL,
             &params);
 
-         std::cerr<<"result: "<<res<<std::endl;
-         std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
-         std::cerr<<"||e||_2:"<<levmarInfo[1]<<std::endl;
-         std::cerr<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
-         std::cerr<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
-         std::cerr<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
-         std::cerr<<"# iterations:"<<levmarInfo[5]<<std::endl;
-         std::cerr<<"reason for terminating:";
-         switch(int(levmarInfo[6]+0.5))
-         {
-         case 1: std::cerr<<" - stopped by small gradient J^T e"<<std::endl;break;
-         case 2: std::cerr<<" - stopped by small Dp"<<std::endl;break;
-         case 3: std::cerr<<" - stopped by itmax"<<std::endl;break;
-         case 4: std::cerr<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
-         case 5: std::cerr<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
-         case 6: std::cerr<<" - stopped by small ||e||_2"<<std::endl;break;
-         case 7: std::cerr<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
-         }
-         std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
-         std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
-         std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
-         //exit(1);
+//        std::cerr<<"result: "<<res<<std::endl;
+//        std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
+//        std::cerr<<"||e||_2:"<<levmarInfo[1]<<std::endl;
+//        std::cerr<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
+//        std::cerr<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
+//        std::cerr<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
+//        std::cerr<<"# iterations:"<<levmarInfo[5]<<std::endl;
+//        std::cerr<<"reason for terminating:";
+//        switch(int(levmarInfo[6]+0.5))
+//        {
+//        case 1: std::cerr<<" - stopped by small gradient J^T e"<<std::endl;break;
+//        case 2: std::cerr<<" - stopped by small Dp"<<std::endl;break;
+//        case 3: std::cerr<<" - stopped by itmax"<<std::endl;break;
+//        case 4: std::cerr<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
+//        case 5: std::cerr<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
+//        case 6: std::cerr<<" - stopped by small ||e||_2"<<std::endl;break;
+//        case 7: std::cerr<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
+//        }
+//        std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
+//        std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
+//        std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
+//        //exit(1);
 
-         for(std::size_t i(0); i<ssize; ++i)
-         {
-             sv[i] = complex(d_sv[i*2+0], d_sv[i*2+1]);
-         }
+        for(std::size_t i(0); i<ssize; ++i)
+        {
+            sv[i] = complex(d_sv[i*2+0], d_sv[i*2+1]);
+        }
 
-        return res;
+        iters = std::size_t(levmarInfo[5]+0.5);
+        error = levmarInfo[1];
     }
 
     namespace
