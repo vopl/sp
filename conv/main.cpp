@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     sp::PeriodGrid echoPeriods(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::frequencyLog);
     std::cerr<<"efmin: "<<(1.0/echoPeriods.grid().back())<<", efmax: "<<(1.0/echoPeriods.grid().front())<<", efcount: "<<echoPeriods.grid().size()<<std::endl;
 
-    sp::PeriodGrid spectrPeriods(echoPeriods.grid()[0], echoPeriods.grid()[1599], 800, sp::PeriodGridType::frequencyLog);
+    sp::PeriodGrid spectrPeriods(echoPeriods.grid()[0], echoPeriods.grid()[1600], 801, sp::PeriodGridType::frequencyLog);
     std::cerr<<"sfmin: "<<1.0/spectrPeriods.grid().back()<<", sfmax: "<<1.0/spectrPeriods.grid().front()<<", sfcount: "<<spectrPeriods.grid().size()<<std::endl;
 
     //exit(0);
@@ -143,10 +143,12 @@ int main(int argc, char *argv[])
 //            std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
 
 
+            std::cerr<<"mk echo #"<<i<<std::endl;
 
             response[i] = 0;
             for(std::size_t k(0); k<1600; k+=8)
             {
+                //std::cerr<<(echoPeriods.grid()[i]/echoPeriods.grid()[k])<<std::endl;
                 response[i] += kt.eval(echoPeriods.grid()[i], echoPeriods.grid()[k], sp::complex(0,1));
             }
 
@@ -158,6 +160,7 @@ int main(int argc, char *argv[])
 
 //        exit(0);
 
+        std::cerr<<"deconvolve"<<std::endl;
         std::vector<double> work;
         int iters = 6;
         //for(int iters0(1); iters0<20; iters0++)
