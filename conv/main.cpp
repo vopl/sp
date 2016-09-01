@@ -73,7 +73,13 @@ int main(int argc, char *argv[])
 
 
 
-    sp::PeriodGrid periodGrid(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::frequencyLog);
+    sp::PeriodGrid echoPeriods(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::frequencyLog);
+    std::cerr<<"efmin: "<<(1.0/echoPeriods.grid().back())<<", efmax: "<<(1.0/echoPeriods.grid().front())<<", efcount: "<<echoPeriods.grid().size()<<std::endl;
+
+    sp::PeriodGrid spectrPeriods(echoPeriods.grid()[0], echoPeriods.grid()[1599], 800, sp::PeriodGridType::frequencyLog);
+    std::cerr<<"sfmin: "<<1.0/spectrPeriods.grid().back()<<", sfmax: "<<1.0/spectrPeriods.grid().front()<<", sfcount: "<<spectrPeriods.grid().size()<<std::endl;
+
+    //exit(0);
 
 
 
@@ -93,56 +99,56 @@ int main(int argc, char *argv[])
 
 
 
-        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        std::cerr<<"make signal"<<std::endl;
-        sp::TVReal signal;
+//        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+//        std::cerr<<"make signal"<<std::endl;
+//        sp::TVReal signal;
 
-        signal.resize(std::size_t(sp::g_periodMax*POW*2.2/sp::g_sampleStep+1));//чтобы уместился максимальный период
-        for(size_t index(0); index<signal.size(); ++index)
-        {
-            sp::real x = index * sp::g_sampleStep;
-            sp::real xTarget = (signal.size()-2)*sp::g_sampleStep;
+//        signal.resize(std::size_t(sp::g_periodMax*POW*2.2/sp::g_sampleStep+1));//чтобы уместился максимальный период
+//        for(size_t index(0); index<signal.size(); ++index)
+//        {
+//            sp::real x = index * sp::g_sampleStep;
+//            sp::real xTarget = (signal.size()-2)*sp::g_sampleStep;
 
-            signal[index] = 0;
+//            signal[index] = 0;
 
-            for(std::size_t k(0); k<800; k+=4)
-            {
-                sp::real t = periodGrid.grid()[k];
-                signal[index] += sin((x-xTarget)*sp::g_2pi/t);
-            }
+//            for(std::size_t k(0); k<1600; k+=8)
+//            {
+//                sp::real t = periodGrid.grid()[k];
+//                signal[index] += sin((x-xTarget)*sp::g_2pi/t);
+//            }
 
 
-            //cout << x<<","<<signal[index]<< endl;
+//            //cout << x<<","<<signal[index]<< endl;
 
-        }
+//        }
 
 
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         sp::TVComplex response(sp::g_periodSteps);
         sp::SignalConvolver c;
-        c.setup(POW, periodGrid, sp::g_sampleStep, 50, sp::SignalApproxType::poly6p5o32x);
+        c.setup(POW, echoPeriods, sp::g_sampleStep, 400, sp::SignalApproxType::poly6p5o32x);
 
-        std::cerr<<"push signal"<<std::endl;
-        c.pushSignal(&signal[0], signal.size());
+//        std::cerr<<"push signal"<<std::endl;
+//        c.pushSignal(&signal[0], signal.size());
 
-        std::cerr<<"convolve signal"<<std::endl;
-        response = c.convolve();
+//        std::cerr<<"convolve signal"<<std::endl;
+//        response = c.convolve();
 
 
 
 
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        for(size_t i(0); i<periodGrid.grid().size(); ++i)
+        for(size_t i(0); i<echoPeriods.grid().size(); ++i)
         {
 //            std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
 
 
 
-//            response[i] = 0;
-//            for(std::size_t k(0); k<800; k+=4)
-//            {
-//                response[i] += kt.eval(periodGrid.grid()[i], periodGrid.grid()[k], sp::complex(0,1));
-//            }
+            response[i] = 0;
+            for(std::size_t k(0); k<1600; k+=8)
+            {
+                response[i] += kt.eval(echoPeriods.grid()[i], echoPeriods.grid()[k], sp::complex(0,1));
+            }
 
 
 
@@ -153,19 +159,13 @@ int main(int argc, char *argv[])
 //        exit(0);
 
         std::vector<double> work;
-
-        sp::PeriodGrid spectrPeriods(periodGrid.grid()[0], periodGrid.grid()[800], 401, sp::PeriodGridType::frequencyLog);
-        //sp::PeriodGrid spectrPeriods(1.0/8000, 1.0/40, 1000, sp::PeriodGridType::frequencyLog);
-
-        std::cerr<<"sfMin: "<<1.0/spectrPeriods.grid().back()<<", sfMax: "<<1.0/spectrPeriods.grid().front()<<std::endl;
-
         int iters = 6;
         //for(int iters0(1); iters0<20; iters0++)
         {
             sp::TVComplex spectr(spectrPeriods.grid().size());
 
             int res = kt.deconvolve(
-                                 response.size(), &periodGrid.grid()[0], &response[0],
+                                 response.size(), &echoPeriods.grid()[0], &response[0],
                                  spectr.size(), &spectrPeriods.grid()[0], &spectr[0],
                                  iters,
                                  work);

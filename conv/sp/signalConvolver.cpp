@@ -57,8 +57,8 @@ namespace sp
             std::size_t mn = n/2-1;
             A.resize(mn+1);
 
-            real kaizerBeta = 5;
-            real kaizerDenominator = kaizerDenom(kaizerBeta);
+//            real kaizerBeta = 5;
+//            real kaizerDenominator = kaizerDenom(kaizerBeta);
 
             A[mn] = q;
             Summator<real> sum = A[mn]/2;
@@ -67,7 +67,7 @@ namespace sp
 
                 real x = k*w;
                 //real v = q * sin(x)/(x);// * kaizer(kaizerBeta, mn+k, n-2, kaizerDenominator);
-                real v = q * boost::math::sinc_pi(x) * kaizer(kaizerBeta, int(mn+k), int(n-2), kaizerDenominator);
+                real v = q * boost::math::sinc_pi(x);// * kaizer(kaizerBeta, int(mn+k), int(n-2), kaizerDenominator);
 
                 A[mn-k] = v;
                 sum += v;
@@ -93,15 +93,6 @@ namespace sp
             std::size_t firLen = (firIdx*2)+3;
             real bndT = (real(firLen-1))/(_pow)/2;
             lowPassHalfFir(bndT, firLen, _halfFirs[firIdx]);
-
-//            if(firIdx>50)
-//            {
-//                for(std::size_t i(0); i<_halfFirs[firIdx].size(); ++i)
-//                {
-//                    std::cout<<_halfFirs[firIdx][i]<<std::endl;
-//                }
-//                exit(0);
-//            }
         }
     }
 
@@ -113,6 +104,7 @@ namespace sp
 
         //_signal.clear();
         _signal.resize(std::size_t(maxPeriod*_pow*2/_signalSampleStep+0.5) + 7);
+        std::fill(_signal.begin(), _signal.end(), real(0));
 
         _sat = sat;
 
