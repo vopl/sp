@@ -9,8 +9,8 @@
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 static const std::size_t phasesAmountForKernelApproximator = 2;//MAGIC
-static const std::size_t samplesPerLevelSample = 2000;
-static const std::size_t samplesPerLevelPeriod =   50;
+static const std::size_t samplesPerLevelSample = 10000;
+static const std::size_t samplesPerLevelPeriod =   400;
 
 
 
