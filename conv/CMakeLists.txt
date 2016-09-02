@@ -55,7 +55,13 @@ set(SRC_LIST
 include_directories(.)
 
 
+set(Boost_USE_STATIC_LIBS ON)
+find_package(Boost COMPONENTS program_options filesystem)
+if(NOT Boost_FOUND)
+    message(FATAL_ERROR "boost not found")
+endif()
 
+include_directories(${Boost_INCLUDE_DIRS})
 
 
 
@@ -65,7 +71,7 @@ add_executable(${PROJECT_NAME} ${SRC_LIST} ${DSP_SRC} ${DSP_INC})
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 
-target_link_libraries(${PROJECT_NAME} levmar lapack blas quadmath)
+target_link_libraries(${PROJECT_NAME} levmar lapack blas ${Boost_LIBRARIES})
 
 
 

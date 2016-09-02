@@ -113,18 +113,18 @@ namespace sp
 
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolver::setup(real pow, const PeriodGrid &periodGrid, real sampleStep, std::size_t samplesPerPeriod, SignalApproxType sat)
+    void SignalConvolver::setup(real pow, const TVReal &periods, real sampleStep, std::size_t samplesPerPeriod, SignalApproxType sat)
     {
         setupFirs(pow, samplesPerPeriod);
-        setupSignal(periodGrid.grid().back(), sampleStep, sat);
+        setupSignal(periods.back(), sampleStep, sat);
 
-        _levels.resize(periodGrid.grid().size());
+        _levels.resize(periods.size());
 
         for(std::size_t i(0); i<_levels.size(); ++i)
         {
             LevelPtr &l = _levels[i];
 
-            l.reset(new SignalConvolverLevel(pow, periodGrid.grid()[i], _signalSampleStep, _samplesPerPeriod));
+            l.reset(new SignalConvolverLevel(pow, periods[i], _signalSampleStep, _samplesPerPeriod));
         }
     }
 
@@ -136,7 +136,7 @@ namespace sp
             std::copy(samples+amount-_signal.size(), samples+amount, _signal.begin());
             std::reverse(_signal.begin(), _signal.end());
         }
-        else
+        else if(amount)
         {
             std::move(_signal.begin(), _signal.end()-amount, _signal.begin()+amount);
             std::copy(samples, samples+amount, _signal.begin());

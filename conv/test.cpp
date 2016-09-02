@@ -51,7 +51,7 @@ int test(int argc, char *argv[])
 
     if(1)
     {
-        sp::KernelTabled kt(POW);
+        sp::KernelTabled kt(POW, 400, 400);
         //sp::Kernel kt(POW);
 
 //        //чето с фиром
@@ -87,7 +87,7 @@ int test(int argc, char *argv[])
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         sp::TVComplex response(sp::g_periodSteps);
         sp::SignalConvolver c;
-        c.setup(POW, echoPeriods, sp::g_sampleStep, 400, sp::SignalApproxType::poly6p5o32x);
+        c.setup(POW, echoPeriods.grid(), sp::g_sampleStep, 400, sp::SignalApproxType::poly6p5o32x);
 
 //        std::cerr<<"push signal"<<std::endl;
 //        c.pushSignal(&signal[0], signal.size());

@@ -13,7 +13,7 @@ namespace sp
             {
                 real min = periodMin;
                 real max = periodMax;
-                real step = (max - min) / (steps-1);
+                real step = (max - min) / (steps);
 
                 for(std::size_t k(0); k<steps; k++)
                 {
@@ -25,7 +25,7 @@ namespace sp
             {
                 real min = 1.0/periodMax;
                 real max = 1.0/periodMin;
-                real step = (max - min) / (steps-1);
+                real step = (max - min) / (steps);
 
                 for(std::size_t k(0); k<steps; k++)
                 {
@@ -37,7 +37,7 @@ namespace sp
             {
                 real min = log(periodMin);
                 real max = log(periodMax);
-                real step = (max - min) / (steps-1);
+                real step = (max - min) / (steps);
 
                 for(std::size_t k(0); k<steps; k++)
                 {
@@ -49,7 +49,7 @@ namespace sp
             {
                 real min = -log(periodMax);
                 real max = -log(periodMin);
-                real step = (max - min) / (steps-1);
+                real step = (max - min) / (steps);
 
                 for(std::size_t k(0); k<steps; k++)
                 {
