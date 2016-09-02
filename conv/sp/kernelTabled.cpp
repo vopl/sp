@@ -315,11 +315,12 @@ namespace sp
                 buildValue(t, v._re, v._im);
                 iter = _valuesByPeriod.insert(std::make_pair(t, v)).first;
 
+                std::cerr<<"ok"<<std::endl;
+
                 if(++_addedValuesAmount >= 10)
                 {
                     save();
                 }
-                std::cerr<<"ok"<<std::endl;
 
             }
             else
