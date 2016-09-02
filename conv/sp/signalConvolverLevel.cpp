@@ -6,13 +6,13 @@
 namespace sp
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    SignalConvolverLevel::SignalConvolverLevel(real pow, real period, real signalSampleStep, std::size_t samplesPerPeriod)
-        : _pow(pow)
+    SignalConvolverLevel::SignalConvolverLevel(real ppw, real period, real signalSampleStep, std::size_t samplesPerPeriod)
+        : _ppw(ppw)
         , _period(period)
         , _signalSampleStep(signalSampleStep)
         , _sampleStep(_period/samplesPerPeriod)
-        , _values(std::size_t(samplesPerPeriod*pow*2 + 0.5))
-        , _valuesFiltered(std::size_t(samplesPerPeriod*pow + 0.5))
+        , _values(std::size_t(samplesPerPeriod*ppw*2 + 0.5))
+        , _valuesFiltered(std::size_t(samplesPerPeriod*ppw + 0.5))
     {
     }
 
@@ -345,7 +345,7 @@ namespace sp
 
         for(std::size_t index(0); index<_valuesFiltered.size()-1; ++index)
         {
-//            if(index < std::size_t(_pow + 2.5))//попробовать без этого
+//            if(index < std::size_t(_ppw + 2.5))//попробовать без этого
 //            {
 //                _valuesFiltered[index+1] = _values[index+1];
 //                continue;
@@ -468,7 +468,7 @@ namespace sp
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     complex SignalConvolverLevel::convolve()
     {
-        const real step0 = 1 / _pow;
+        const real step0 = 1 / _ppw;
 
 //        real period_m1 = _period /(1.0-step0/2);
 //        real period_p1 = _period /(1.0+step0/2);
@@ -490,8 +490,8 @@ namespace sp
 //            res_p1 += evalSegment(period_p1, x0, y0, x1, y1);
         }
 
-        return res / (_period * _pow);
-        //return (res_p1*(1.0+step0/2) - res_m1*(1.0-step0/2)) / (_period * _pow);
+        return res / (_period * _ppw);
+        //return (res_p1*(1.0+step0/2) - res_m1*(1.0-step0/2)) / (_period * _ppw);
     }
 
 }

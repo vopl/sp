@@ -21,9 +21,9 @@ namespace sp
         ~SignalConvolver();
 
 
-        void setupFirs(real pow, std::size_t samplesPerPeriod);
+        void setupFirs(real ppw, std::size_t samplesPerPeriod);
         void setupSignal(real sampleStep, real maxPeriod, SignalApproxType sat = SignalApproxType::linear);
-        void setup(real pow, const TVReal &periods, real sampleStep, std::size_t samplesPerPeriod, SignalApproxType sat = SignalApproxType::linear);
+        void setup(real ppw, const TVReal &periods, real sampleStep, std::size_t samplesPerPeriod, SignalApproxType sat = SignalApproxType::linear);
 
         void pushSignal(const real *samples, std::size_t amount);
 
@@ -36,7 +36,7 @@ namespace sp
         void prepareValues();
 
     private:
-        real                            _pow = 0;
+        real                            _ppw = 0;
         SignalApproxType                _sat = SignalApproxType::linear;
         real                            _signalSampleStep = 0;
         std::size_t                     _signalSamplesPushed = 0;
