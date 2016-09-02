@@ -9,7 +9,7 @@ namespace sp
     class SignalConvolverLevel
     {
     public:
-        SignalConvolverLevel(real pow, real period, real signalSampleStep, std::size_t samplesPerPeriod);
+        SignalConvolverLevel(real ppw, real period, real signalSampleStep, std::size_t samplesPerPeriod);
         ~SignalConvolverLevel();
 
         void update(const real *signal, std::size_t signalSize, SignalApproxType sat);
@@ -21,7 +21,7 @@ namespace sp
         real updateOnePoly(const real *signal, std::size_t signalSize, real startTime, real stopTime, std::size_t signalStartIdx, std::size_t signalStopIdx);
 
     private:
-        real    _pow;
+        real    _ppw;
         real    _period;
         real    _signalSampleStep;
         real    _sampleStep;

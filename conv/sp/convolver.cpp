@@ -6,8 +6,8 @@
 namespace sp
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    Convolver::Convolver(real pow)
-        : _pow(pow)
+    Convolver::Convolver(real ppw)
+        : _ppw(ppw)
     {
     }
 
@@ -67,10 +67,10 @@ namespace sp
         }
 
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        complex executeOne(real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, real period, real pow)
+        complex executeOne(real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, real period, real ppw)
         {
-            const real _winLen = period * pow;
-            const real _step0 = 1.0 / pow;
+            const real _winLen = period * ppw;
+            const real _step0 = 1.0 / ppw;
 
             real period_m1 = period /(1.0-_step0/2);
             real period_p1 = period /(1.0+_step0/2);
@@ -191,13 +191,13 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    real /*signalStartTime*/ Convolver::prepareSignal(real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, real pow, real maxT, TVReal &preparedSignal)
+    real /*signalStartTime*/ Convolver::prepareSignal(real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, real ppw, real maxT, TVReal &preparedSignal)
     {
         size_t extraSamples = 4;
 
-        std::size_t minLen = std::size_t(pow*5+0.5);//по 10 точек на период, иначе fir не справляется
+        std::size_t minLen = std::size_t(ppw*5+0.5);//по 10 точек на период, иначе fir не справляется
 
-        std::size_t maxLen = std::size_t(pow*(maxT/signalSampleLength)*2 + 1.5);
+        std::size_t maxLen = std::size_t(ppw*(maxT/signalSampleLength)*2 + 1.5);
         if(maxLen&1)
         {
             maxLen+=1;
@@ -210,7 +210,7 @@ namespace sp
         preparedSignal.reserve(maxLen/2 + extraSamples);
         preparedSignal.resize(maxLen/2);
 
-//        FirId firId{pow, minLen, maxLen};
+//        FirId firId{ppw, minLen, maxLen};
 //        if(firId != g_firId)
 //        {
 //            std::cerr<<"make fir"<<std::endl;
@@ -221,7 +221,7 @@ namespace sp
 //                if(len >= minLen)
 //                {
 //                    //std::cerr<<len<<"/"<<maxLen<<std::endl;
-//                    real bndT = real(len)/(pow/2)/2;
+//                    real bndT = real(len)/(ppw/2)/2;
 //                    lowPassFir(bndT, len, g_firs[(len-minLen)/2]);
 //                }
 //            }
@@ -235,7 +235,7 @@ namespace sp
             if(len >= minLen)
             {
                 TVReal fir;
-                real bndT = real(len)/(pow/2)/2;
+                real bndT = real(len)/(ppw/2)/2;
                 lowPassFir(bndT, len, fir);
 
 //                const TVReal &fir = g_firs[(len-minLen)/2];
@@ -271,7 +271,7 @@ namespace sp
     void Convolver::execute(const PeriodGrid &periodGrid, real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime, TVComplex &echo)
     {
         TVReal preparedSignal;
-        real preparedSignalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _pow, periodGrid.grid().back(), preparedSignal);
+        real preparedSignalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _ppw, periodGrid.grid().back(), preparedSignal);
 
 //        std::size_t signalTargetIdx = (targetTime - signalStartTime)/signalSampleLength+0.5;
 //        std::size_t preparedSignalTargetIdx = (targetTime - preparedSignalStartTime)/signalSampleLength+0.5;
@@ -284,7 +284,7 @@ namespace sp
         echo.resize(periodGrid.grid().size());
         for(std::size_t i(0); i<periodGrid.grid().size(); i++)
         {
-            echo[i] = executeOne(preparedSignalStartTime, signalSampleLength, preparedSignal, targetTime, periodGrid.grid()[i], _pow);
+            echo[i] = executeOne(preparedSignalStartTime, signalSampleLength, preparedSignal, targetTime, periodGrid.grid()[i], _ppw);
         }
     }
 
@@ -292,7 +292,7 @@ namespace sp
     complex /*echo*/ Convolver::execute(const real &period, real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime)
     {
         TVReal preparedSignal;
-        real preparedSignalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _pow, period, preparedSignal);
+        real preparedSignalStartTime = prepareSignal(signalStartTime, signalSampleLength, signal, targetTime, _ppw, period, preparedSignal);
 
 //        std::size_t signalTargetIdx = (targetTime - signalStartTime)/signalSampleLength+0.5;
 //        std::size_t preparedSignalTargetIdx = (targetTime - preparedSignalStartTime)/signalSampleLength+0.5;
@@ -302,7 +302,7 @@ namespace sp
 //        }
 //        exit(0);
 
-        return executeOne(preparedSignalStartTime, signalSampleLength, preparedSignal, targetTime, period, _pow);
+        return executeOne(preparedSignalStartTime, signalSampleLength, preparedSignal, targetTime, period, _ppw);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -311,14 +311,14 @@ namespace sp
         echo.resize(periodGrid.grid().size());
         for(std::size_t i(0); i<periodGrid.grid().size(); i++)
         {
-            echo[i] = executeOne(signalStartTime, signalSampleLength, signal, targetTime, periodGrid.grid()[i], _pow);
+            echo[i] = executeOne(signalStartTime, signalSampleLength, signal, targetTime, periodGrid.grid()[i], _ppw);
         }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     complex /*echo*/ Convolver::executeOnPrepared(const real &period, real signalStartTime, real signalSampleLength, const TVReal &signal, real targetTime)
     {
-        return executeOne(signalStartTime, signalSampleLength, signal, targetTime, period, _pow);
+        return executeOne(signalStartTime, signalSampleLength, signal, targetTime, period, _ppw);
     }
 
 }

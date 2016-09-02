@@ -81,17 +81,17 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolver::setupFirs(real pow, std::size_t samplesPerPeriod)
+    void SignalConvolver::setupFirs(real ppw, std::size_t samplesPerPeriod)
     {
-        _pow = pow;
+        _ppw = ppw;
         _samplesPerPeriod = samplesPerPeriod;
 
-        _halfFirs.resize(std::size_t(_samplesPerPeriod*_pow + 0.5));
+        _halfFirs.resize(std::size_t(_samplesPerPeriod*_ppw + 0.5));
 
         for(std::size_t firIdx(0); firIdx<_halfFirs.size(); ++firIdx)
         {
             std::size_t firLen = (firIdx*2)+3;
-            real bndT = (real(firLen-1))/(_pow)/2;
+            real bndT = (real(firLen-1))/(_ppw)/2;
             lowPassHalfFir(bndT, firLen, _halfFirs[firIdx]);
         }
     }
@@ -103,7 +103,7 @@ namespace sp
         _signalSamplesPushed = 0;
 
         //_signal.clear();
-        _signal.resize(std::size_t(maxPeriod*_pow*2/_signalSampleStep+0.5) + 7);
+        _signal.resize(std::size_t(maxPeriod*_ppw*2/_signalSampleStep+0.5) + 7);
         std::fill(_signal.begin(), _signal.end(), real(0));
 
         _sat = sat;
@@ -113,9 +113,9 @@ namespace sp
 
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolver::setup(real pow, const TVReal &periods, real sampleStep, std::size_t samplesPerPeriod, SignalApproxType sat)
+    void SignalConvolver::setup(real ppw, const TVReal &periods, real sampleStep, std::size_t samplesPerPeriod, SignalApproxType sat)
     {
-        setupFirs(pow, samplesPerPeriod);
+        setupFirs(ppw, samplesPerPeriod);
         setupSignal(periods.back(), sampleStep, sat);
 
         _levels.resize(periods.size());
@@ -124,7 +124,7 @@ namespace sp
         {
             LevelPtr &l = _levels[i];
 
-            l.reset(new SignalConvolverLevel(pow, periods[i], _signalSampleStep, _samplesPerPeriod));
+            l.reset(new SignalConvolverLevel(ppw, periods[i], _signalSampleStep, _samplesPerPeriod));
         }
     }
 
@@ -181,7 +181,7 @@ namespace sp
         const real *signal = &_signal[0];
         std::size_t signalSize = _signal.size();
 
-        SignalConvolverLevel level(_pow, period, _signalSampleStep, _samplesPerPeriod);
+        SignalConvolverLevel level(_ppw, period, _signalSampleStep, _samplesPerPeriod);
         level.update(signal, signalSize, _sat);
         level.filtrate(_halfFirs);
 

@@ -24,7 +24,7 @@ using namespace sp;
 
     /*
      * параметры ядра
-     * pow
+     * ppw
      * splp - samples per leveled period = 800
      * sspls - signal samples per leveled sample = 800
      *
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
     desc.add_options()
             ("help", "produce help message")
 
-            ("pow", po::value<sp::real>()->default_value(10), "periods on analyze window")
+            ("ppw", po::value<sp::real>()->default_value(10), "periods per analyze window")
 
             ("spls", po::value<std::size_t>()->default_value(10000), "samples per level sample")
             ("splp", po::value<std::size_t>()->default_value(400), "samples per level period")
@@ -244,10 +244,10 @@ int main(int argc, char *argv[])
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     SignalConvolver convolver;
-    convolver.setup(vars["pow"].as<sp::real>(), echoPeriods, sp::real(1)/sps, vars["splp"].as<std::size_t>(), SignalApproxType::poly6p5o32x);
+    convolver.setup(vars["ppw"].as<sp::real>(), echoPeriods, sp::real(1)/sps, vars["splp"].as<std::size_t>(), SignalApproxType::poly6p5o32x);
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    KernelTabled k(vars["pow"].as<sp::real>(), vars["spls"].as<std::size_t>(), vars["splp"].as<std::size_t>());
+    KernelTabled k(vars["ppw"].as<sp::real>(), vars["spls"].as<std::size_t>(), vars["splp"].as<std::size_t>());
 
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7

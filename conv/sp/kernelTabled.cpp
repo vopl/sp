@@ -14,8 +14,8 @@ static const std::size_t phasesAmountForKernelApproximator = 2;//MAGIC
 
 namespace sp
 {
-    KernelTabled::KernelTabled(real pow, std::size_t samplesPerLevelSample, std::size_t samplesPerLevelPeriod)
-        : _pow(pow)
+    KernelTabled::KernelTabled(real ppw, std::size_t samplesPerLevelSample, std::size_t samplesPerLevelPeriod)
+        : _ppw(ppw)
         , _samplesPerLevelSample(samplesPerLevelSample)
         , _samplesPerLevelPeriod(samplesPerLevelPeriod)
     {
@@ -354,7 +354,7 @@ namespace sp
     void KernelTabled::buildValue(const real &period, complex &re, complex &im)
     {
         const real sampleStep = period/_samplesPerLevelPeriod/_samplesPerLevelSample;
-        real targetX = period*_pow*2.0+sampleStep*3 + 10*period/_samplesPerLevelPeriod;
+        real targetX = period*_ppw*2.0+sampleStep*3 + 10*period/_samplesPerLevelPeriod;
         TVReal signal(std::size_t(targetX/sampleStep+1.5));
 
         SignalConvolver &sc = getSignalConvolver();
@@ -386,7 +386,7 @@ namespace sp
     std::string KernelTabled::stateFileName()
     {
         char tmp[4096];
-        sprintf(tmp, "kt_state_POW%0.2f_%zd_%zd.bin", double(_pow), size_t(_samplesPerLevelSample), size_t(_samplesPerLevelPeriod));
+        sprintf(tmp, "kt_state_PPW%0.2f_%zd_%zd.bin", double(_ppw), size_t(_samplesPerLevelSample), size_t(_samplesPerLevelPeriod));
 
         return tmp;
     }
@@ -480,7 +480,7 @@ namespace sp
         if(!_scp)
         {
             _scp.reset(new SignalConvolver);
-            _scp->setupFirs(_pow, _samplesPerLevelPeriod);
+            _scp->setupFirs(_ppw, _samplesPerLevelPeriod);
         }
 
         return *_scp;
