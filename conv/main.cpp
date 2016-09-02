@@ -64,13 +64,13 @@ int main(int argc, char *argv[])
             ("spls", po::value<std::size_t>()->default_value(10000), "samples per level sample")
             ("splp", po::value<std::size_t>()->default_value(400), "samples per level period")
 
-            ("efmin", po::value<sp::real>()->default_value(2), "echo frequency grid minimum")
+            ("efmin", po::value<sp::real>()->default_value(5), "echo frequency grid minimum")
             ("efmax", po::value<sp::real>()->default_value(20000), "echo frequency grid maximum")
             ("efcount", po::value<std::size_t>()->default_value(1000), "echo frequency grid size")
             //("eftype", po::value<std::string>()->default_value("flog"), "echo frequency grid type (plin|plog|flin|flog)")
 
-            ("sfpart", po::value<sp::real>()->default_value(0.7), "spectr frequency part")
-            ("sfmult", po::value<std::size_t>()->default_value(2), "spectr frequency mult")
+            ("sfminmult", po::value<sp::real>()->default_value(2.5), "spectr frequency minimum value part")
+            ("sfcountmult", po::value<std::size_t>()->default_value(2), "spectr frequency count mult")
 
             ("fps", po::value<sp::real>()->default_value(100), "frames per second")
 
@@ -125,32 +125,40 @@ int main(int argc, char *argv[])
 
     TVReal spectrPeriods;
     {
-        sp::real sfPart = vars["sfpart"].as<sp::real>();
-        if(sfPart > 1)
+        sp::real sfMinMult = vars["sfminmult"].as<sp::real>();
+        if(sfMinMult < 1)
         {
-            cerr<<"bad sfpart: "<<sfPart<<std::endl;
+            cerr<<"bad sfminmult: "<<sfMinMult<<std::endl;
             return EXIT_FAILURE;
         }
 
-        std::size_t sfMult = vars["sfmult"].as<std::size_t>();
-        if(sfMult < 1)
+        std::size_t sfCountMult = vars["sfcountmult"].as<std::size_t>();
+        if(sfCountMult < 1)
         {
-            cerr<<"bad sfmult: "<<sfMult<<std::endl;
+            cerr<<"bad sfcountmult: "<<sfCountMult<<std::endl;
             return EXIT_FAILURE;
         }
 
-        std::size_t spectrPeriodsSize = std::size_t(echoPeriods.size()*sfPart/sfMult+0.5);
+        auto iter = std::find_if(echoPeriods.rbegin(), echoPeriods.rend(), [&](sp::real t){return t<=echoPeriods.back()/sfMinMult;});
+        if(iter==echoPeriods.rend())
+        {
+            cerr<<"bad sfminmult: "<<sfMinMult<<std::endl;
+            return EXIT_FAILURE;
+        }
+
+        std::size_t echoPeriodsSize4Spectr = std::size_t(echoPeriods.rend() - iter);
+        std::size_t spectrPeriodsSize = std::size_t(sp::real(echoPeriodsSize4Spectr)/sfCountMult+0.5);
 
         if(spectrPeriodsSize < 2 || spectrPeriodsSize>echoPeriods.size())
         {
-            cerr<<"bad sfmult sfpart combination, spectrSize: "<<spectrPeriodsSize<<std::endl;
+            cerr<<"bad sfminmult sfcountmult combination, spectrSize: "<<spectrPeriodsSize<<std::endl;
             return EXIT_FAILURE;
         }
 
         spectrPeriods.resize(spectrPeriodsSize);
         for(std::size_t i(0); i<spectrPeriodsSize; i++)
         {
-            spectrPeriods[i] = echoPeriods[i*sfMult];
+            spectrPeriods[i] = echoPeriods[std::size_t(i*sfCountMult)];
         }
     }
 
@@ -258,12 +266,12 @@ int main(int argc, char *argv[])
         cout<<"frame "<<frameIndex<<"/"<<framesAmount<<" ("<<sp::real(frameIndex*100)/framesAmount<<"%, "<<sp::real(sampleIndex-extraSamples4Push)/sps<<" sec) ";
         cout.flush();
 
-        cout<<"c";
+        cout<<"c..";
         cout.flush();
 
         echo = convolver.convolve();
 
-        cout<<"d";
+        cout<<"d..";
         cout.flush();
 
         std::fill(spectr.begin(), spectr.end(), sp::real(0));
@@ -276,7 +284,7 @@ int main(int argc, char *argv[])
             iters,
             error,
             kwork);
-        cout<<" iters: "<<iters<<", error: "<<error<<endl;
+        cout<<"ok, iters: "<<iters<<", error: "<<error<<endl;
 
         echoStore.pushFrames(echo);
         spectrStore.pushFrames(spectr);
