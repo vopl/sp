@@ -23,7 +23,7 @@ namespace sp
 
         void setupFirs(real pow, std::size_t samplesPerPeriod);
         void setupSignal(real sampleStep, real maxPeriod, SignalApproxType sat = SignalApproxType::linear);
-        void setup(real pow, const PeriodGrid &periodGrid, real sampleStep, std::size_t samplesPerPeriod, SignalApproxType sat = SignalApproxType::linear);
+        void setup(real pow, const TVReal &periods, real sampleStep, std::size_t samplesPerPeriod, SignalApproxType sat = SignalApproxType::linear);
 
         void pushSignal(const real *samples, std::size_t amount);
 

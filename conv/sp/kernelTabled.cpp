@@ -9,15 +9,15 @@
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 static const std::size_t phasesAmountForKernelApproximator = 2;//MAGIC
-static const std::size_t samplesPerLevelSample = 10000;
-static const std::size_t samplesPerLevelPeriod =   200;
 
 
 
 namespace sp
 {
-    KernelTabled::KernelTabled(real pow)
+    KernelTabled::KernelTabled(real pow, std::size_t samplesPerLevelSample, std::size_t samplesPerLevelPeriod)
         : _pow(pow)
+        , _samplesPerLevelSample(samplesPerLevelSample)
+        , _samplesPerLevelPeriod(samplesPerLevelPeriod)
     {
         load();
     }
@@ -158,7 +158,7 @@ namespace sp
 
         static double levmarOpts[LM_OPTS_SZ] =
         {
-            1e-40,  //LM_INIT_MU,        //mu
+            1e-30,  //LM_INIT_MU,        //mu
             1e-140,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
             1e-140,  //LM_STOP_THRESH,    //||Dp||_2 and
             1e-20,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
@@ -185,28 +185,28 @@ namespace sp
             NULL,
             &params);
 
-//        std::cerr<<"result: "<<res<<std::endl;
-//        std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
-//        std::cerr<<"||e||_2:"<<levmarInfo[1]<<std::endl;
-//        std::cerr<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
-//        std::cerr<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
-//        std::cerr<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
-//        std::cerr<<"# iterations:"<<levmarInfo[5]<<std::endl;
-//        std::cerr<<"reason for terminating:";
-//        switch(int(levmarInfo[6]+0.5))
-//        {
-//        case 1: std::cerr<<" - stopped by small gradient J^T e"<<std::endl;break;
-//        case 2: std::cerr<<" - stopped by small Dp"<<std::endl;break;
-//        case 3: std::cerr<<" - stopped by itmax"<<std::endl;break;
-//        case 4: std::cerr<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
-//        case 5: std::cerr<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
-//        case 6: std::cerr<<" - stopped by small ||e||_2"<<std::endl;break;
-//        case 7: std::cerr<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
-//        }
-//        std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
-//        std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
-//        std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
-//        //exit(1);
+        std::cerr<<"result: "<<res<<std::endl;
+        std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
+        std::cerr<<"||e||_2:"<<levmarInfo[1]<<std::endl;
+        std::cerr<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
+        std::cerr<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
+        std::cerr<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
+        std::cerr<<"# iterations:"<<levmarInfo[5]<<std::endl;
+        std::cerr<<"reason for terminating:";
+        switch(int(levmarInfo[6]+0.5))
+        {
+        case 1: std::cerr<<" - stopped by small gradient J^T e"<<std::endl;break;
+        case 2: std::cerr<<" - stopped by small Dp"<<std::endl;break;
+        case 3: std::cerr<<" - stopped by itmax"<<std::endl;break;
+        case 4: std::cerr<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
+        case 5: std::cerr<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
+        case 6: std::cerr<<" - stopped by small ||e||_2"<<std::endl;break;
+        case 7: std::cerr<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
+        }
+        std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
+        std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
+        std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
+        //exit(1);
 
         for(std::size_t i(0); i<ssize; ++i)
         {
@@ -298,7 +298,7 @@ namespace sp
     {
         ValuesByPeriod::iterator iter = _valuesByPeriod.lower_bound(t);
 
-        static const real maxDelta = std::numeric_limits<real>::epsilon()*10;
+        static const real maxDelta = std::numeric_limits<real>::epsilon()*20;
 
         bool found = false;
 
@@ -308,16 +308,19 @@ namespace sp
 
             if(fabs(iter->first/t-1) > maxDelta)
             {
+                std::cerr<<"add kernel value "<<t<<", "<<_valuesByPeriod.size()<<"...";
+                std::cerr.flush();
+
                 Value v;
                 buildValue(t, v._re, v._im);
                 iter = _valuesByPeriod.insert(std::make_pair(t, v)).first;
 
-                std::cerr<<"add kernel value "<<t<<", "<<_valuesByPeriod.size()<<std::endl;
-
-                if(++_addedValuesAmount >= 100)
+                if(++_addedValuesAmount >= 10)
                 {
                     save();
                 }
+                std::cerr<<"ok"<<std::endl;
+
             }
             else
             {
@@ -349,8 +352,8 @@ namespace sp
 
     void KernelTabled::buildValue(const real &period, complex &re, complex &im)
     {
-        const real sampleStep = period/samplesPerLevelPeriod/samplesPerLevelSample;
-        real targetX = period*_pow*2.0+sampleStep*3 + 10*period/samplesPerLevelPeriod;
+        const real sampleStep = period/_samplesPerLevelPeriod/_samplesPerLevelSample;
+        real targetX = period*_pow*2.0+sampleStep*3 + 10*period/_samplesPerLevelPeriod;
         TVReal signal(std::size_t(targetX/sampleStep+1.5));
 
         SignalConvolver &sc = getSignalConvolver();
@@ -382,7 +385,7 @@ namespace sp
     std::string KernelTabled::stateFileName()
     {
         char tmp[4096];
-        sprintf(tmp, "kt_state_POW%0.2f_%zd_%zd.bin", double(_pow), size_t(samplesPerLevelSample), size_t(samplesPerLevelPeriod));
+        sprintf(tmp, "kt_state_POW%0.2f_%zd_%zd.bin", double(_pow), size_t(_samplesPerLevelSample), size_t(_samplesPerLevelPeriod));
 
         return tmp;
     }
@@ -476,7 +479,7 @@ namespace sp
         if(!_scp)
         {
             _scp.reset(new SignalConvolver);
-            _scp->setupFirs(_pow, samplesPerLevelPeriod);
+            _scp->setupFirs(_pow, _samplesPerLevelPeriod);
         }
 
         return *_scp;
