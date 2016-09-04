@@ -457,14 +457,9 @@ namespace sp
 
     namespace
     {
-        complex approxCosPlusAxPlusB(TVReal &ys)
+        complex approxCosPlusPoly(TVReal &ys, std::size_t polyOrder)
         {
             double levmarInfo[LM_INFO_SZ];
-            static std::vector<double> work;
-            if(work.size() < LM_DIF_WORKSZ(4, ys.size()*2))
-            {
-                work.resize(LM_DIF_WORKSZ(4, ys.size()*2));
-            }
 
             static double levmarOpts[LM_OPTS_SZ] =
             {
@@ -474,37 +469,58 @@ namespace sp
                 1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
             };
 
-            double p[4]={0,0,0,0};
+            static std::vector<double> args;
+            args.resize(2+polyOrder+1);
+            std::fill(args.begin(), args.end(), double(0));
 
             static std::vector<double> dys;
             dys.assign(ys.begin(), ys.end());
+
+            static std::vector<double> work;
+            if(work.size() < LM_DIF_WORKSZ(args.size(), dys.size()))
+            {
+                work.resize(LM_DIF_WORKSZ(args.size(), dys.size()));
+            }
+
 
             int levmarResult = dlevmar_der(
                         [](double *p, double *hx, int m, int n, void *_levmarParams)->void{
                             for(int i(0); i<n; i++)
                             {
-                                real x = g_2pi*i/n;
-                                hx[i] = double(p[0]*cos(x) - p[1]*sin(x) + p[2]*x + p[3]);
+                                real x = real(i)/n;
 
-                                int k = 1;
+                                real v = p[0]*cos(g_2pi*x) - p[1]*sin(g_2pi*x);
+                                real xp = 1;
+                                for(int j(2); j<m; ++j)
+                                {
+                                    v += p[j]*xp;
+                                    xp *= x;
+                                }
+
+                                hx[i] = double(v);
                             }
                         },
                         [](double *p, double *jx, int m, int n, void *_levmarParams){
                             for(int i(0); i<n; i++)
                             {
-                                real x = g_2pi*i/n;
+                                real x = real(i)/n;
 
-                                jx[i*4+0] = double(cos(x));
-                                jx[i*4+1] = double(-sin(x));
-                                jx[i*4+2] = double(x);
-                                jx[i*4+3] = double(1);
+                                jx[i*m+0] = double(cos(g_2pi*x));
+                                jx[i*m+1] = double(-sin(g_2pi*x));
+
+                                real xp = 1;
+                                for(int j(2); j<m; ++j)
+                                {
+                                    jx[i*m+j] = xp;
+                                    xp *= x;
+                                }
                             }
                         },
-                        &p[0],
+                        &args[0],
                         &dys[0],
-                        4,
+                        args.size(),
                         ys.size(),
-                        5,
+                        10,
                         levmarOpts,
                         levmarInfo,
                         &work[0],
@@ -532,9 +548,9 @@ namespace sp
 //            std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
 //            std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
 //            std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
-//            exit(1);
+//            //exit(1);
 
-            return complex(p[0],p[1]);
+            return complex(args[0], args[1]);
         }
     }
 
@@ -558,7 +574,7 @@ namespace sp
 
 //        complex r1 = res / (_period * _ppw);
 
-        complex r2 = approxCosPlusAxPlusB(_valuesFiltered);
+        complex r2 = approxCosPlusPoly(_valuesFiltered, 10);
 
         return r2;
     }
