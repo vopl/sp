@@ -35,10 +35,20 @@ int main(int argc, char *argv[])
 
 
     sp::PeriodGrid echoPeriods(sp::g_periodMin, sp::g_periodMax, sp::g_periodSteps, sp::PeriodGridType::frequencyLog);
-    std::cerr<<"efmin: "<<(1.0/echoPeriods.grid().back())<<", efmax: "<<(1.0/echoPeriods.grid().front())<<", efcount: "<<echoPeriods.grid().size()<<std::endl;
+    std::cerr
+          <<"efmin: "<<(1.0/echoPeriods.grid().back())
+          <<", efmax: "<<(1.0/echoPeriods.grid().front())
+          <<", efcount: "<<echoPeriods.grid().size()
+          <<", efstep: "<<(echoPeriods.grid()[1]/echoPeriods.grid()[0])
+          <<std::endl;
 
-    sp::PeriodGrid spectrPeriods = sp::PeriodGrid(echoPeriods.grid()[0], echoPeriods.grid()[750], 750, sp::PeriodGridType::frequencyLog);
-    std::cerr<<"sfmin: "<<1.0/spectrPeriods.grid().back()<<", sfmax: "<<1.0/spectrPeriods.grid().front()<<", sfcount: "<<spectrPeriods.grid().size()<<std::endl;
+    sp::PeriodGrid spectrPeriods = sp::PeriodGrid(echoPeriods.grid()[0], echoPeriods.grid()[800], 800, sp::PeriodGridType::frequencyLog);
+    std::cerr
+            <<"sfmin: "<<(1.0/spectrPeriods.grid().back())
+            <<", sfmax: "<<(1.0/spectrPeriods.grid().front())
+            <<", sfcount: "<<spectrPeriods.grid().size()
+            <<", sfstep: "<<(spectrPeriods.grid()[1]/spectrPeriods.grid()[0])
+            <<std::endl;
 
     //exit(0);
 
@@ -71,7 +81,7 @@ int main(int argc, char *argv[])
 
             signal[index] = 0;
 
-            for(std::size_t k(10); k<spectrPeriods.grid().size(); k+=10)
+            for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
             {
                 sp::real t = echoPeriods.grid()[k];
                 signal[index] += sin((x-xTarget)*sp::g_2pi/t);
@@ -100,12 +110,13 @@ int main(int argc, char *argv[])
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         for(size_t i(0); i<echoPeriods.grid().size(); ++i)
         {
-//            std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
+            //std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
 
 
             //std::cerr<<"mk echo #"<<i<<std::endl;
 
 //            response[i] = 0;
+//            //std::size_t k = 500;
 //            for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
 //            {
 //                //std::cerr<<(echoPeriods.grid()[i]/echoPeriods.grid()[k])<<std::endl;
