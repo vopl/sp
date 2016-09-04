@@ -102,15 +102,13 @@ namespace sp
         _ppw = ppw;
         _samplesPerPeriod = samplesPerPeriod;
 
-        _halfFirs.resize(std::size_t(_samplesPerPeriod*_ppw + 0.5));
+        _halfFirs.resize(_samplesPerPeriod);
 
         TVReal hhpf;
 
         for(std::size_t firIdx(0); firIdx<_halfFirs.size(); ++firIdx)
         {
-            std::size_t firLen = (firIdx*2)+3;
-
-            const real step0 = real(1) / _ppw;
+            std::size_t firLen = (firIdx + std::size_t(_samplesPerPeriod*_ppw*(1-1/_ppw)+0.5))*2 + 1;
 
             real lowBndT = (real(firLen-1))/(_ppw)/2;
             halfLowPassFir(lowBndT, firLen, _halfFirs[firIdx]);

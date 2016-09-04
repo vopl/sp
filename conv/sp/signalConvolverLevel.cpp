@@ -1,5 +1,6 @@
 #include "sp/signalConvolverLevel.hpp"
 #include "sp/math.hpp"
+#include "levmar.h"
 #include <cassert>
 #include <iostream>
 
@@ -12,7 +13,7 @@ namespace sp
         , _signalSampleStep(signalSampleStep)
         , _sampleStep(_period/samplesPerPeriod)
         , _values(std::size_t(samplesPerPeriod*ppw*2 + 0.5))
-        , _valuesFiltered(std::size_t(samplesPerPeriod*ppw + 0.5))
+        , _valuesFiltered(samplesPerPeriod)
     {
     }
 
@@ -339,35 +340,23 @@ namespace sp
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void SignalConvolverLevel::filtrate(const std::vector<std::vector<real>> &halfFirs)
     {
-        //_valuesFiltered[0] = _values[0];
-        _valuesFiltered[0] = 0;
-
-        for(std::size_t index(0); index<_valuesFiltered.size()-1; ++index)
+        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
         {
-            if(index < std::size_t(_valuesFiltered.size()*(1-1/_ppw) + 0.5))
+            assert(index < halfFirs.size());
+            const std::vector<real> &halfFir = halfFirs[index];
+            const std::size_t halfFirSize = halfFir.size();
+            assert(halfFirSize>=2);
+            const std::size_t firSize = (halfFirSize-1)*2+1;
+
+            Summator<real> sum = 0;
+            sum += (_values[0] + _values[firSize-1]) * halfFir[0] / 2;
+            for(std::size_t i(1); i<halfFirSize-1; ++i)
             {
-                //_valuesFiltered[index+1] = _values[index+1];
-                _valuesFiltered[index+1] = 0;
-                continue;
+                sum += (_values[i] + _values[firSize-1-i]) * halfFir[i];
             }
+            sum += _values[halfFirSize-1] * halfFir[halfFirSize-1];
 
-            {
-                assert(index < halfFirs.size());
-                const std::vector<real> &halfFir = halfFirs[index];
-                const std::size_t halfFirSize = halfFir.size();
-                assert(halfFirSize>=2);
-                const std::size_t firSize = (halfFirSize-1)*2+1;
-
-                Summator<real> sum = 0;
-                sum += (_values[0] + _values[firSize-1]) * halfFir[0] / 2;
-                for(std::size_t i(1); i<halfFirSize-1; ++i)
-                {
-                    sum += (_values[i] + _values[firSize-1-i]) * halfFir[i];
-                }
-                sum += _values[halfFirSize-1] * halfFir[halfFirSize-1];
-
-                _valuesFiltered[index+1] = sum;
-            }
+            _valuesFiltered[index] = sum;
         }
 
 //        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
@@ -465,33 +454,113 @@ namespace sp
             return complex(re, im);
         }
     }
+
+    namespace
+    {
+        complex approxCosPlusAxPlusB(TVReal &ys)
+        {
+            double levmarInfo[LM_INFO_SZ];
+            static std::vector<double> work;
+            if(work.size() < LM_DIF_WORKSZ(4, ys.size()*2))
+            {
+                work.resize(LM_DIF_WORKSZ(4, ys.size()*2));
+            }
+
+            static double levmarOpts[LM_OPTS_SZ] =
+            {
+                1e-40,  //LM_INIT_MU,        //mu
+                1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
+                1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
+                1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
+            };
+
+            double p[4]={0,0,0,0};
+
+            static std::vector<double> dys;
+            dys.assign(ys.begin(), ys.end());
+
+            int levmarResult = dlevmar_der(
+                        [](double *p, double *hx, int m, int n, void *_levmarParams)->void{
+                            for(int i(0); i<n; i++)
+                            {
+                                real x = g_2pi*i/n;
+                                hx[i] = double(p[0]*cos(x) - p[1]*sin(x) + p[2]*x + p[3]);
+
+                                int k = 1;
+                            }
+                        },
+                        [](double *p, double *jx, int m, int n, void *_levmarParams){
+                            for(int i(0); i<n; i++)
+                            {
+                                real x = g_2pi*i/n;
+
+                                jx[i*4+0] = double(cos(x));
+                                jx[i*4+1] = double(-sin(x));
+                                jx[i*4+2] = double(x);
+                                jx[i*4+3] = double(1);
+                            }
+                        },
+                        &p[0],
+                        &dys[0],
+                        4,
+                        ys.size(),
+                        5,
+                        levmarOpts,
+                        levmarInfo,
+                        &work[0],
+                        NULL,
+                        NULL);
+
+//            std::cerr<<"result: "<<levmarResult<<std::endl;
+//            std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
+//            std::cerr<<"||e||_2:"<<levmarInfo[1]<<std::endl;
+//            std::cerr<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
+//            std::cerr<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
+//            std::cerr<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
+//            std::cerr<<"# iterations:"<<levmarInfo[5]<<std::endl;
+//            std::cerr<<"reason for terminating:";
+//            switch(int(levmarInfo[6]+0.5))
+//            {
+//            case 1: std::cerr<<" - stopped by small gradient J^T e"<<std::endl;break;
+//            case 2: std::cerr<<" - stopped by small Dp"<<std::endl;break;
+//            case 3: std::cerr<<" - stopped by itmax"<<std::endl;break;
+//            case 4: std::cerr<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
+//            case 5: std::cerr<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
+//            case 6: std::cerr<<" - stopped by small ||e||_2"<<std::endl;break;
+//            case 7: std::cerr<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
+//            }
+//            std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
+//            std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
+//            std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
+//            exit(1);
+
+            return complex(p[0],p[1]);
+        }
+    }
+
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     complex SignalConvolverLevel::convolve()
     {
-        const real step0 = 1 / _ppw;
+//        Summator<complex> res;
 
-//        real period_m1 = _period /(1.0-step0/2);
-//        real period_p1 = _period /(1.0+step0/2);
+//        for(std::size_t index(0); index<_valuesFiltered.size()-1; ++index)
+//        {
+//            real x0 = index * _sampleStep;
+//            real x1 = x0 + _sampleStep;
 
-        Summator<complex> res;
-//        Summator<complex> res_m1;
-//        Summator<complex> res_p1;
+//            real y0 = _valuesFiltered[index];
+//            real y1 = _valuesFiltered[index+1];
 
-        for(std::size_t index(std::size_t(_valuesFiltered.size()*(1-1/_ppw) + 0.5)); index<_valuesFiltered.size()-1; ++index)
-        {
-            real x0 = index * _sampleStep;
-            real x1 = x0 + _sampleStep;
+//            res += evalSegment(_period, x0, y0, x1, y1);
+//        }
 
-            real y0 = _valuesFiltered[index];
-            real y1 = _valuesFiltered[index+1];
+//        //return res / (_period * _ppw);
 
-            res += evalSegment(_period, x0, y0, x1, y1);
-//            res_m1 += evalSegment(period_m1, x0, y0, x1, y1);
-//            res_p1 += evalSegment(period_p1, x0, y0, x1, y1);
-        }
+//        complex r1 = res / (_period * _ppw);
 
-        return res / (_period * _ppw);
-        //return (res_p1*(1.0+step0/2) - res_m1*(1.0-step0/2)) / (_period * _ppw);
+        complex r2 = approxCosPlusAxPlusB(_valuesFiltered);
+
+        return r2;
     }
 
 }
