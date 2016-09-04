@@ -230,10 +230,10 @@ namespace sp
 
             static double levmarOpts[LM_OPTS_SZ] =
             {
-                1e-30,  //LM_INIT_MU,        //mu
+                1e-40,  //LM_INIT_MU,        //mu
                 1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
                 1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
-                1e-20,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
+                1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
             };
 
             double p[2]={0,0};
@@ -260,7 +260,7 @@ namespace sp
                         &dys[0],
                         2,
                         ys.size(),
-                        50,
+                        5,
                         levmarOpts,
                         levmarInfo,
                         &work[0],
@@ -288,7 +288,7 @@ namespace sp
 //            std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
 //            std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
 //            std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
-//            //exit(1);
+//            exit(1);
 
             return complex(p[0],p[1]);
         }
