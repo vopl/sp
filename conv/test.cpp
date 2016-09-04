@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
           <<", efstep: "<<(echoPeriods.grid()[1]/echoPeriods.grid()[0])
           <<std::endl;
 
-    sp::PeriodGrid spectrPeriods = sp::PeriodGrid(echoPeriods.grid()[0], echoPeriods.grid()[800], 800, sp::PeriodGridType::frequencyLog);
+    sp::PeriodGrid spectrPeriods = sp::PeriodGrid(echoPeriods.grid()[0], echoPeriods.grid()[780], 780, sp::PeriodGridType::frequencyLog);
     std::cerr
             <<"sfmin: "<<(1.0/spectrPeriods.grid().back())
             <<", sfmax: "<<(1.0/spectrPeriods.grid().front())
