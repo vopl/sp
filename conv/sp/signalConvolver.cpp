@@ -44,7 +44,7 @@ namespace sp
         }
 
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        void lowPassHalfFir(
+        void halfLowPassFir(
             real bndT,
             std::size_t n,
             std::vector<real> &A)
@@ -57,7 +57,7 @@ namespace sp
             std::size_t mn = n/2-1;
             A.resize(mn+1);
 
-//            real kaizerBeta = 5;
+//            real kaizerBeta = 10;
 //            real kaizerDenominator = kaizerDenom(kaizerBeta);
 
             A[mn] = q;
@@ -78,6 +78,22 @@ namespace sp
                 v /= sum*2;
             }
         }
+
+        void halfHighPassFir(
+            real bndT,
+            std::size_t n,
+            std::vector<real> &A)
+        {
+            halfLowPassFir(bndT, n, A);
+
+            for(std::size_t i = 0; i < (n-1)/2; i++)
+            {
+                A[i] = -A[i];
+            }
+
+            A[(n-1)/2] = -A[(n-1)/2] + 1.0;
+        }
+
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -88,11 +104,26 @@ namespace sp
 
         _halfFirs.resize(std::size_t(_samplesPerPeriod*_ppw + 0.5));
 
+        TVReal hhpf;
+
         for(std::size_t firIdx(0); firIdx<_halfFirs.size(); ++firIdx)
         {
             std::size_t firLen = (firIdx*2)+3;
-            real bndT = (real(firLen-1))/(_ppw)/2;
-            lowPassHalfFir(bndT, firLen, _halfFirs[firIdx]);
+
+            const real step0 = real(1) / _ppw;
+
+            real lowBndT = (real(firLen-1))/(_ppw)/2;
+            halfLowPassFir(lowBndT, firLen, _halfFirs[firIdx]);
+
+            real highBndT = (real(firLen-1))/(_ppw*(1-1/_ppw))/2;
+            halfHighPassFir(highBndT, firLen, hhpf);
+
+
+            for(std::size_t i(0); i<_halfFirs[firIdx].size(); ++i)
+            {
+                _halfFirs[firIdx][i] = -(_halfFirs[firIdx][i] + hhpf[i]);
+            }
+            _halfFirs[firIdx].back() += 1.0;
         }
     }
 

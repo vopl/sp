@@ -1,3 +1,4 @@
+#if 0
 #include <iostream>
 #include <fstream>
 #include <boost/program_options.hpp>
@@ -52,8 +53,27 @@ using namespace sp;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
-int main(int argc, char *argv[])
+int main0(int argc, char *argv[])
 {
+
+
+//    {
+//        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+//        KernelTabled k(10, 10, 80);
+
+//        k.eval(4.0, 1, sp::complex(1.0));
+
+
+//        exit(0);
+//    }
+
+
+
+
+
+
+
+
     ////////////////////////////////////////////////////////////////////////////////
     po::options_description desc("conv");
     desc.add_options()
@@ -425,3 +445,4 @@ int main_old(int argc, char *argv[])
 
     return 0;
 }
+#endif

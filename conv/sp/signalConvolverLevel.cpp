@@ -339,17 +339,17 @@ namespace sp
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void SignalConvolverLevel::filtrate(const std::vector<std::vector<real>> &halfFirs)
     {
-
-
-        _valuesFiltered[0] = _values[0];
+        //_valuesFiltered[0] = _values[0];
+        _valuesFiltered[0] = 0;
 
         for(std::size_t index(0); index<_valuesFiltered.size()-1; ++index)
         {
-//            if(index < std::size_t(_ppw + 2.5))//попробовать без этого
-//            {
-//                _valuesFiltered[index+1] = _values[index+1];
-//                continue;
-//            }
+            if(index < std::size_t(_valuesFiltered.size()*(1-1/_ppw) + 0.5))
+            {
+                //_valuesFiltered[index+1] = _values[index+1];
+                _valuesFiltered[index+1] = 0;
+                continue;
+            }
 
             {
                 assert(index < halfFirs.size());
@@ -477,7 +477,7 @@ namespace sp
 //        Summator<complex> res_m1;
 //        Summator<complex> res_p1;
 
-        for(std::size_t index(0); index<_valuesFiltered.size()-1; ++index)
+        for(std::size_t index(std::size_t(_valuesFiltered.size()*(1-1/_ppw) + 0.5)); index<_valuesFiltered.size()-1; ++index)
         {
             real x0 = index * _sampleStep;
             real x1 = x0 + _sampleStep;

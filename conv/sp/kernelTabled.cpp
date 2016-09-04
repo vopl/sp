@@ -158,10 +158,10 @@ namespace sp
 
         static double levmarOpts[LM_OPTS_SZ] =
         {
-            1e-30,  //LM_INIT_MU,        //mu
+            1e-40,  //LM_INIT_MU,        //mu
             1e-140,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
             1e-140,  //LM_STOP_THRESH,    //||Dp||_2 and
-            1e-20,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
+            1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
         };
 
         std::vector<double> d_sv(ssize*2);
@@ -368,6 +368,8 @@ namespace sp
             for(std::size_t sindex(startIdx); sindex<stopIdx; sindex++)
             {
                 signal[sindex] = cos(g_2pi*(sampleStep*sindex - targetX) + phaseIndex*g_pi/2/phasesAmountForKernelApproximator);
+//                signal[sindex] += cos(g_2pi*(sampleStep*sindex - targetX)*2 + phaseIndex*g_pi/2/phasesAmountForKernelApproximator);
+//                signal[sindex] += cos(g_2pi*(sampleStep*sindex - targetX)*0.5 + phaseIndex*g_pi/2/phasesAmountForKernelApproximator);
             }
 
             sc.pushSignal(&signal[0], signal.size());
