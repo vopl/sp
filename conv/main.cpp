@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
             ("spls", po::value<std::size_t>()->default_value(10000), "samples per level sample")
             ("splp", po::value<std::size_t>()->default_value(400), "samples per level period")
 
-            ("cpo", po::value<std::size_t>()->default_value(10), "convolver polynome order")
+            ("cpo", po::value<std::size_t>()->default_value(11), "convolver polynome order")
 
             ("efmin", po::value<sp::real>()->default_value(5), "echo frequency grid minimum")
             ("efmax", po::value<sp::real>()->default_value(20000), "echo frequency grid maximum")
