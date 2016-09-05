@@ -11,7 +11,7 @@ namespace sp
     class KernelTabled
     {
     public:
-        KernelTabled(real ppw, std::size_t samplesPerLevelSample, std::size_t samplesPerLevelPeriod);
+        KernelTabled(real ppw, std::size_t samplesPerLevelSample, std::size_t samplesPerLevelPeriod, std::size_t convolverPolyOrder);
         ~KernelTabled();
 
 
@@ -41,6 +41,7 @@ namespace sp
         real _ppw;
         std::size_t _samplesPerLevelSample;
         std::size_t _samplesPerLevelPeriod;
+        std::size_t _convolverPolyOrder;
 
         using SignalConvolverPtr = std::unique_ptr<SignalConvolver>;
         SignalConvolverPtr _scp;

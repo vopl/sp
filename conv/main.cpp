@@ -1,4 +1,3 @@
-#if 0
 #include <iostream>
 #include <fstream>
 #include <boost/program_options.hpp>
@@ -53,15 +52,15 @@ using namespace sp;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
-int main0(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 
 
 //    {
 //        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-//        KernelTabled k(10, 10, 80);
+//        KernelTabled k(10, 1000, 200);
 
-//        k.eval(4.0, 1, sp::complex(1.0));
+//        k.eval(1.1, 1, sp::complex(1.0));
 
 
 //        exit(0);
@@ -84,13 +83,16 @@ int main0(int argc, char *argv[])
             ("spls", po::value<std::size_t>()->default_value(10000), "samples per level sample")
             ("splp", po::value<std::size_t>()->default_value(400), "samples per level period")
 
+            ("cpo", po::value<std::size_t>()->default_value(10), "convolver polynome order")
+
             ("efmin", po::value<sp::real>()->default_value(5), "echo frequency grid minimum")
             ("efmax", po::value<sp::real>()->default_value(20000), "echo frequency grid maximum")
             ("efcount", po::value<std::size_t>()->default_value(1000), "echo frequency grid size")
             //("eftype", po::value<std::string>()->default_value("flog"), "echo frequency grid type (plin|plog|flin|flog)")
 
-            ("sfminmult", po::value<sp::real>()->default_value(2.5), "spectr frequency minimum value part")
-            ("sfcountmult", po::value<std::size_t>()->default_value(2), "spectr frequency count mult")
+            ("sfminmult", po::value<sp::real>()->default_value(7.5), "spectr frequency minimum value part")
+            ("sfmaxmult", po::value<sp::real>()->default_value(0.99), "spectr frequency maximum value part")
+            ("sfcountmult", po::value<std::size_t>()->default_value(1), "spectr frequency count mult")
 
             ("fps", po::value<sp::real>()->default_value(100), "frames per second")
 
@@ -141,16 +143,19 @@ int main0(int argc, char *argv[])
 
     TVReal echoPeriods = echoPeriodsGrid.grid();
 
-    cout<<"efmin: "<<(sp::real(1)/echoPeriods.back())<<", efmax: "<<(sp::real(1)/echoPeriods.front())<<", efcount: "<<echoPeriods.size()<<endl;
+    cout
+        <<"efmin: "<<(sp::real(1)/echoPeriods.back())
+        <<", efmax: "<<(sp::real(1)/echoPeriods.front())
+        <<", efcount: "<<echoPeriods.size()
+        <<", efstep: "<<echoPeriods[1]/echoPeriods[0]
+        <<endl;
 
     TVReal spectrPeriods;
     {
-        sp::real sfMinMult = vars["sfminmult"].as<sp::real>();
-        if(sfMinMult < 1)
-        {
-            cerr<<"bad sfminmult: "<<sfMinMult<<std::endl;
-            return EXIT_FAILURE;
-        }
+
+        TVReal::const_iterator sfBegin = std::lower_bound(echoPeriods.begin(), echoPeriods.end(), echoPeriods.front()/vars["sfmaxmult"].as<sp::real>());
+        TVReal::const_iterator sfEnd = std::lower_bound(echoPeriods.begin(), echoPeriods.end(), echoPeriods.back()/vars["sfminmult"].as<sp::real>());
+
 
         std::size_t sfCountMult = vars["sfcountmult"].as<std::size_t>();
         if(sfCountMult < 1)
@@ -159,30 +164,24 @@ int main0(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
-        auto iter = std::find_if(echoPeriods.rbegin(), echoPeriods.rend(), [&](sp::real t){return t<=echoPeriods.back()/sfMinMult;});
-        if(iter==echoPeriods.rend())
+
+        spectrPeriods.clear();
+        spectrPeriods.resize((sfEnd-sfBegin)/sfCountMult);
+        auto sfIter = sfBegin;
+        for(std::size_t idx(0); idx<spectrPeriods.size(); ++idx)
         {
-            cerr<<"bad sfminmult: "<<sfMinMult<<std::endl;
-            return EXIT_FAILURE;
+            spectrPeriods[idx] = *sfIter;
+            sfIter += std::ptrdiff_t(sfCountMult);
         }
 
-        std::size_t echoPeriodsSize4Spectr = std::size_t(echoPeriods.rend() - iter);
-        std::size_t spectrPeriodsSize = std::size_t(sp::real(echoPeriodsSize4Spectr)/sfCountMult+0.5);
-
-        if(spectrPeriodsSize < 2 || spectrPeriodsSize>echoPeriods.size())
-        {
-            cerr<<"bad sfminmult sfcountmult combination, spectrSize: "<<spectrPeriodsSize<<std::endl;
-            return EXIT_FAILURE;
-        }
-
-        spectrPeriods.resize(spectrPeriodsSize);
-        for(std::size_t i(0); i<spectrPeriodsSize; i++)
-        {
-            spectrPeriods[i] = echoPeriods[std::size_t(i*sfCountMult)];
-        }
     }
 
-    cout<<"sfmin: "<<(sp::real(1)/spectrPeriods.back())<<", sfmax: "<<(sp::real(1)/spectrPeriods.front())<<", sfcount: "<<spectrPeriods.size()<<endl;
+    cout
+        <<"sfmin: "<<(sp::real(1)/spectrPeriods.back())
+        <<", sfmax: "<<(sp::real(1)/spectrPeriods.front())
+        <<", sfcount: "<<spectrPeriods.size()
+        <<", sfstep: "<<spectrPeriods[1]/spectrPeriods[0]
+        <<endl;
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     TVReal samples;
@@ -214,7 +213,7 @@ int main0(int argc, char *argv[])
 
                 samples[index] = 0;
 
-                for(std::size_t k(0); k<spectrPeriods.size(); k+=calibrate)
+                for(std::size_t k(calibrate); k<=spectrPeriods.size()-calibrate; k+=calibrate)
                 {
                     sp::real t = spectrPeriods[k];
                     samples[index] += sp::sin(x*sp::g_2pi/t);
@@ -264,10 +263,20 @@ int main0(int argc, char *argv[])
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     SignalConvolver convolver;
-    convolver.setup(vars["ppw"].as<sp::real>(), echoPeriods, sp::real(1)/sps, vars["splp"].as<std::size_t>(), SignalApproxType::poly6p5o32x);
+    convolver.setup(
+            vars["ppw"].as<sp::real>(),
+            echoPeriods,
+            sp::real(1)/sps,
+            vars["splp"].as<std::size_t>(),
+            vars["cpo"].as<std::size_t>(),
+            SignalApproxType::poly6p5o32x);
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    KernelTabled k(vars["ppw"].as<sp::real>(), vars["spls"].as<std::size_t>(), vars["splp"].as<std::size_t>());
+    KernelTabled k(
+            vars["ppw"].as<sp::real>(),
+            vars["spls"].as<std::size_t>(),
+            vars["splp"].as<std::size_t>(),
+            vars["cpo"].as<std::size_t>());
 
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -296,7 +305,7 @@ int main0(int argc, char *argv[])
 
         std::fill(spectr.begin(), spectr.end(), sp::real(0));
 
-        std::size_t iters = 5;
+        std::size_t iters = 15;
         sp::real error = 0;
         k.deconvolve(
             echo.size(), &echoPeriods[0], &echo[0],
@@ -317,132 +326,3 @@ int main0(int argc, char *argv[])
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-int main_old(int argc, char *argv[])
-{
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    std::string wavFName = "/home/vopl/tmp/13/start.wav";
-    TVReal samples;
-    uint32_t sps;
-
-    if(!loadWav(wavFName, samples, sps))
-    {
-        cerr<<"unable to load wav file"<<endl;
-        return -1;
-    }
-
-    cout<<"wav loaded: "<<samples.size()<<" samples at "<<sps<<"Hz ("<<sp::real(samples.size())/sps<<" sec)"<<endl;
-
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    PeriodGrid echoPeriods(1.0L/20000, 1.0L/2, 1000, PeriodGridType::frequencyLog);
-    cout<<"efmin: "<<(1.0/echoPeriods.grid().back())<<", efmax: "<<(1.0/echoPeriods.grid().front())<<", efcount: "<<echoPeriods.grid().size()<<endl;
-
-    PeriodGrid spectrPeriods(echoPeriods.grid()[0], echoPeriods.grid()[699], 700, PeriodGridType::frequencyLog);
-    cout<<"sfmin: "<<1.0/spectrPeriods.grid().back()<<", sfmax: "<<1.0/spectrPeriods.grid().front()<<", sfcount: "<<spectrPeriods.grid().size()<<endl;
-
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    SpectrStore echoStore(wavFName+".echo", echoPeriods.grid());
-    SpectrStore spectrStore(wavFName+".spectr", spectrPeriods.grid());
-
-    if(
-       echoStore.framesPushed() == std::size_t(-1) ||
-       echoStore.framesPushed() != spectrStore.framesPushed())
-    {
-        cerr<<"spectr stores are inconsistent: "<<echoStore.framesPushed()<<" vs "<<spectrStore.framesPushed()<<endl;
-        return -1;
-    }
-
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    sp::real framesPerSecond = 200;
-    const size_t samplesPerFrame = size_t(sps/framesPerSecond);
-    cout<<"samplesPerFrame: "<<samplesPerFrame<<endl;
-
-    framesPerSecond = sp::real(sps)/samplesPerFrame;
-    cout<<"framesPerSecond: "<<framesPerSecond<<endl;
-
-    const size_t framesAmount = (samples.size()-2)/samplesPerFrame;//2 extra samples for poly signal approximator
-    cout<<"framesAmount: "<<framesAmount<<endl;
-
-    size_t frameIndex = echoStore.framesPushed() + 95;
-
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    SignalConvolver convolver;
-    convolver.setup(10, echoPeriods.grid(), sp::real(1)/sps, 400, SignalApproxType::poly6p5o32x);
-
-    convolver.pushSignal(&samples[0], 2);//2 extra samples for poly signal approximator
-    size_t sampleIndex = 2;
-
-    if(frameIndex)
-    {
-        convolver.pushSignal(&samples[sampleIndex], samplesPerFrame*frameIndex);
-        sampleIndex += samplesPerFrame*frameIndex;
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    KernelTabled k(10, 10000, 400);
-
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    TVComplex echo;
-    TVComplex spectr(spectrPeriods.grid().size());
-
-    std::vector<double> kwork;
-    for(; frameIndex<framesAmount; ++frameIndex)
-    {
-        cout<<"frame "<<frameIndex<<"/"<<framesAmount<<" ("<<sp::real(sampleIndex-2)/sps<<" sec, "<<sp::real(frameIndex*100)/framesAmount<<"%) ";
-        cout.flush();
-
-        convolver.pushSignal(&samples[sampleIndex], samplesPerFrame);
-        sampleIndex += samplesPerFrame;
-
-        cout<<"c";
-        cout.flush();
-
-        echo = convolver.convolve();
-
-        cout<<"d";
-        cout.flush();
-
-        std::fill(spectr.begin(), spectr.end(), sp::real(0));
-
-        std::size_t iters = 5;
-        sp::real error = 0;
-        k.deconvolve(
-            echo.size(), &echoPeriods.grid()[0], &echo[0],
-            spectr.size(), &spectrPeriods.grid()[0], &spectr[0],
-            iters,
-            error,
-            kwork);
-        cout<<" iters: "<<iters<<", error: "<<error<<endl;
-
-        echoStore.pushFrames(echo);
-        spectrStore.pushFrames(spectr);
-    }
-
-
-    return 0;
-}
-#endif

@@ -7,11 +7,12 @@
 namespace sp
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    SignalConvolverLevel::SignalConvolverLevel(real ppw, real period, real signalSampleStep, std::size_t samplesPerPeriod)
+    SignalConvolverLevel::SignalConvolverLevel(real ppw, real period, real signalSampleStep, std::size_t samplesPerPeriod, std::size_t polyOrder)
         : _ppw(ppw)
         , _period(period)
         , _signalSampleStep(signalSampleStep)
         , _sampleStep(_period/samplesPerPeriod)
+        , _polyOrder(polyOrder)
         , _values(std::size_t(samplesPerPeriod*ppw*2 + 0.5))
         , _valuesFiltered(samplesPerPeriod)
     {
@@ -464,8 +465,8 @@ namespace sp
             static double levmarOpts[LM_OPTS_SZ] =
             {
                 1e-40,  //LM_INIT_MU,        //mu
-                1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
-                1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
+                1e-280,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
+                1e-280,  //LM_STOP_THRESH,    //||Dp||_2 and
                 1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
             };
 
@@ -490,14 +491,38 @@ namespace sp
                                 real x = real(i)/n;
 
                                 real v = p[0]*cos(g_2pi*x) - p[1]*sin(g_2pi*x);
-                                real xp = 1;
-                                for(int j(2); j<m; ++j)
-                                {
-                                    v += p[j]*xp;
-                                    xp *= x;
-                                }
 
-                                hx[i] = double(v);
+                                real polyVal = 0;
+
+//                                real xp = 1;
+//                                for(int j(2); j<m; ++j)
+//                                {
+//                                    polyVal += p[j]*xp;
+//                                    xp *= x;
+//                                }
+
+                                //чебышева первого рода
+
+                                real b1;
+                                real b2;
+                                int o;
+
+                                real time = real(i)/n*2 - 1;
+                                b1 = 0;
+                                b2 = 0;
+                                o = m-2+1;
+                                do
+                                {
+                                    polyVal = 2*time*b1-b2+p[2+o];
+                                    b2 = b1;
+                                    b1 = polyVal;
+                                    o -= 1;
+                                }
+                                while(o>=0);
+                                polyVal = polyVal-time*b2;
+
+
+                                hx[i] = double(v + polyVal);
                             }
                         },
                         [](double *p, double *jx, int m, int n, void *_levmarParams){
@@ -508,19 +533,44 @@ namespace sp
                                 jx[i*m+0] = double(cos(g_2pi*x));
                                 jx[i*m+1] = double(-sin(g_2pi*x));
 
-                                real xp = 1;
-                                for(int j(2); j<m; ++j)
+//                                real xp = 1;
+//                                for(int j(2); j<m; ++j)
+//                                {
+//                                    jx[i*m+j] = xp;
+//                                    xp *= x;
+//                                }
+
+                                real time = real(i)/n*2 - 1;
+
+                                size_t maxPow = m-2+1;
+                                if(maxPow == 0)
                                 {
-                                    jx[i*m+j] = xp;
-                                    xp *= x;
+                                    jx[i*m+2+0] = 1;
                                 }
+                                else if(maxPow == 1)
+                                {
+                                    jx[i*m+2+0] = 1;
+                                    jx[i*m+2+1] = time;
+                                }
+                                else
+                                {
+                                    jx[i*m+2+0] = 1;
+                                    jx[i*m+2+1] = time;
+
+                                    for(size_t o=2; o<=maxPow; o++)
+                                    {
+                                        jx[i*m+2+o] = 2.0*time*jx[i*m+2+o-1] - jx[i*m+2+o-2];
+                                    }
+                                }
+
+
                             }
                         },
                         &args[0],
                         &dys[0],
                         args.size(),
                         ys.size(),
-                        10,
+                        50,
                         levmarOpts,
                         levmarInfo,
                         &work[0],
@@ -574,7 +624,7 @@ namespace sp
 
 //        complex r1 = res / (_period * _ppw);
 
-        complex r2 = approxCosPlusPoly(_valuesFiltered, 10);
+        complex r2 = approxCosPlusPoly(_valuesFiltered, _polyOrder);
 
         return r2;
     }
