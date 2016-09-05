@@ -112,7 +112,8 @@ LM_REAL p_eL2, jacTe_inf, pDp_eL2; /* ||e(p)||_2, ||J^T e||_inf, ||e(p+Dp)||_2 *
 LM_REAL p_L2, Dp_L2=LM_REAL_MAX, dF, dL;
 LM_REAL tau, eps1, eps2, eps2_sq, eps3;
 LM_REAL init_p_eL2;
-int nu=2, nu2, stop=0, nfev, njev=0, nlss=0;
+long long nu=2, nu2;
+int stop=0, nfev, njev=0, nlss=0;
 const int nm=n*m;
 int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
 

@@ -9,7 +9,7 @@ namespace sp
     class SignalConvolverLevel
     {
     public:
-        SignalConvolverLevel(real ppw, real period, real signalSampleStep, std::size_t samplesPerPeriod);
+        SignalConvolverLevel(real ppw, real period, real signalSampleStep, std::size_t samplesPerPeriod, std::size_t polyOrder);
         ~SignalConvolverLevel();
 
         void update(const real *signal, std::size_t signalSize, SignalApproxType sat);
@@ -25,6 +25,7 @@ namespace sp
         real    _period;
         real    _signalSampleStep;
         real    _sampleStep;
+        std::size_t _polyOrder;
         TVReal  _values;
         TVReal  _valuesFiltered;
 

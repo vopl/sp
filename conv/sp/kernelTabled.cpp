@@ -14,10 +14,11 @@ static const std::size_t phasesAmountForKernelApproximator = 2;//MAGIC
 
 namespace sp
 {
-    KernelTabled::KernelTabled(real ppw, std::size_t samplesPerLevelSample, std::size_t samplesPerLevelPeriod)
+    KernelTabled::KernelTabled(real ppw, std::size_t samplesPerLevelSample, std::size_t samplesPerLevelPeriod, std::size_t convolverPolyOrder)
         : _ppw(ppw)
         , _samplesPerLevelSample(samplesPerLevelSample)
         , _samplesPerLevelPeriod(samplesPerLevelPeriod)
+        , _convolverPolyOrder(convolverPolyOrder)
     {
         load();
     }
@@ -59,9 +60,9 @@ namespace sp
         //////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////
-        void evalLevmarFunc(double *p, double *hx, int m, int n, void *_levmarParams)
+        void evalLevmarFunc(double *p, double *hx, int m, int n, void *levmarParams)
         {
-            LevmarParams *params = (LevmarParams *)_levmarParams;
+            LevmarParams *params = reinterpret_cast<LevmarParams *>(levmarParams);
 
             for(int i(0); i<n/2; i++)
             {
@@ -97,9 +98,10 @@ namespace sp
         }
 
         //////////////////////////////////////////////////////////////////////////
-        void evalLevmarJaco(double *p, double *jx, int m, int n, void *_levmarParams)
+        void evalLevmarJaco(double *p, double *jx, int m, int n, void *levmarParams)
         {
-            LevmarParams *params = (LevmarParams *)_levmarParams;
+            (void)p;
+            LevmarParams *params = reinterpret_cast<LevmarParams *>(levmarParams);
 
             for(int i(0); i<n/2; i++)
             {
@@ -160,7 +162,7 @@ namespace sp
         {
             1e-40,  //LM_INIT_MU,        //mu
             1e-140,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
-            1e-140,  //LM_STOP_THRESH,    //||Dp||_2 and
+            1e-300,  //LM_STOP_THRESH,    //||Dp||_2 and
             1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
         };
 
@@ -176,9 +178,9 @@ namespace sp
             &evalLevmarJaco,
             &d_sv[0],
             NULL,
-            ssize*2,
-            esize*2,
-            iters,
+            int(ssize*2),
+            int(esize*2),
+            int(iters),
             levmarOpts,
             levmarInfo,
             &work[0],
@@ -206,6 +208,7 @@ namespace sp
         std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
         std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
         std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
+        std::cerr<<std::endl;
         //exit(1);
 
         for(std::size_t i(0); i<ssize; ++i)
@@ -241,15 +244,17 @@ namespace sp
             std::vector<double> dys(ys.begin(), ys.end());
 
             int levmarResult = dlevmar_der(
-                        [](double *p, double *hx, int m, int n, void *_levmarParams)->void{
+                        [](double *p, double *hx, int m, int n, void *)->void{
+                            (void)m;
                             for(int i(0); i<n; i++)
                             {
                                 hx[i] = double(p[0]*cos(g_pi/2*i/n) - p[1]*sin(g_pi/2*i/n));
-
-                                int k = 1;
                             }
                         },
-                        [](double *p, double *jx, int m, int n, void *_levmarParams){
+                        [](double *p, double *jx, int m, int n, void *){
+                            (void)p;
+                            (void)m;
+
                             for(int i(0); i<n; i++)
                             {
                                 jx[i*2+0] = double(cos(g_pi/2*i/n));
@@ -259,13 +264,14 @@ namespace sp
                         &p[0],
                         &dys[0],
                         2,
-                        ys.size(),
+                        int(ys.size()),
                         5,
                         levmarOpts,
                         levmarInfo,
                         &work[0],
                         NULL,
                         NULL);
+            (void)levmarResult;
 
 //            std::cerr<<"result: "<<levmarResult<<std::endl;
 //            std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
@@ -388,7 +394,11 @@ namespace sp
     std::string KernelTabled::stateFileName()
     {
         char tmp[4096];
-        sprintf(tmp, "kt_state_PPW%0.2f_%zd_%zd.bin", double(_ppw), size_t(_samplesPerLevelSample), size_t(_samplesPerLevelPeriod));
+        sprintf(tmp, "kt_state_PPW%0.2f_CPO%zd_SPLS%zd_SPLP%zd.bin",
+                double(_ppw),
+                size_t(_convolverPolyOrder),
+                size_t(_samplesPerLevelSample),
+                size_t(_samplesPerLevelPeriod));
 
         return tmp;
     }
@@ -482,7 +492,7 @@ namespace sp
         if(!_scp)
         {
             _scp.reset(new SignalConvolver);
-            _scp->setupFirs(_ppw, _samplesPerLevelPeriod);
+            _scp->setupFirs(_ppw, _samplesPerLevelPeriod, _convolverPolyOrder);
         }
 
         return *_scp;

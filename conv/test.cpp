@@ -22,7 +22,7 @@ using namespace std;
 #define POW 10.0
 
 
-int main(int argc, char *argv[])
+int main0(int argc, char *argv[])
 {
     cout.precision(20);
     cout.setf(std::ios::scientific);
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 
     if(1)
     {
-        sp::KernelTabled kt(POW, 200, 200);
+        sp::KernelTabled kt(POW, 200, 200, 10);
         //sp::Kernel kt(POW);
 
 //        kt.eval(1, 1, sp::complex(.23452,1.3456));
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         sp::TVComplex response(sp::g_periodSteps);
         sp::SignalConvolver c;
-        c.setup(POW, echoPeriods.grid(), sp::g_sampleStep, 200, sp::SignalApproxType::poly6p5o32x);
+        c.setup(POW, echoPeriods.grid(), sp::g_sampleStep, 200, 10, sp::SignalApproxType::poly6p5o32x);
 
         std::cerr<<"push signal"<<std::endl;
         c.pushSignal(&signal[0], signal.size());
