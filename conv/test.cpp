@@ -19,7 +19,6 @@ using namespace std;
 
 
 
-#define POW 10.0
 
 
 int main0(int argc, char *argv[])
@@ -56,12 +55,16 @@ int main0(int argc, char *argv[])
 
 
 
+#define POW 10.0
 
+    std::size_t spls = 200;
+    std::size_t splp = 200;
+    std::size_t cpo = 11;
 
 
     if(1)
     {
-        sp::KernelTabled kt(POW, 200, 200, 10);
+        sp::KernelTabled kt(POW, spls, splp, cpo);
         //sp::Kernel kt(POW);
 
 //        kt.eval(1, 1, sp::complex(.23452,1.3456));
@@ -81,6 +84,8 @@ int main0(int argc, char *argv[])
 
             signal[index] = 0;
 
+            sp::real a = x/xTarget;
+
             for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
             {
                 sp::real t = echoPeriods.grid()[k];
@@ -96,7 +101,7 @@ int main0(int argc, char *argv[])
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         sp::TVComplex response(sp::g_periodSteps);
         sp::SignalConvolver c;
-        c.setup(POW, echoPeriods.grid(), sp::g_sampleStep, 200, 10, sp::SignalApproxType::poly6p5o32x);
+        c.setup(POW, echoPeriods.grid(), sp::g_sampleStep, splp, cpo, sp::SignalApproxType::poly6p5o32x);
 
         std::cerr<<"push signal"<<std::endl;
         c.pushSignal(&signal[0], signal.size());
@@ -107,17 +112,17 @@ int main0(int argc, char *argv[])
 
 
 
-        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        for(size_t i(0); i<echoPeriods.grid().size(); ++i)
-        {
-            //std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
+//        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+//        for(size_t i(0); i<echoPeriods.grid().size(); ++i)
+//        {
+//            //std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
 
 
-            //std::cerr<<"mk echo #"<<i<<std::endl;
+//            //std::cerr<<"mk echo #"<<i<<std::endl;
 
 //            response[i] = 0;
-//            //std::size_t k = 500;
-//            for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
+//            std::size_t k = 500;
+//            //for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
 //            {
 //                //std::cerr<<(echoPeriods.grid()[i]/echoPeriods.grid()[k])<<std::endl;
 //                response[i] += kt.eval(echoPeriods.grid()[i], echoPeriods.grid()[k], sp::complex(0,1));
@@ -127,7 +132,7 @@ int main0(int argc, char *argv[])
 
 //            std::cout<<response[i].re()<<", "<<response[i].im();
 //            std::cout<<std::endl;
-        }
+//        }
 
 //        exit(0);
 

@@ -187,29 +187,29 @@ namespace sp
             NULL,
             &params);
 
-        std::cerr<<"result: "<<res<<std::endl;
-        std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
-        std::cerr<<"||e||_2:"<<levmarInfo[1]<<std::endl;
-        std::cerr<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
-        std::cerr<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
-        std::cerr<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
-        std::cerr<<"# iterations:"<<levmarInfo[5]<<std::endl;
-        std::cerr<<"reason for terminating:";
-        switch(int(levmarInfo[6]+0.5))
-        {
-        case 1: std::cerr<<" - stopped by small gradient J^T e"<<std::endl;break;
-        case 2: std::cerr<<" - stopped by small Dp"<<std::endl;break;
-        case 3: std::cerr<<" - stopped by itmax"<<std::endl;break;
-        case 4: std::cerr<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
-        case 5: std::cerr<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
-        case 6: std::cerr<<" - stopped by small ||e||_2"<<std::endl;break;
-        case 7: std::cerr<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
-        }
-        std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
-        std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
-        std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
-        std::cerr<<std::endl;
-        //exit(1);
+//        std::cerr<<"result: "<<res<<std::endl;
+//        std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
+//        std::cerr<<"||e||_2:"<<levmarInfo[1]<<std::endl;
+//        std::cerr<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
+//        std::cerr<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
+//        std::cerr<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
+//        std::cerr<<"# iterations:"<<levmarInfo[5]<<std::endl;
+//        std::cerr<<"reason for terminating:";
+//        switch(int(levmarInfo[6]+0.5))
+//        {
+//        case 1: std::cerr<<" - stopped by small gradient J^T e"<<std::endl;break;
+//        case 2: std::cerr<<" - stopped by small Dp"<<std::endl;break;
+//        case 3: std::cerr<<" - stopped by itmax"<<std::endl;break;
+//        case 4: std::cerr<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
+//        case 5: std::cerr<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
+//        case 6: std::cerr<<" - stopped by small ||e||_2"<<std::endl;break;
+//        case 7: std::cerr<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
+//        }
+//        std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
+//        std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
+//        std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
+//        std::cerr<<std::endl;
+//        //exit(1);
 
         for(std::size_t i(0); i<ssize; ++i)
         {
@@ -217,7 +217,14 @@ namespace sp
         }
 
         iters = std::size_t(levmarInfo[5]+0.5);
-        error = levmarInfo[1];
+        if(levmarInfo[0]>0)
+        {
+            error = levmarInfo[1]/levmarInfo[0];
+        }
+        else
+        {
+            error = 0;
+        }
     }
 
     namespace
