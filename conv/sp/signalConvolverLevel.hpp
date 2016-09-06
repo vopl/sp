@@ -13,6 +13,7 @@ namespace sp
         ~SignalConvolverLevel();
 
         void update(const real *signal, std::size_t signalSize, SignalApproxType sat);
+        void updateIdentity(real phase);
         void filtrate(const std::vector<std::vector<real> > &firs);
         complex convolve();
 

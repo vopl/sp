@@ -27,7 +27,6 @@ using namespace sp;
      * параметры ядра
      * ppw
      * splp - samples per leveled period = 800
-     * sspls - signal samples per leveled sample = 800
      *
      * сетка периода отклика
      * efmin, efmax, efcount, efscaletype
@@ -54,16 +53,24 @@ namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
 void prony();
+void test();
 
 int main(int argc, char *argv[])
 {
 //    prony();
+//    test();
 //    return 0;
 
 
 //    {
+//        std::cerr.precision(20);
+//        std::cerr.setf(std::ios::scientific);
+
+//        std::cout.precision(20);
+//        std::cout.setf(std::ios::scientific);
+
 //        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-//        KernelTabled k(10, 1000, 200);
+//        KernelTabled k(10, 100, 100, 11);
 
 //        k.eval(1.1, 1, sp::complex(1.0));
 
@@ -85,8 +92,7 @@ int main(int argc, char *argv[])
 
             ("ppw", po::value<sp::real>()->default_value(10), "periods per analyze window")
 
-            ("spls", po::value<std::size_t>()->default_value(10000), "samples per level sample")
-            ("splp", po::value<std::size_t>()->default_value(400), "samples per level period")
+            ("splp", po::value<std::size_t>()->default_value(200), "samples per level period")
 
             ("cpo", po::value<std::size_t>()->default_value(11), "convolver polynome order")
 
@@ -305,7 +311,6 @@ int main(int argc, char *argv[])
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     KernelTabled k(
             vars["ppw"].as<sp::real>(),
-            vars["spls"].as<std::size_t>(),
             vars["splp"].as<std::size_t>(),
             vars["cpo"].as<std::size_t>());
 

@@ -8,15 +8,14 @@
 #include <set>
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-static const std::size_t phasesAmountForKernelApproximator = 2;//MAGIC
+static const std::size_t phasesAmountForKernelApproximator = 4;//MAGIC
 
 
 
 namespace sp
 {
-    KernelTabled::KernelTabled(real ppw, std::size_t samplesPerLevelSample, std::size_t samplesPerLevelPeriod, std::size_t convolverPolyOrder)
+    KernelTabled::KernelTabled(real ppw, std::size_t samplesPerLevelPeriod, std::size_t convolverPolyOrder)
         : _ppw(ppw)
-        , _samplesPerLevelSample(samplesPerLevelSample)
         , _samplesPerLevelPeriod(samplesPerLevelPeriod)
         , _convolverPolyOrder(convolverPolyOrder)
     {
@@ -362,32 +361,15 @@ namespace sp
 
     void KernelTabled::buildValue(const real &period, complex &re, complex &im)
     {
-        const real sampleStep = period/_samplesPerLevelPeriod/_samplesPerLevelSample;
-        real targetX = period*_ppw*2.0+sampleStep*3 + 10*period/_samplesPerLevelPeriod;
-        TVReal signal(std::size_t(targetX/sampleStep+1.5));
-
         SignalConvolver &sc = getSignalConvolver();
-        sc.setupSignal(period, sampleStep);
 
         TVReal hre(phasesAmountForKernelApproximator), him(phasesAmountForKernelApproximator);
         for(std::size_t phaseIndex(0); phaseIndex<phasesAmountForKernelApproximator; ++phaseIndex)
         {
-            std::size_t startIdx = 0;
-            std::size_t stopIdx = signal.size();
-            for(std::size_t sindex(startIdx); sindex<stopIdx; sindex++)
-            {
-                signal[sindex] = cos(g_2pi*(sampleStep*sindex - targetX) + phaseIndex*g_pi/2/phasesAmountForKernelApproximator);
-//                signal[sindex] += cos(g_2pi*(sampleStep*sindex - targetX)*2 + phaseIndex*g_pi/2/phasesAmountForKernelApproximator);
-//                signal[sindex] += cos(g_2pi*(sampleStep*sindex - targetX)*0.5 + phaseIndex*g_pi/2/phasesAmountForKernelApproximator);
-            }
-
-            sc.pushSignal(&signal[0], signal.size());
-
-            complex echo = sc.convolve(period);
+            complex echo = sc.convolveIdentity(period, phaseIndex*g_pi/2/phasesAmountForKernelApproximator);
 
             hre[phaseIndex] = echo.re();
             him[phaseIndex] = echo.im();
-
         }
 
         re = approxCos(hre);
@@ -397,10 +379,9 @@ namespace sp
     std::string KernelTabled::stateFileName()
     {
         char tmp[4096];
-        sprintf(tmp, "kt_state_PPW%0.2f_CPO%zd_SPLS%zd_SPLP%zd.bin",
+        sprintf(tmp, "kt_state_PPW%0.2f_CPO%zd_SPLP%zd.bin",
                 double(_ppw),
                 size_t(_convolverPolyOrder),
-                size_t(_samplesPerLevelSample),
                 size_t(_samplesPerLevelPeriod));
 
         return tmp;

@@ -31,6 +31,7 @@ namespace sp
 
         TVComplex /*echo*/ convolve();
         complex /*echo*/ convolve(real period);
+        complex /*echo*/ convolveIdentity(real period, real phase);
 
     private:
         void prepareValues();
