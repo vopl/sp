@@ -339,6 +339,19 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    void SignalConvolverLevel::updateIdentity(real phase)
+    {
+        real stepMult = real(1)/g_2pi/_sampleStep;
+        for(std::size_t valueIndex(0); valueIndex<_values.size(); ++valueIndex)
+        {
+            real startTime = _sampleStep*valueIndex;
+            real stopTime = startTime+_sampleStep;
+
+            _values[valueIndex] = stepMult * (sin(g_2pi*stopTime + phase) - sin(g_2pi*startTime + phase));
+        }
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void SignalConvolverLevel::filtrate(const std::vector<std::vector<real>> &halfFirs)
     {
         for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
@@ -490,7 +503,7 @@ namespace sp
                             {
                                 real x = real(i)/n;
 
-                                real v = p[0]*cos(g_2pi*x) - p[1]*sin(g_2pi*x);
+                                real v = p[0]*cos(g_2pi*x) + p[1]*sin(g_2pi*x);
 
                                 real polyVal = 0;
 
@@ -531,7 +544,7 @@ namespace sp
                                 real x = real(i)/n;
 
                                 jx[i*m+0] = double(cos(g_2pi*x));
-                                jx[i*m+1] = double(-sin(g_2pi*x));
+                                jx[i*m+1] = double(sin(g_2pi*x));
 
 //                                real xp = 1;
 //                                for(int j(2); j<m; ++j)

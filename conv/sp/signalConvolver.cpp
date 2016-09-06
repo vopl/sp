@@ -219,6 +219,16 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    complex /*echo*/ SignalConvolver::convolveIdentity(real period, real phase)
+    {
+        SignalConvolverLevel level(_ppw, period, _signalSampleStep, _samplesPerPeriod, _polyOrder);
+        level.updateIdentity(phase);
+        level.filtrate(_halfFirs);
+
+        return level.convolve();
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void SignalConvolver::prepareValues()
     {
         if(!_dirty)
