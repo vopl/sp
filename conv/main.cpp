@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <chrono>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 
@@ -88,7 +89,7 @@ int main(int argc, char *argv[])
             ("efmin", po::value<sp::real>()->default_value(5), "echo frequency grid minimum")
             ("efmax", po::value<sp::real>()->default_value(20000), "echo frequency grid maximum")
             ("efcount", po::value<std::size_t>()->default_value(1000), "echo frequency grid size")
-            //("eftype", po::value<std::string>()->default_value("flog"), "echo frequency grid type (plin|plog|flin|flog)")
+            ("eftype", po::value<std::string>()->default_value("flog"), "echo frequency grid type (plin|plog|flin|flog)")
 
             ("sfminmult", po::value<sp::real>()->default_value(7.5), "spectr frequency minimum value part")
             ("sfmaxmult", po::value<sp::real>()->default_value(0.99), "spectr frequency maximum value part")
@@ -134,12 +135,38 @@ int main(int argc, char *argv[])
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 
+    PeriodGridType pgt = PeriodGridType::frequencyLog;
+
+    if("plin" == vars["eftype"].as<std::string>())
+    {
+        pgt = PeriodGridType::periodLin;
+    }
+    else if("plog" == vars["eftype"].as<std::string>())
+    {
+        pgt = PeriodGridType::periodLog;
+    }
+    else if("flin" == vars["eftype"].as<std::string>())
+    {
+        pgt = PeriodGridType::frequencyLin;
+    }
+    else if("flog" == vars["eftype"].as<std::string>())
+    {
+        pgt = PeriodGridType::frequencyLog;
+    }
+    else
+    {
+        cerr<<"bad eftype: "<<vars["eftype"].as<std::string>()<<std::endl;
+        return EXIT_FAILURE;
+    }
+
+    cout<<"pgt: "<<vars["eftype"].as<std::string>()<<endl;
+
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     PeriodGrid echoPeriodsGrid(
         sp::real(1)/vars["efmax"].as<sp::real>(),
         sp::real(1)/vars["efmin"].as<sp::real>(),
         vars["efcount"].as<std::size_t>(),
-        PeriodGridType::frequencyLog);
+        pgt);
 
     TVReal echoPeriods = echoPeriodsGrid.grid();
 
@@ -285,6 +312,8 @@ int main(int argc, char *argv[])
 
     size_t sampleIndex = 0;
 
+    auto moment = std::chrono::high_resolution_clock::now();
+
     std::vector<double> kwork;
     for(; frameIndex<framesAmount; ++frameIndex)
     {
@@ -303,7 +332,15 @@ int main(int argc, char *argv[])
         cout<<"d..";
         cout.flush();
 
-        std::fill(spectr.begin(), spectr.end(), sp::real(0));
+        //std::fill(spectr.begin(), spectr.end(), sp::complex(0));
+
+        sp::real dx = 1/framesPerSecond;
+        for(std::size_t i(0); i<spectr.size(); ++i)
+        {
+            sp::real t = spectrPeriods[i];
+            sp::real dp = dx*sp::g_2pi/t;
+            spectr[i].rotate(dp);
+        }
 
         std::size_t iters = 15;
         sp::real error = 0;
@@ -313,7 +350,12 @@ int main(int argc, char *argv[])
             iters,
             error,
             kwork);
-        cout<<"ok, iters: "<<iters<<", error: "<<error<<endl;
+
+        auto moment1 = std::chrono::high_resolution_clock::now();
+
+        sp::real dur = std::chrono::duration<sp::real>(moment1 - moment).count();
+        cout<<"ok, iters: "<<iters<<", error: "<<error<<", dur: "<<dur<< std::endl;
+        moment = moment1;
 
         echoStore.pushFrames(echo);
         spectrStore.pushFrames(spectr);

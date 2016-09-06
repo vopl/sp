@@ -223,7 +223,7 @@ namespace sp
         }
         else
         {
-            error = 0;
+            error = levmarInfo[1];
         }
     }
 
