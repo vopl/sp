@@ -143,15 +143,18 @@ int main0(int argc, char *argv[])
             sp::TVComplex spectr(spectrPeriods.grid().size());
 
             std::size_t iters = 6;
-            sp::real error = 0;
+            sp::real error0 = 0;
+            sp::real error1 = 0;
             kt.deconvolve(
                     response.size(), &echoPeriods.grid()[0], &response[0],
                     spectr.size(), &spectrPeriods.grid()[0], &spectr[0],
                     iters,
-                    error,
+                    1e-40,
+                    error0,
+                    error1,
                     work);
 
-            cerr<<iters<<": "<<error<<endl;
+            cerr<<iters<<": "<<error0<<"->"<<error1<<endl;
             for(size_t i(0); i<spectr.size(); ++i)
             {
                 std::cout<<spectr[i].re()<<", "<<spectr[i].im()<<std::endl;

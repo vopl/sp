@@ -129,7 +129,9 @@ namespace sp
             size_t esize, const real *et, const complex *ev, //отклик
             size_t ssize, const real *st,       complex *sv, //спектр
             size_t &iters, //макс итераций
-            real &error,
+            real initialMu,
+            real &error0,
+            real &error1,
             std::vector<double> &work)
     {
         LevmarParams params;
@@ -158,9 +160,9 @@ namespace sp
 //         std::cerr<<"dlevmar_chkjac: "<<errVal<<std::endl;
 //         exit(0);
 
-        static double levmarOpts[LM_OPTS_SZ] =
+        double levmarOpts[LM_OPTS_SZ] =
         {
-            1e-40,  //LM_INIT_MU,        //mu
+            initialMu,  //LM_INIT_MU,        //mu
             1e-140,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
             1e-300,  //LM_STOP_THRESH,    //||Dp||_2 and
             1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
@@ -217,14 +219,8 @@ namespace sp
         }
 
         iters = std::size_t(levmarInfo[5]+0.5);
-        if(levmarInfo[0]>0)
-        {
-            error = levmarInfo[1]/levmarInfo[0];
-        }
-        else
-        {
-            error = levmarInfo[1];
-        }
+        error0 = levmarInfo[0];
+        error1 = levmarInfo[1];
     }
 
     namespace
