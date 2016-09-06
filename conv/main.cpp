@@ -53,8 +53,12 @@ using namespace sp;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
+void prony();
+
 int main(int argc, char *argv[])
 {
+//    prony();
+//    return 0;
 
 
 //    {
@@ -317,6 +321,19 @@ int main(int argc, char *argv[])
     std::vector<double> kwork;
     for(; frameIndex<framesAmount; ++frameIndex)
     {
+        //rotate spectr to new position
+        {
+            sp::real dx = 1/framesPerSecond;
+            for(std::size_t i(0); i<spectr.size(); ++i)
+            {
+                sp::real t = spectrPeriods[i];
+                sp::real dp = dx*sp::g_2pi/t;
+                spectr[i] = spectr[i].rotate(dp);
+            }
+        }
+
+
+
         std::size_t needSampleIndex = std::size_t(samplesPerFrame*(frameIndex+1))+extraSamples4Push;
         convolver.pushSignal(&samples[sampleIndex], needSampleIndex - sampleIndex);
         sampleIndex = needSampleIndex;
@@ -334,28 +351,45 @@ int main(int argc, char *argv[])
 
         //std::fill(spectr.begin(), spectr.end(), sp::complex(0));
 
-        sp::real dx = 1/framesPerSecond;
-        for(std::size_t i(0); i<spectr.size(); ++i)
-        {
-            sp::real t = spectrPeriods[i];
-            sp::real dp = dx*sp::g_2pi/t;
-            spectr[i].rotate(dp);
-        }
 
         std::size_t iters = 15;
-        sp::real error = 0;
+        sp::real error0 = 0;
+        sp::real error1 = 0;
         k.deconvolve(
             echo.size(), &echoPeriods[0], &echo[0],
             spectr.size(), &spectrPeriods[0], &spectr[0],
             iters,
-            error,
+            1e-40,
+            error0,
+            error1,
             kwork);
 
         auto moment1 = std::chrono::high_resolution_clock::now();
 
         sp::real dur = std::chrono::duration<sp::real>(moment1 - moment).count();
-        cout<<"ok, iters: "<<iters<<", error: "<<error<<", dur: "<<dur<< std::endl;
+        cout<<"ok, iters: "<<iters<<", error: "<<error1<<"/"<<error0<<"="<<(error1/error0)<<", dur: "<<dur<< std::endl;
         moment = moment1;
+
+        if(0)
+        {
+            iters = 15;
+            error0 = 0;
+            error1 = 0;
+            k.deconvolve(
+                echo.size(), &echoPeriods[0], &echo[0],
+                spectr.size(), &spectrPeriods[0], &spectr[0],
+                iters,
+                1e-1,
+                error0,
+                error1,
+                kwork);
+
+            moment1 = std::chrono::high_resolution_clock::now();
+
+            dur = std::chrono::duration<sp::real>(moment1 - moment).count();
+            cout<<"ok2, iters: "<<iters<<", error: "<<error1<<"/"<<error0<<"="<<(error1/error0)<<", dur: "<<dur<< std::endl;
+            moment = moment1;
+        }
 
         echoStore.pushFrames(echo);
         spectrStore.pushFrames(spectr);
