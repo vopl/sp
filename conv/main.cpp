@@ -54,11 +54,13 @@ namespace fs = boost::filesystem;
 
 void prony();
 void test();
+void inv();
 
 int main(int argc, char *argv[])
 {
 //    prony();
 //    test();
+//    inv();
 //    return 0;
 
 
@@ -326,7 +328,9 @@ int main(int argc, char *argv[])
     std::vector<double> kwork;
     for(; frameIndex<framesAmount; ++frameIndex)
     {
-        //std::fill(spectr.begin(), spectr.end(), sp::complex(0));
+//        std::fill(spectr.begin(), spectr.end(), sp::complex(0));
+
+        //std::cerr<<"init: "<<spectr[spectr.size()/2].re()<<", "<<spectr[spectr.size()/2].im()<<std::endl;
 
         //rotate spectr to new position
         {
@@ -335,9 +339,10 @@ int main(int argc, char *argv[])
             {
                 sp::real t = spectrPeriods[i];
                 sp::real dp = dx*sp::g_2pi/t;
-                spectr[i] = spectr[i].rotate(-dp);
+                spectr[i] = spectr[i].rotate(dp);
             }
         }
+        //std::cerr<<"rot: "<<spectr[spectr.size()/2].re()<<", "<<spectr[spectr.size()/2].im()<<std::endl;
 
 
 
@@ -376,26 +381,7 @@ int main(int argc, char *argv[])
         cout<<"ok, iters: "<<iters<<", error: "<<error1<<"/"<<error0<<"="<<(error1/error0)<<", dur: "<<dur<< std::endl;
         moment = moment1;
 
-        if(0)
-        {
-            iters = 15;
-            error0 = 0;
-            error1 = 0;
-            k.deconvolve(
-                echo.size(), &echoPeriods[0], &echo[0],
-                spectr.size(), &spectrPeriods[0], &spectr[0],
-                iters,
-                1e-1,
-                error0,
-                error1,
-                kwork);
-
-            moment1 = std::chrono::high_resolution_clock::now();
-
-            dur = std::chrono::duration<sp::real>(moment1 - moment).count();
-            cout<<"ok2, iters: "<<iters<<", error: "<<error1<<"/"<<error0<<"="<<(error1/error0)<<", dur: "<<dur<< std::endl;
-            moment = moment1;
-        }
+        //std::cerr<<"upd: "<<spectr[spectr.size()/2].re()<<", "<<spectr[spectr.size()/2].im()<<std::endl;
 
         echoStore.pushFrames(echo);
         spectrStore.pushFrames(spectr);

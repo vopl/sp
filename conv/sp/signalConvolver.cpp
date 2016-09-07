@@ -168,7 +168,9 @@ namespace sp
         }
         else if(amount)
         {
-            std::move(_signal.begin(), _signal.end()-amount, _signal.begin()+amount);
+            //std::move(_signal.begin(), _signal.end()-amount, _signal.begin()+amount);
+            std::move_backward(_signal.begin(), _signal.end()-amount, _signal.end());
+
             std::copy(samples, samples+amount, _signal.begin());
             std::reverse(_signal.begin(), _signal.begin()+amount);
         }
