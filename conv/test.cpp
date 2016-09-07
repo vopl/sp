@@ -66,7 +66,7 @@ int test()
         sp::KernelTabled kt(POW, splp, cpo);
         //sp::Kernel kt(POW);
 
-//        kt.eval(1, 1, sp::complex(.23452,1.3456));
+//        kt.eval(1.2345234, 1, sp::complex(.23452,1.3456));
 //        exit(0);
 
 

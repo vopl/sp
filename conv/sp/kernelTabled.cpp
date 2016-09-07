@@ -8,7 +8,7 @@
 #include <set>
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-static const std::size_t phasesAmountForKernelApproximator = 4;//MAGIC
+static const std::size_t phasesAmountForKernelApproximator = 8;//MAGIC
 
 
 
@@ -250,7 +250,7 @@ namespace sp
                             (void)m;
                             for(int i(0); i<n; i++)
                             {
-                                hx[i] = double(p[0]*cos(g_pi/2*i/n) - p[1]*sin(g_pi/2*i/n));
+                                hx[i] = double(p[0]*cos(g_pi/2*i/n) + p[1]*sin(g_pi/2*i/n));
                             }
                         },
                         [](double *p, double *jx, int m, int n, void *){
@@ -260,7 +260,7 @@ namespace sp
                             for(int i(0); i<n; i++)
                             {
                                 jx[i*2+0] = double(cos(g_pi/2*i/n));
-                                jx[i*2+1] = double(-sin(g_pi/2*i/n));
+                                jx[i*2+1] = double(sin(g_pi/2*i/n));
                             }
                         },
                         &p[0],
@@ -296,7 +296,7 @@ namespace sp
 //            std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
 //            std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
 //            std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
-//            exit(1);
+//            //exit(1);
 
             return complex(p[0],p[1]);
         }
@@ -306,7 +306,7 @@ namespace sp
     {
         ValuesByPeriod::iterator iter = _valuesByPeriod.lower_bound(t);
 
-        static const real maxDelta = std::numeric_limits<real>::epsilon()*20;
+        static const real maxDelta = std::numeric_limits<real>::epsilon()*10;
 
         bool found = false;
 
@@ -352,6 +352,14 @@ namespace sp
         }
 
         Value &v = iter->second;
+
+//        auto prev = iter; prev--;
+//        auto next = iter; next++;
+
+//        if(prev->first >= iter->first || next->first<=iter->first)
+//        {
+//            std::cout<<"evalKernel: "<<t<<" ["<<prev->first<<", "<<(iter)->first<<", "<<(next)->first<<"]"<<std::endl;
+//        }
 
         rr = v._re.re();
         ri = v._re.im();
