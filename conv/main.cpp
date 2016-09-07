@@ -326,6 +326,8 @@ int main(int argc, char *argv[])
     std::vector<double> kwork;
     for(; frameIndex<framesAmount; ++frameIndex)
     {
+        //std::fill(spectr.begin(), spectr.end(), sp::complex(0));
+
         //rotate spectr to new position
         {
             sp::real dx = 1/framesPerSecond;
@@ -333,7 +335,7 @@ int main(int argc, char *argv[])
             {
                 sp::real t = spectrPeriods[i];
                 sp::real dp = dx*sp::g_2pi/t;
-                spectr[i] = spectr[i].rotate(dp);
+                spectr[i] = spectr[i].rotate(-dp);
             }
         }
 
@@ -354,7 +356,6 @@ int main(int argc, char *argv[])
         cout<<"d..";
         cout.flush();
 
-        //std::fill(spectr.begin(), spectr.end(), sp::complex(0));
 
 
         std::size_t iters = 15;

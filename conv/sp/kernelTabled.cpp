@@ -325,7 +325,7 @@ namespace sp
 
                 std::cerr<<"ok"<<std::endl;
 
-                if(++_addedValuesAmount >= 10)
+                if(++_addedValuesAmount >= 1000)
                 {
                     save();
                 }
@@ -345,7 +345,7 @@ namespace sp
 
         if(found)
         {
-            if(_addedValuesAmount && (++_addedValuesAmount >= 100))
+            if(_addedValuesAmount && (++_addedValuesAmount >= 10000))
             {
                 save();
             }
