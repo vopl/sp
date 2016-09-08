@@ -484,9 +484,9 @@ namespace sp
             static long double levmarOpts[LM_OPTS_SZ] =
             {
                 1e-40,  //LM_INIT_MU,        //mu
-                1e-280,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
-                1e-280,  //LM_STOP_THRESH,    //||Dp||_2 and
-                1e-240,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
+                std::numeric_limits<long double>::min(),  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
+                std::numeric_limits<long double>::min(),  //LM_STOP_THRESH,    //||Dp||_2 and
+                std::numeric_limits<long double>::min(),  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
             };
 
             static std::vector<long double> args;
@@ -503,7 +503,7 @@ namespace sp
             }
 
 
-            using bigreal = boost::multiprecision::mpfr_float_1000;
+            using bigreal = boost::multiprecision::float128;
             struct Params
             {
                 std::vector<std::vector<bigreal>> _bigbasis;
@@ -573,7 +573,7 @@ namespace sp
             }
 
 
-            int levmarResult = ldlevmar_der(
+            int levmarResult = elevmar_der(
                         [](long double *p, long double *hx, int m, int n, void *_params)->void{
                             Params &params = *reinterpret_cast<Params*>(_params);
 

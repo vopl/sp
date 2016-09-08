@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
+#include <assert.h>
 
 #include "levmar.h"
 #include "compiler.h"
@@ -124,7 +125,7 @@ LM_REAL p_eL2, jacTe_inf, pDp_eL2; /* ||e(p)||_2, ||J^T e||_inf, ||e(p+Dp)||_2 *
 LM_REAL p_L2, p_L2_fix, Dp_L2=LM_REAL_MAX, Dp_L2_fix=0, dF, dL, dL_fix;
 LM_REAL tau, eps1, eps2, eps2_sq, eps3;
 LM_REAL init_p_eL2;
-long long nu=2, nu2;
+long long nu=1, nu2;
 int stop=0, nfev, njev=0, nlss=0;
 const int nm=n*m;
 int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
@@ -157,8 +158,9 @@ int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
     eps3=LM_CNST(LM_STOP_THRESH);
   }
 
+  worksz=LM_DER_WORKSZ(m, n); //2*n+4*m + n*m + m*m;
+
   if(!work){
-    worksz=LM_DER_WORKSZ(m, n); //2*n+4*m + n*m + m*m;
     work=(LM_REAL *)malloc(worksz*sizeof(LM_REAL)); /* allocate a big chunk in one step */
     if(!work){
       fprintf(stderr, LCAT(LEVMAR_DER, "(): memory allocation request failed\n"));
@@ -185,6 +187,8 @@ int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
   diag_jacTjac_fix=diag_jacTjac + m;
 
   pDp=diag_jacTjac_fix + m;
+
+  assert(pDp+m <= work+worksz);
 
   /* compute e=x - f(p) and its L2 norm */
   (*func)(p, hx, m, n, adata); nfev=1;
@@ -405,7 +409,7 @@ if(!(k%100)){
           tmp=(LM_CNST(2.0)*dF/dL-LM_CNST(1.0));
           tmp=LM_CNST(1.0)-tmp*tmp*tmp;
           mu=mu*( (tmp>=LM_CNST(ONE_THIRD))? tmp : LM_CNST(ONE_THIRD) );
-          nu=2;
+          nu=1;
 
           for(i=0 ; i<m; ++i) /* update p's estimate */
             p[i]=pDp[i];
@@ -424,8 +428,9 @@ if(!(k%100)){
       mu*=nu;
       nu2=nu<<1; // 2*nu;
       if(nu2<=nu){ /* nu has wrapped around (overflown). Thanks to Frank Jordan for spotting this case */
-        stop=5;
-        break;
+        //stop=5;
+        //break;
+        nu2 = nu;
       }
       nu=nu2;
 

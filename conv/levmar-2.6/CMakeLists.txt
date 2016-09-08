@@ -1,4 +1,4 @@
-# levmar CMake file; see http://www.cmake.org and 
+# levmar CMake file; see http://www.cmake.org and
 #                        http://www.insightsoftwareconsortium.org/wiki/index.php/CMake_Tutorial
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
@@ -15,7 +15,7 @@ ENDIF(HAVE_PLASMA)
 SET(LINSOLVERS_RETAIN_MEMORY 1 CACHE BOOL "Should linear solvers retain working memory between calls? (non-reentrant!)")
 
 
-SET(LM_LDBL_PREC 1 CACHE BOOL "Build long double precision routines?")
+SET(LM_EXT_PREC 1 CACHE BOOL "Build long double precision routines?")
 
 SET(LM_DBL_PREC 1 CACHE BOOL "Build double precision routines?")
 SET(LM_DBL_PREC 0)

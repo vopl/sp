@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Levenberg - Marquardt non-linear minimization algorithm
 //  Copyright (C) 2004  Manolis Lourakis (lourakis at ics forth gr)
 //  Institute of Computer Science, Foundation for Research & Technology - Hellas
@@ -17,7 +17,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////
 
-/******************************************************************************** 
+/********************************************************************************
  * Levenberg-Marquardt nonlinear minimization. The same core code is used with
  * appropriate #defines to derive single and double precision versions, see
  * also lm_core.c
@@ -35,7 +35,7 @@
 #define EPSILON       1E-12
 #define ONE_THIRD     0.3333333334 /* 1.0/3.0 */
 
-#if !defined(LM_LDBL_PREC) && !defined(LM_DBL_PREC) && !defined(LM_SNGL_PREC)
+#if !defined(LM_EXT_PREC) && !defined(LM_DBL_PREC) && !defined(LM_SNGL_PREC)
 #error At least one of LM_DBL_PREC, LM_SNGL_PREC should be defined!
 #endif
 
@@ -101,13 +101,13 @@
 
 
 
-#ifdef LM_LDBL_PREC
+#ifdef LM_EXT_PREC
 /* long double precision definitions */
 #define LM_REAL long double
-#define LM_PREFIX ld
+#define LM_PREFIX e
 
-#define LM_REAL_MAX LDBL_MAX
-#define LM_REAL_MIN -LDBL_MAX
+#define LM_REAL_MAX DBL_MAX
+#define LM_REAL_MIN -DBL_MAX
 #define LM_REAL_EPSILON LDBL_EPSILON
 #define LM_CNST(x) (x)
 
