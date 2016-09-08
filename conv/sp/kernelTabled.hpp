@@ -24,7 +24,7 @@ namespace sp
             real initialMu,
             real &error0,
             real &error1,
-            std::vector<double> &work);
+            std::vector<long double> &work);
 
     public:
         void evalKernel(real t, real &rr, real &ri, real &ir, real &ii);

@@ -50,6 +50,8 @@
 # endif /* LINSOLVERS_RETAIN_MEMORY */
 #endif /* _OPENMP */
 
+/* specifies whether long double precision routines will be compiled or not */
+#cmakedefine LM_LDBL_PREC
 /* specifies whether double precision routines will be compiled or not */
 #cmakedefine LM_DBL_PREC
 /* specifies whether single precision routines will be compiled or not */
@@ -65,8 +67,8 @@ extern "C" {
 /* work arrays size for ?levmar_der and ?levmar_dif functions.
  * should be multiplied by sizeof(double) or sizeof(float) to be converted to bytes
  */
-#define LM_DER_WORKSZ(npar, nmeas) (2*(nmeas) + 4*(npar) + (nmeas)*(npar) + (npar)*(npar))
-#define LM_DIF_WORKSZ(npar, nmeas) (4*(nmeas) + 4*(npar) + (nmeas)*(npar) + (npar)*(npar))
+#define LM_DER_WORKSZ(npar, nmeas) ((2*(nmeas) + 4*(npar) + (nmeas)*(npar) + (npar)*(npar))*4)
+#define LM_DIF_WORKSZ(npar, nmeas) ((4*(nmeas) + 4*(npar) + (nmeas)*(npar) + (npar)*(npar))*4)
 
 /* work arrays size for ?levmar_bc_der and ?levmar_bc_dif functions.
  * should be multiplied by sizeof(double) or sizeof(float) to be converted to bytes
@@ -99,6 +101,16 @@ extern "C" {
 #define LM_STOP_THRESH     1E-17
 #define LM_DIFF_DELTA    1E-06
 #define LM_VERSION       "2.6 (November 2011)"
+
+#ifdef LM_LDBL_PREC
+/* double precision LM, with & without Jacobian */
+/* unconstrained minimization */
+extern int ldlevmar_der(
+      void (*func)(long double *p, long double *hx, int m, int n, void *adata),
+      void (*jacf)(long double *p, long double *j, int m, int n, void *adata),
+      long double *p, long double *x, int m, int n, int itmax, long double *opts,
+      long double *info, long double *work, long double *covar, void *adata);
+#endif /* LM_LDBL_PREC */
 
 #ifdef LM_DBL_PREC
 /* double precision LM, with & without Jacobian */
@@ -311,6 +323,10 @@ extern int slevmar_lic_dif(
 
 /* linear system solvers */
 #ifdef HAVE_LAPACK
+
+#ifdef LM_LDBL_PREC
+extern int ldAx_eq_b_Chol(long double *A, long double *B, long double *x, int m);
+#endif /* LM_LDBL_PREC */
 
 #ifdef LM_DBL_PREC
 extern int dAx_eq_b_QR(double *A, double *B, double *x, int m);

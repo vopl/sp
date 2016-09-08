@@ -201,9 +201,9 @@ void prony()
     //аппроксимировать
 
     {
-        double levmarInfo[LM_INFO_SZ];
+        long double levmarInfo[LM_INFO_SZ];
 
-        static double levmarOpts[LM_OPTS_SZ] =
+        static long double levmarOpts[LM_OPTS_SZ] =
         {
             1e-40,  //LM_INIT_MU,        //mu
             1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
@@ -211,11 +211,11 @@ void prony()
             1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
         };
 
-        static std::vector<double> args;
+        static std::vector<long double> args;
         args.resize(periods.size()*2);
-        std::fill(args.begin(), args.end(), double(0));
+        std::fill(args.begin(), args.end(), (long double)(0));
 
-        static std::vector<double> work;
+        static std::vector<long double> work;
         if(work.size() < LM_DIF_WORKSZ(args.size(), scaledFilteredSignal.size()))
         {
             work.resize(LM_DIF_WORKSZ(args.size(), scaledFilteredSignal.size()));
@@ -230,12 +230,12 @@ void prony()
         levmarParams._xs = &scaledFilteredSignalX[0];
         levmarParams._ts = &periods[0];
 
-        std::vector<double> ys;
+        std::vector<long double> ys;
         ys.assign(scaledFilteredSignal.begin(), scaledFilteredSignal.end());
 
 
-        int levmarResult = dlevmar_der(
-                    [](double *p, double *hx, int m, int n, void *_levmarParams)->void{
+        int levmarResult = ldlevmar_der(
+                    [](long double *p, long double *hx, int m, int n, void *_levmarParams)->void{
                         LevmarParams *levmarParams = reinterpret_cast<LevmarParams*>(_levmarParams);
                         for(int i(0); i<n; i++)
                         {
@@ -257,7 +257,7 @@ void prony()
                             }
                         }
                     },
-                    [](double *p, double *jx, int m, int n, void *_levmarParams){
+                    [](long double *p, long double *jx, int m, int n, void *_levmarParams){
                         LevmarParams *levmarParams = reinterpret_cast<LevmarParams*>(_levmarParams);
 
                         for(int i(0); i<n; i++)

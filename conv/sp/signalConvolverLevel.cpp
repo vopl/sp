@@ -4,6 +4,12 @@
 #include <cassert>
 #include <iostream>
 
+#include <boost/multiprecision/float128.hpp>
+#include <boost/multiprecision/cpp_bin_float.hpp>
+#include <boost/multiprecision/mpfr.hpp>
+#include <boost/multiprecision/gmp.hpp>
+
+
 namespace sp
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -473,145 +479,161 @@ namespace sp
     {
         complex approxCosPlusPoly(TVReal &ys, std::size_t polyOrder)
         {
-            double levmarInfo[LM_INFO_SZ];
+            long double levmarInfo[LM_INFO_SZ];
 
-            static double levmarOpts[LM_OPTS_SZ] =
+            static long double levmarOpts[LM_OPTS_SZ] =
             {
                 1e-40,  //LM_INIT_MU,        //mu
                 1e-280,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
                 1e-280,  //LM_STOP_THRESH,    //||Dp||_2 and
-                1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
+                1e-240,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
             };
 
-            static std::vector<double> args;
+            static std::vector<long double> args;
             args.resize(2+polyOrder+1);
-            std::fill(args.begin(), args.end(), double(0));
+            std::fill(args.begin(), args.end(), (long double)(0));
 
-            static std::vector<double> dys;
+            static std::vector<long double> dys;
             dys.assign(ys.begin(), ys.end());
 
-            static std::vector<double> work;
+            static std::vector<long double> work;
             if(work.size() < LM_DIF_WORKSZ(args.size(), dys.size()))
             {
                 work.resize(LM_DIF_WORKSZ(args.size(), dys.size()));
             }
 
 
-            int levmarResult = dlevmar_der(
-                        [](double *p, double *hx, int m, int n, void *_levmarParams)->void{
+            using bigreal = boost::multiprecision::mpfr_float_1000;
+            struct Params
+            {
+                std::vector<std::vector<bigreal>> _bigbasis;
+                std::vector<std::vector<long double>> _basis;
+            };
+
+            static Params params;
+
+            if(params._bigbasis.empty())
+            {
+                std::size_t n = ys.size();
+                std::size_t m = args.size();
+
+                params._bigbasis.resize(n);
+                params._basis.resize(n);
+                for(std::size_t i(0); i<n; i++)
+                {
+                    params._bigbasis[i].resize(m);
+                    params._basis[i].resize(m);
+                }
+
+                /////
+                for(std::size_t i(0); i<n; i++)
+                {
+                    bigreal x = bigreal(i)/n;
+
+                    params._bigbasis[i][0] = cos(g_2pi*x);
+                    params._bigbasis[i][1] = sin(g_2pi*x);
+                }
+
+                /////
+                std::vector<bigreal> poly(polyOrder+1);
+                for(std::size_t i(0); i<n; i++)
+                {
+                    bigreal time = bigreal(i)/(n-1)*2 - 1;
+                    bigreal time2 = time*2;
+
+                    if(polyOrder == 0)
+                    {
+                        poly[0] = 1;
+                    }
+                    else
+                    {
+                        poly[0] = 1;
+                        poly[1] = time;
+
+                        for(size_t o=2; o<=polyOrder; o++)
+                        {
+                            poly[o] = time2*poly[o-1] - poly[o-2];
+                        }
+                    }
+
+                    for(size_t o=0; o<=polyOrder; o++)
+                    {
+                        params._bigbasis[i][o+2] = poly[o];
+                    }
+                }
+
+                /////
+                for(std::size_t i(0); i<n; i++)
+                {
+                    for(int j(0); j<m; j++)
+                    {
+                        params._basis[i][j] = params._bigbasis[i][j].convert_to<long double>();
+                    }
+                }
+            }
+
+
+            int levmarResult = ldlevmar_der(
+                        [](long double *p, long double *hx, int m, int n, void *_params)->void{
+                            Params &params = *reinterpret_cast<Params*>(_params);
+
                             for(int i(0); i<n; i++)
                             {
-                                real x = real(i)/n;
+                                Summator<bigreal> sum(0);
 
-                                real v = p[0]*cos(g_2pi*x) + p[1]*sin(g_2pi*x);
-
-                                real polyVal = 0;
-
-//                                real xp = 1;
-//                                for(int j(2); j<m; ++j)
-//                                {
-//                                    polyVal += p[j]*xp;
-//                                    xp *= x;
-//                                }
-
-                                //чебышева первого рода
-
-                                real b1;
-                                real b2;
-                                int o;
-
-                                real time = real(i)/n*2 - 1;
-                                b1 = 0;
-                                b2 = 0;
-                                o = m-2+1;
-                                do
+                                for(int j(0); j<m; j++)
                                 {
-                                    polyVal = 2*time*b1-b2+p[2+o];
-                                    b2 = b1;
-                                    b1 = polyVal;
-                                    o -= 1;
+                                    sum += params._bigbasis[i][j] * p[j];
                                 }
-                                while(o>=0);
-                                polyVal = polyVal-time*b2;
 
-
-                                hx[i] = double(v + polyVal);
+                                hx[i] = bigreal(sum).convert_to<long double>();
                             }
                         },
-                        [](double *p, double *jx, int m, int n, void *_levmarParams){
+                        [](long double *p, long double *jx, int m, int n, void *_params){
+
+                            Params &params = *reinterpret_cast<Params*>(_params);
+
                             for(int i(0); i<n; i++)
                             {
-                                real x = real(i)/n;
-
-                                jx[i*m+0] = double(cos(g_2pi*x));
-                                jx[i*m+1] = double(sin(g_2pi*x));
-
-//                                real xp = 1;
-//                                for(int j(2); j<m; ++j)
-//                                {
-//                                    jx[i*m+j] = xp;
-//                                    xp *= x;
-//                                }
-
-                                real time = real(i)/n*2 - 1;
-
-                                size_t maxPow = m-2+1;
-                                if(maxPow == 0)
+                                for(int j(0); j<m; j++)
                                 {
-                                    jx[i*m+2+0] = 1;
+                                    jx[i*m+j] = params._basis[i][j];
                                 }
-                                else if(maxPow == 1)
-                                {
-                                    jx[i*m+2+0] = 1;
-                                    jx[i*m+2+1] = time;
-                                }
-                                else
-                                {
-                                    jx[i*m+2+0] = 1;
-                                    jx[i*m+2+1] = time;
-
-                                    for(size_t o=2; o<=maxPow; o++)
-                                    {
-                                        jx[i*m+2+o] = 2.0*time*jx[i*m+2+o-1] - jx[i*m+2+o-2];
-                                    }
-                                }
-
-
                             }
                         },
                         &args[0],
                         &dys[0],
                         args.size(),
                         ys.size(),
-                        50,
+                        150,
                         levmarOpts,
                         levmarInfo,
                         &work[0],
                         NULL,
-                        NULL);
+                        &params);
 
-//            std::cerr<<"result: "<<levmarResult<<std::endl;
-//            std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
-//            std::cerr<<"||e||_2:"<<levmarInfo[1]<<std::endl;
-//            std::cerr<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
-//            std::cerr<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
-//            std::cerr<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
-//            std::cerr<<"# iterations:"<<levmarInfo[5]<<std::endl;
-//            std::cerr<<"reason for terminating:";
-//            switch(int(levmarInfo[6]+0.5))
-//            {
-//            case 1: std::cerr<<" - stopped by small gradient J^T e"<<std::endl;break;
-//            case 2: std::cerr<<" - stopped by small Dp"<<std::endl;break;
-//            case 3: std::cerr<<" - stopped by itmax"<<std::endl;break;
-//            case 4: std::cerr<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
-//            case 5: std::cerr<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
-//            case 6: std::cerr<<" - stopped by small ||e||_2"<<std::endl;break;
-//            case 7: std::cerr<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
-//            }
-//            std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
-//            std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
-//            std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
-//            //exit(1);
+            std::cerr<<"result: "<<levmarResult<<std::endl;
+            std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
+            std::cerr<<"||e||_2:"<<levmarInfo[1]<<std::endl;
+            std::cerr<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
+            std::cerr<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
+            std::cerr<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
+            std::cerr<<"# iterations:"<<levmarInfo[5]<<std::endl;
+            std::cerr<<"reason for terminating:";
+            switch(int(levmarInfo[6]+0.5))
+            {
+            case 1: std::cerr<<" - stopped by small gradient J^T e"<<std::endl;break;
+            case 2: std::cerr<<" - stopped by small Dp"<<std::endl;break;
+            case 3: std::cerr<<" - stopped by itmax"<<std::endl;break;
+            case 4: std::cerr<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
+            case 5: std::cerr<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
+            case 6: std::cerr<<" - stopped by small ||e||_2"<<std::endl;break;
+            case 7: std::cerr<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
+            }
+            std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
+            std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
+            std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
+            //exit(1);
 
             return complex(args[0], args[1]);
         }
@@ -633,9 +655,7 @@ namespace sp
 //            res += evalSegment(_period, x0, y0, x1, y1);
 //        }
 
-//        //return res / (_period * _ppw);
-
-//        complex r1 = res / (_period * _ppw);
+//        return res / (_period * _ppw);
 
         complex r2 = approxCosPlusPoly(_valuesFiltered, _polyOrder);
 
