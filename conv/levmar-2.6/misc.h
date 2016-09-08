@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Levenberg - Marquardt non-linear minimization algorithm
 //  Copyright (C) 2004  Manolis Lourakis (lourakis at ics forth gr)
 //  Institute of Computer Science, Foundation for Research & Technology - Hellas
@@ -74,7 +74,7 @@ extern "C" {
 /* blocking-based matrix multiply */
 extern void slevmar_trans_mat_mat_mult(float *a, float *b, int n, int m);
 extern void dlevmar_trans_mat_mat_mult(double *a, double *b, int n, int m);
-extern void ldlevmar_trans_mat_mat_mult(long double *a, long double *b, int n, int m);
+extern void elevmar_trans_mat_mat_mult(long double *a, long double *b, int n, int m);
 
 /* forward finite differences */
 extern void slevmar_fdif_forw_jac_approx(void (*func)(float *p, float *hx, int m, int n, void *adata),
@@ -83,7 +83,7 @@ extern void slevmar_fdif_forw_jac_approx(void (*func)(float *p, float *hx, int m
 extern void dlevmar_fdif_forw_jac_approx(void (*func)(double *p, double *hx, int m, int n, void *adata),
                     double *p, double *hx, double *hxx, double delta,
                     double *jac, int m, int n, void *adata);
-extern void ldlevmar_fdif_forw_jac_approx(void (*func)(long double *p, long double *hx, int m, int n, void *adata),
+extern void elevmar_fdif_forw_jac_approx(void (*func)(long double *p, long double *hx, int m, int n, void *adata),
                     long double *p, long double *hx, long double *hxx, long double delta,
                     long double *jac, int m, int n, void *adata);
 
@@ -94,14 +94,14 @@ extern void slevmar_fdif_cent_jac_approx(void (*func)(float *p, float *hx, int m
 extern void dlevmar_fdif_cent_jac_approx(void (*func)(double *p, double *hx, int m, int n, void *adata),
           double *p, double *hxm, double *hxp, double delta,
           double *jac, int m, int n, void *adata);
-extern void ldlevmar_fdif_cent_jac_approx(void (*func)(long double *p, long double *hx, int m, int n, void *adata),
+extern void elevmar_fdif_cent_jac_approx(void (*func)(long double *p, long double *hx, int m, int n, void *adata),
           long double *p, long double *hxm, long double *hxp, long double delta,
           long double *jac, int m, int n, void *adata);
 
 /* e=x-y and ||e|| */
 extern float  slevmar_L2nrmxmy(float *e, float *x, float *y, int n);
 extern double dlevmar_L2nrmxmy(double *e, double *x, double *y, int n);
-extern long double ldlevmar_L2nrmxmy(long double *e, long double *x, long double *y, int n);
+extern long double elevmar_L2nrmxmy(long double *e, long double *x, long double *y, int n);
 
 /* covariance of LS fit */
 extern int slevmar_covar(float *JtJ, float *C, float sumsq, int m, int n);

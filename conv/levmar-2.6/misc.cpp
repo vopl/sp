@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Levenberg - Marquardt non-linear minimization algorithm
 //  Copyright (C) 2004-05  Manolis Lourakis (lourakis at ics forth gr)
 //  Institute of Computer Science, Foundation for Research & Technology - Hellas
@@ -17,7 +17,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////
 
-/******************************************************************************** 
+/********************************************************************************
  * Miscelaneous functions for Levenberg-Marquardt nonlinear minimization. The
  * same core code is used with appropriate #defines to derive single and double
  * precision versions, see also misc_core.c
@@ -31,7 +31,7 @@
 #include "levmar.h"
 #include "misc.h"
 
-#if !defined(LM_LDBL_PREC) && !defined(LM_DBL_PREC) && !defined(LM_SNGL_PREC)
+#if !defined(LM_EXT_PREC) && !defined(LM_DBL_PREC) && !defined(LM_SNGL_PREC)
 #error At least one of LM_DBL_PREC, LM_SNGL_PREC should be defined!
 #endif
 
@@ -85,10 +85,10 @@
 
 
 
-#ifdef LM_LDBL_PREC
+#ifdef LM_EXT_PREC
 /* double precision definitions */
 #define LM_REAL long double
-#define LM_PREFIX ld
+#define LM_PREFIX e
 
 #define LM_REAL_EPSILON LDBL_EPSILON
 #define LM_CNST(x) (x)
@@ -99,4 +99,4 @@
 #undef LM_PREFIX
 #undef LM_REAL_EPSILON
 #undef LM_CNST
-#endif /* LM_LDBL_PREC */
+#endif /* LM_EXT_PREC */

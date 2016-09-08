@@ -234,7 +234,7 @@ void prony()
         ys.assign(scaledFilteredSignal.begin(), scaledFilteredSignal.end());
 
 
-        int levmarResult = ldlevmar_der(
+        int levmarResult = elevmar_der(
                     [](long double *p, long double *hx, int m, int n, void *_levmarParams)->void{
                         LevmarParams *levmarParams = reinterpret_cast<LevmarParams*>(_levmarParams);
                         for(int i(0); i<n; i++)

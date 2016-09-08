@@ -174,7 +174,7 @@ namespace sp
             d_sv[i*2+1] = (sv[i].im());
         }
 
-        int res = ldlevmar_der(
+        int res = elevmar_der(
             &evalLevmarFunc,
             &evalLevmarJaco,
             &d_sv[0],
@@ -235,10 +235,10 @@ namespace sp
 
             static long double levmarOpts[LM_OPTS_SZ] =
             {
-                1e-40,  //LM_INIT_MU,        //mu
-                1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
-                1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
-                1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
+                1e-4,  //LM_INIT_MU,        //mu
+                std::numeric_limits<long double>::min(),  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
+                std::numeric_limits<long double>::min(),  //LM_STOP_THRESH,    //||Dp||_2 and
+                std::numeric_limits<long double>::min(),  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
             };
 
             long double p[2]={0,0};
@@ -249,7 +249,7 @@ namespace sp
 //            std::for_each(dys.begin(), dys.end(), [&](real v){if(max<fabs(v)) max=fabs(v);});
 //            std::for_each(dys.begin(), dys.end(), [&](real &v){v/=max;});
 
-            int levmarResult = ldlevmar_der(
+            int levmarResult = elevmar_der(
                         [](long double *p, long double *hx, int m, int n, void *)->void{
                             (void)m;
                             for(int i(0); i<n; i++)
@@ -271,7 +271,7 @@ namespace sp
                         &dys[0],
                         2,
                         int(ys.size()),
-                        5,
+                        50,
                         levmarOpts,
                         levmarInfo,
                         &work[0],
@@ -384,8 +384,11 @@ namespace sp
             him[phaseIndex] = echo.im();
         }
 
-        re = approxCos(hre);
-        im = approxCos(him);
+        for(;;)
+        {
+            re = approxCos(hre);
+            im = approxCos(him);
+        }
 
         int k = 220;
     }
