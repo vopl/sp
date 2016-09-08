@@ -13,8 +13,16 @@ IF(HAVE_PLASMA)
  SET(PLASMA_DIR "/usr/local/PLASMA" CACHE PATH "Path to PLASMA root")
 ENDIF(HAVE_PLASMA)
 SET(LINSOLVERS_RETAIN_MEMORY 1 CACHE BOOL "Should linear solvers retain working memory between calls? (non-reentrant!)")
+
+
+SET(LM_LDBL_PREC 1 CACHE BOOL "Build long double precision routines?")
+
 SET(LM_DBL_PREC 1 CACHE BOOL "Build double precision routines?")
-SET(LM_SNGL_PREC 1 CACHE BOOL "Build single precision routines?")
+SET(LM_DBL_PREC 0)
+
+SET(LM_SNGL_PREC 0 CACHE BOOL "Build single precision routines?")
+SET(LM_SNGL_PREC 0)
+
 OPTION(BUILD_DEMO "Build demo program?" TRUE)
 
 # actual names for the lapack/blas/f2c libraries
@@ -61,9 +69,16 @@ ENDIF(HAVE_PLASMA)
 
 # levmar library source files
 ADD_LIBRARY(levmar STATIC
-  lm.c Axb.c misc.c lmlec.c lmbc.c lmblec.c lmbleic.c
+  lm.cpp Axb.cpp misc.cpp
+  #lmlec.cpp lmbc.cpp lmblec.cpp lmbleic.cpp
   levmar.h misc.h compiler.h
 )
+
+set_property(TARGET levmar PROPERTY CXX_STANDARD 14)
+set_property(TARGET levmar PROPERTY CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-write-strings")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-align-double")
 
 # demo program
 #IF(BUILD_DEMO)

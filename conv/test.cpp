@@ -57,7 +57,7 @@ int test()
 
 #define POW 10.0
 
-    std::size_t splp = 100;
+    std::size_t splp = 200;
     std::size_t cpo = 11;
 
 
@@ -66,8 +66,8 @@ int test()
         sp::KernelTabled kt(POW, splp, cpo);
         //sp::Kernel kt(POW);
 
-//        kt.eval(1.2345234, 1, sp::complex(.23452,1.3456));
-//        exit(0);
+        kt.eval(1.2345234, 1, sp::complex(.23452,1.3456));
+        exit(0);
 
 
 
@@ -135,7 +135,7 @@ int test()
 //        exit(0);
 
         std::cerr<<"deconvolve"<<std::endl;
-        std::vector<double> work;
+        std::vector<long double> work;
         //for(int iters0(1); iters0<20; iters0++)
         {
             sp::TVComplex spectr(spectrPeriods.grid().size());
