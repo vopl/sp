@@ -8,7 +8,7 @@
 #include <set>
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-static const std::size_t phasesAmountForKernelApproximator = 1000;//MAGIC
+static const std::size_t phasesAmountForKernelApproximator = 37;//MAGIC
 
 
 
@@ -59,7 +59,7 @@ namespace sp
         //////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////
-        void evalLevmarFunc(long double *p, long double *hx, int m, int n, void *levmarParams)
+        void evalLevmarFunc(real *p, real *hx, int m, int n, void *levmarParams)
         {
             LevmarParams *params = reinterpret_cast<LevmarParams *>(levmarParams);
 
@@ -91,13 +91,13 @@ namespace sp
                 re += -params->_ev[i].re();
                 im += -params->_ev[i].im();
 
-                hx[i*2+0] = (long double)(re);
-                hx[i*2+1] = (long double)(im);
+                hx[i*2+0] = re;
+                hx[i*2+1] = im;
             }
         }
 
         //////////////////////////////////////////////////////////////////////////
-        void evalLevmarJaco(long double *p, long double *jx, int m, int n, void *levmarParams)
+        void evalLevmarJaco(real *p, real *jx, int m, int n, void *levmarParams)
         {
             (void)p;
             LevmarParams *params = reinterpret_cast<LevmarParams *>(levmarParams);
@@ -113,11 +113,11 @@ namespace sp
                     real rr,  ri,  ir,  ii;
                     params->_kernelTabled->evalKernel(et/st, rr, ri, ir, ii);
 
-                    jx[(i*2+0)*m+j*2+0] = (long double)(rr);
-                    jx[(i*2+0)*m+j*2+1] = (long double)(-ri);
+                    jx[(i*2+0)*m+j*2+0] = rr;
+                    jx[(i*2+0)*m+j*2+1] = -ri;
 
-                    jx[(i*2+1)*m+j*2+0] = (long double)(ir);
-                    jx[(i*2+1)*m+j*2+1] = (long double)(-ii);
+                    jx[(i*2+1)*m+j*2+0] = ir;
+                    jx[(i*2+1)*m+j*2+1] = -ii;
                 }
             }
         }
@@ -131,7 +131,7 @@ namespace sp
             real initialMu,
             real &error0,
             real &error1,
-            std::vector<long double> &work)
+            TVReal &work)
     {
         LevmarParams params;
         params._et = et;
@@ -139,27 +139,13 @@ namespace sp
         params._st = st;
         params._kernelTabled = this;
 
-        long double levmarInfo[LM_INFO_SZ];
+        real levmarInfo[LM_INFO_SZ];
         if(work.size() < LM_DER_WORKSZ(ssize*2, esize*2))
         {
             work.resize(LM_DER_WORKSZ(ssize*2, esize*2));
         }
 
-//         TVReal err(size*2);
-//         params._ev = NULL;
-//         dlevmar_chkjac(
-//             evalLevmarFunc,
-//             evalLevmarJaco,
-//             (real *)sv,
-//             ssize*2,
-//             esize*2,
-//             &params,
-//             &err.front());
-//         real errVal = std::accumulate(err.begin(), err.end(), 0.0)/err.size();
-//         std::cerr<<"dlevmar_chkjac: "<<errVal<<std::endl;
-//         exit(0);
-
-        long double levmarOpts[LM_OPTS_SZ] =
+        real levmarOpts[LM_OPTS_SZ] =
         {
             initialMu,  //LM_INIT_MU,        //mu
             1e-140,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
@@ -167,14 +153,14 @@ namespace sp
             1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
         };
 
-        std::vector<long double> d_sv(ssize*2);
+        TVReal d_sv(ssize*2);
         for(std::size_t i(0); i<ssize; ++i)
         {
             d_sv[i*2+0] = (sv[i].re());
             d_sv[i*2+1] = (sv[i].im());
         }
 
-        int res = elevmar_der(
+        int res = levmar_der(
             &evalLevmarFunc,
             &evalLevmarJaco,
             &d_sv[0],
@@ -226,14 +212,14 @@ namespace sp
     {
         complex approxCos(const TVReal &ys)
         {
-            long double levmarInfo[LM_INFO_SZ];
-            std::vector<long double> work;
+            real levmarInfo[LM_INFO_SZ];
+            TVReal work;
             if(work.size() < LM_DIF_WORKSZ(2, ys.size()*2))
             {
                 work.resize(LM_DIF_WORKSZ(2, ys.size()*2));
             }
 
-            static long double levmarOpts[LM_OPTS_SZ] =
+            static real levmarOpts[LM_OPTS_SZ] =
             {
                 1e-40,  //LM_INIT_MU,        //mu
                 1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
@@ -241,30 +227,26 @@ namespace sp
                 1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
             };
 
-            long double p[2]={0,0};
+            real p[2]={0,0};
 
-            std::vector<long double> dys(ys.begin(), ys.end());
+            std::vector<real> dys(ys.begin(), ys.end());
 
-            real max = 1;
-//            std::for_each(dys.begin(), dys.end(), [&](real v){if(max<fabs(v)) max=fabs(v);});
-//            std::for_each(dys.begin(), dys.end(), [&](real &v){v/=max;});
-
-            int levmarResult = elevmar_der(
-                        [](long double *p, long double *hx, int m, int n, void *)->void{
+            int levmarResult = levmar_der(
+                        [](real *p, real *hx, int m, int n, void *)->void{
                             (void)m;
                             for(int i(0); i<n; i++)
                             {
-                                hx[i] = (long double)(p[0]*cos(g_pi*2*i/n) + p[1]*sin(g_pi*2*i/n));
+                                hx[i] = p[0]*cos(g_pi*2*i/n) + p[1]*sin(g_pi*2*i/n);
                             }
                         },
-                        [](long double *p, long double *jx, int m, int n, void *){
+                        [](real *p, real *jx, int m, int n, void *){
                             (void)p;
                             (void)m;
 
                             for(int i(0); i<n; i++)
                             {
-                                jx[i*2+0] = (long double)(cos(g_pi*2*i/n));
-                                jx[i*2+1] = (long double)(sin(g_pi*2*i/n));
+                                jx[i*2+0] = cos(g_pi*2*i/n);
+                                jx[i*2+1] = sin(g_pi*2*i/n);
                             }
                         },
                         &p[0],
@@ -279,30 +261,30 @@ namespace sp
                         NULL);
             (void)levmarResult;
 
-            std::cerr<<"result: "<<levmarResult<<std::endl;
-            std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
-            std::cerr<<"||e||_2:"<<levmarInfo[1]<<std::endl;
-            std::cerr<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
-            std::cerr<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
-            std::cerr<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
-            std::cerr<<"# iterations:"<<levmarInfo[5]<<std::endl;
-            std::cerr<<"reason for terminating:";
-            switch(int(levmarInfo[6]+0.5))
-            {
-            case 1: std::cerr<<" - stopped by small gradient J^T e"<<std::endl;break;
-            case 2: std::cerr<<" - stopped by small Dp"<<std::endl;break;
-            case 3: std::cerr<<" - stopped by itmax"<<std::endl;break;
-            case 4: std::cerr<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
-            case 5: std::cerr<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
-            case 6: std::cerr<<" - stopped by small ||e||_2"<<std::endl;break;
-            case 7: std::cerr<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
-            }
-            std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
-            std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
-            std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
-            //exit(1);
+//            std::cerr<<"result: "<<levmarResult<<std::endl;
+//            std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
+//            std::cerr<<"||e||_2:"<<levmarInfo[1]<<std::endl;
+//            std::cerr<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
+//            std::cerr<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
+//            std::cerr<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
+//            std::cerr<<"# iterations:"<<levmarInfo[5]<<std::endl;
+//            std::cerr<<"reason for terminating:";
+//            switch(int(levmarInfo[6]+0.5))
+//            {
+//            case 1: std::cerr<<" - stopped by small gradient J^T e"<<std::endl;break;
+//            case 2: std::cerr<<" - stopped by small Dp"<<std::endl;break;
+//            case 3: std::cerr<<" - stopped by itmax"<<std::endl;break;
+//            case 4: std::cerr<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
+//            case 5: std::cerr<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
+//            case 6: std::cerr<<" - stopped by small ||e||_2"<<std::endl;break;
+//            case 7: std::cerr<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
+//            }
+//            std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
+//            std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
+//            std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
+//            //exit(1);
 
-            return complex(p[0],p[1])*max;
+            return complex(p[0],p[1]);
         }
     }
 
@@ -310,7 +292,7 @@ namespace sp
     {
         ValuesByPeriod::iterator iter = _valuesByPeriod.lower_bound(t);
 
-        static const real maxDelta = std::numeric_limits<real>::epsilon()*10;
+        static const real maxDelta = std::numeric_limits<real>::epsilon()*20;
 
         bool found = false;
 
@@ -378,19 +360,24 @@ namespace sp
         TVReal hre(phasesAmountForKernelApproximator), him(phasesAmountForKernelApproximator);
         for(std::size_t phaseIndex(0); phaseIndex<phasesAmountForKernelApproximator; ++phaseIndex)
         {
-            complex echo = sc.convolveIdentity(period, phaseIndex*g_pi*2/phasesAmountForKernelApproximator);
+            complex echo = sc.convolveIdentity(period, phaseIndex*g_2pi/phasesAmountForKernelApproximator);
 
             hre[phaseIndex] = echo.re();
             him[phaseIndex] = echo.im();
         }
 
-        for(;;)
-        {
-            re = approxCos(hre);
-            im = approxCos(him);
-        }
+        re = approxCos(hre);
+        im = approxCos(him);
 
-        int k = 220;
+//        Summator<real> sre, sim;
+//        for(std::size_t phaseIndex(0); phaseIndex<phasesAmountForKernelApproximator; ++phaseIndex)
+//        {
+//            sre += fabs(hre[phaseIndex] - re.rotate(-real(phaseIndex*g_2pi/phasesAmountForKernelApproximator)).re());
+//            sim += fabs(him[phaseIndex] - im.rotate(-real(phaseIndex*g_2pi/phasesAmountForKernelApproximator)).re());
+//        }
+
+//        std::cout<<this->_samplesPerLevelPeriod<<", "<<real(sre)<<", "<<real(sim)<<std::endl;
+
     }
 
     std::string KernelTabled::stateFileName()

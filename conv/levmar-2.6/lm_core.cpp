@@ -476,7 +476,7 @@ if(!(k%100)){
   return (stop!=4 && stop!=7)?  k : LM_ERROR;
 }
 
-
+#if 0
 /* Secant version of the LEVMAR_DER() function above: the Jacobian is approximated with
  * the aid of finite differences (forward or central, see the comment for the opts argument)
  */
@@ -885,6 +885,7 @@ if(!(k%100)){
 
   return (stop!=4 && stop!=7)?  k : LM_ERROR;
 }
+#endif
 
 /* undefine everything. THIS MUST REMAIN AT THE END OF THE FILE */
 #undef LEVMAR_DER

@@ -59,9 +59,9 @@ void inv();
 int main(int argc, char *argv[])
 {
 //    prony();
-    test();
+//    test();
 //    inv();
-    return 0;
+//    return 0;
 
 
 //    {
@@ -325,7 +325,7 @@ int main(int argc, char *argv[])
 
     auto moment = std::chrono::high_resolution_clock::now();
 
-    std::vector<long double> kwork;
+    TVReal kwork;
     for(; frameIndex<framesAmount; ++frameIndex)
     {
         //std::fill(spectr.begin(), spectr.end(), sp::complex(0));

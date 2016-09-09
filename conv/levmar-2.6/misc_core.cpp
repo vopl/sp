@@ -47,14 +47,14 @@ extern "C" {
 extern void GEMM(char *transa, char *transb, int *m, int *n, int *k,
           LM_REAL *alpha, LM_REAL *a, int *lda, LM_REAL *b, int *ldb, LM_REAL *beta, LM_REAL *c, int *ldc);
 
-#define GESVD LM_MK_LAPACK_NAME(gesvd)
-#define GESDD LM_MK_LAPACK_NAME(gesdd)
-extern int GESVD(char *jobu, char *jobvt, int *m, int *n, LM_REAL *a, int *lda, LM_REAL *s, LM_REAL *u, int *ldu,
-                 LM_REAL *vt, int *ldvt, LM_REAL *work, int *lwork, int *info);
+//#define GESVD LM_MK_LAPACK_NAME(gesvd)
+//#define GESDD LM_MK_LAPACK_NAME(gesdd)
+//extern int GESVD(char *jobu, char *jobvt, int *m, int *n, LM_REAL *a, int *lda, LM_REAL *s, LM_REAL *u, int *ldu,
+//                 LM_REAL *vt, int *ldvt, LM_REAL *work, int *lwork, int *info);
 
-/* lapack 3.0 new SVD routine, faster than xgesvd() */
-extern int GESDD(char *jobz, int *m, int *n, LM_REAL *a, int *lda, LM_REAL *s, LM_REAL *u, int *ldu, LM_REAL *vt, int *ldvt,
-                 LM_REAL *work, int *lwork, int *iwork, int *info);
+///* lapack 3.0 new SVD routine, faster than xgesvd() */
+//extern int GESDD(char *jobz, int *m, int *n, LM_REAL *a, int *lda, LM_REAL *s, LM_REAL *u, int *ldu, LM_REAL *vt, int *ldvt,
+//                 LM_REAL *work, int *lwork, int *iwork, int *info);
 
 /* Cholesky decomposition */
 #define POTF2 LM_MK_LAPACK_NAME(potf2)
@@ -133,6 +133,7 @@ const int bsize=__BLOCKSZ__;
 #endif /* HAVE_LAPACK */
 }
 
+#if 0
 /* forward finite difference approximation to the Jacobian of func */
 void LEVMAR_FDIF_FORW_JAC_APPROX(
     void (*func)(LM_REAL *p, LM_REAL *hx, int m, int n, void *adata),
@@ -319,6 +320,7 @@ int fvec_sz=n, fjac_sz=n*m, pp_sz=m, fvecp_sz=n;
 
   return;
 }
+#endif
 
 #ifdef HAVE_LAPACK
 

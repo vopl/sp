@@ -1,8 +1,10 @@
 set(CMAKE_CXX_FLAGS_RELEASE "")
+
 #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -static-libgcc -static-libstdc++")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -DNDEBUG")
-#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto -march=native -Ofast -funroll-loops -ffast-math -fno-signed-zeros -fno-trapping-math -fomit-frame-pointer")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto -march=native -O3")
+
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto -march=native -Ofast -funroll-loops -ffast-math -fno-signed-zeros -fno-trapping-math -fomit-frame-pointer")
+#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto -march=native -O3")
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-align-double")
 
@@ -64,10 +66,38 @@ set(SRC_LIST
 
 include_directories(.)
 
+
+############################################################################
 file(GLOB LAPACK_PART_SRC lapack_part/*.c)
 include_directories(lapack_part)
 
 
+############################################################################
+SET(HAVE_LAPACK 1)
+SET(LINSOLVERS_RETAIN_MEMORY 1)
+SET(LM_EXT_PREC 1)
+SET(LM_DBL_PREC 1)
+SET(LM_SNGL_PREC 0)
+
+SET(LEVMAR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/levmar-2.6)
+
+CONFIGURE_FILE(${LEVMAR_DIR}/levmar.h.in ${LEVMAR_DIR}/levmar.h)
+INCLUDE_DIRECTORIES(${LEVMAR_DIR})
+
+set(LEVMAR_SRC
+  ${LEVMAR_DIR}/lm.cpp
+  ${LEVMAR_DIR}/Axb.cpp
+  ${LEVMAR_DIR}/misc.cpp
+
+  ${LEVMAR_DIR}/levmar.h
+  ${LEVMAR_DIR}/misc.h
+  ${LEVMAR_DIR}/compiler.h
+)
+
+
+
+
+############################################################################
 set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost COMPONENTS program_options filesystem)
 if(NOT Boost_FOUND)
@@ -79,15 +109,16 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 
 
-add_executable(${PROJECT_NAME} ${SRC_LIST} ${DSP_SRC} ${DSP_INC} ${LAPACK_PART_SRC})
+############################################################################
+add_executable(${PROJECT_NAME} ${SRC_LIST} ${DSP_SRC} ${DSP_INC} ${LAPACK_PART_SRC} ${LEVMAR_SRC})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 
-target_link_libraries(${PROJECT_NAME} levmar quadmath mpfr ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} quadmath ${Boost_LIBRARIES})
 #target_link_libraries(${PROJECT_NAME} blas lapack)
 
 
 
-add_subdirectory(levmar-2.6)
-include_directories(levmar-2.6)
+#add_subdirectory(levmar-2.6)
+#include_directories(levmar-2.6)

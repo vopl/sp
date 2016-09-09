@@ -57,7 +57,7 @@ int test()
 
 #define POW 10.0
 
-    std::size_t splp = 200;
+    std::size_t splp = 100;
     std::size_t cpo = 11;
 
 
@@ -66,8 +66,8 @@ int test()
         sp::KernelTabled kt(POW, splp, cpo);
         //sp::Kernel kt(POW);
 
-        kt.eval(1.2345234, 1, sp::complex(.23452,1.3456));
-        exit(0);
+//        kt.eval(1.2345234, 1, sp::complex(.23452,1.3456));
+//        exit(0);
 
 
 
@@ -111,19 +111,19 @@ int test()
 
 
 
-//        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-//        for(size_t i(0); i<echoPeriods.grid().size(); ++i)
-//        {
-//            //std::cerr<<"mk echo #"<<i<<std::endl;
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        for(size_t i(0); i<echoPeriods.grid().size(); ++i)
+        {
+            //std::cerr<<"mk echo #"<<i<<std::endl;
 
-//            response[i] = 0;
-//            std::size_t k = 500;
-//            //for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
-//            {
-//                //std::cerr<<(echoPeriods.grid()[i]/echoPeriods.grid()[k])<<std::endl;
-//                response[i] += kt.eval(echoPeriods.grid()[i], echoPeriods.grid()[k], sp::complex(0,1));
-//            }
-//        }
+            response[i] = 0;
+            //std::size_t k = 500;
+            for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
+            {
+                //std::cerr<<(echoPeriods.grid()[i]/echoPeriods.grid()[k])<<std::endl;
+                response[i] += kt.eval(echoPeriods.grid()[i], echoPeriods.grid()[k], sp::complex(0,1));
+            }
+        }
 
 //        for(size_t i(0); i<echoPeriods.grid().size(); ++i)
 //        {
@@ -135,7 +135,7 @@ int test()
 //        exit(0);
 
         std::cerr<<"deconvolve"<<std::endl;
-        std::vector<long double> work;
+        std::vector<sp::real> work;
         //for(int iters0(1); iters0<20; iters0++)
         {
             sp::TVComplex spectr(spectrPeriods.grid().size());
