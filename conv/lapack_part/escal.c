@@ -1,7 +1,7 @@
 #include "blaswrap.h"
 #include "f2c.h"
 
-/* Subroutine */ int escal_(const integer *n, const doublereal *da, doublereal *dx,
+/* Subroutine */ int escal_(const integer *n, const extendedreal *da, extendedreal *dx,
     const integer *incx)
 {
     /* System generated locals */

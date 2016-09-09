@@ -428,9 +428,8 @@ if(!(k%100)){
       mu*=nu;
       nu2=nu<<1; // 2*nu;
       if(nu2<=nu){ /* nu has wrapped around (overflown). Thanks to Frank Jordan for spotting this case */
-        //stop=5;
-        //break;
-        nu2 = nu;
+        stop=5;
+        break;
       }
       nu=nu2;
 

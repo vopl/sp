@@ -1,15 +1,15 @@
 #include "blaswrap.h"
 #include "f2c.h"
 
-doublereal edot_(const integer *n, const doublereal *dx, const integer *incx, const doublereal *dy,
+extendedreal edot_(const integer *n, const extendedreal *dx, const integer *incx, const extendedreal *dy,
     const integer *incy)
 {
     /* System generated locals */
     integer i__1;
-    doublereal ret_val;
+    extendedreal ret_val;
     /* Local variables */
     _THREAD_STATIC_ integer i__, m, ix, iy, mp1;
-    _THREAD_STATIC_ doublereal dtemp;
+    _THREAD_STATIC_ extendedreal dtemp;
 /*  Purpose
     =======
        forms the dot product of two vectors.

@@ -1,7 +1,7 @@
 #include "blaswrap.h"
 #include "f2c.h"
 
-/* Subroutine */ int epotrf_(char *uplo, integer *n, doublereal *a, integer *
+/* Subroutine */ int epotrf_(char *uplo, integer *n, extendedreal *a, integer *
     lda, integer *info)
 {
 /*  -- LAPACK routine (version 3.1) --
@@ -63,25 +63,25 @@
     /* Table of constant values */
     static const integer c__1 = 1;
     static const integer c_n1 = -1;
-    static const doublereal c_b13 = -1.;
-    static const doublereal c_b14 = 1.;
+    static const extendedreal c_b13 = -1.;
+    static const extendedreal c_b14 = 1.;
 
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3, i__4;
     /* Local variables */
     _THREAD_STATIC_ integer j, jb, nb;
     extern /* Subroutine */ int egemm_(const char *, const char *, const integer *, const integer *,
-        const integer *, const doublereal *, const doublereal *, const integer *, const doublereal *,
-        const integer *, const doublereal *, const doublereal *, const integer *);
+        const integer *, const extendedreal *, const extendedreal *, const integer *, const extendedreal *,
+        const integer *, const extendedreal *, const extendedreal *, const integer *);
     extern logical lsame_(const char *, const char *);
     extern /* Subroutine */ int etrsm_(const char *, const char *, const char *, const char *,
-        const integer *, const integer *, const doublereal *, const doublereal *, const integer *,
-        const doublereal *, const integer *);
+        const integer *, const integer *, const extendedreal *, const extendedreal *, const integer *,
+        const extendedreal *, const integer *);
     _THREAD_STATIC_ logical upper;
     extern /* Subroutine */ int esyrk_(const char *, const char *, const integer *, const integer *,
-        const doublereal *, const doublereal *, const integer *, const doublereal *, const doublereal *,
+        const extendedreal *, const extendedreal *, const integer *, const extendedreal *, const extendedreal *,
          const integer *), epotf2_(const char *, const integer *,
-        const doublereal *, const integer *, const integer *), xerbla_(const char *,
+        const extendedreal *, const integer *, const integer *), xerbla_(const char *,
         const integer *);
     extern integer ilaenv_(const integer *, const char *, const char *, const integer *, const integer *,
         const integer *, const integer *, const ftnlen, const ftnlen);

@@ -2,14 +2,14 @@
 #include "f2c.h"
 
 /* Subroutine */ int etrsm_(const char *side, const char *uplo, const char *transa, const char *diag,
-    const integer *m, const integer *n, const doublereal *alpha, const doublereal *a, const integer *
-    lda, doublereal *b, const integer *ldb)
+    const integer *m, const integer *n, const extendedreal *alpha, const extendedreal *a, const integer *
+    lda, extendedreal *b, const integer *ldb)
 {
     /* System generated locals */
     integer a_dim1, a_offset, b_dim1, b_offset, i__1, i__2, i__3;
     /* Local variables */
     _THREAD_STATIC_ integer i__, j, k, info;
-    _THREAD_STATIC_ doublereal temp;
+    _THREAD_STATIC_ extendedreal temp;
     _THREAD_STATIC_ logical lside;
     extern logical lsame_(const char *, const char *);
     _THREAD_STATIC_ integer nrowa;
