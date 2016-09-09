@@ -103,18 +103,6 @@ extern float  slevmar_L2nrmxmy(float *e, float *x, float *y, int n);
 extern double dlevmar_L2nrmxmy(double *e, double *x, double *y, int n);
 extern long double elevmar_L2nrmxmy(long double *e, long double *x, long double *y, int n);
 
-/* covariance of LS fit */
-extern int slevmar_covar(float *JtJ, float *C, float sumsq, int m, int n);
-extern int dlevmar_covar(double *JtJ, double *C, double sumsq, int m, int n);
-
-/* box constraints consistency check */
-extern int slevmar_box_check(float *lb, float *ub, int m);
-extern int dlevmar_box_check(double *lb, double *ub, int m);
-
-/* Cholesky */
-extern int slevmar_chol(float *C, float *W, int m);
-extern int dlevmar_chol(double *C, double *W, int m);
-
 #ifdef __cplusplus
 }
 #endif

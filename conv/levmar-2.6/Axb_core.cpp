@@ -37,64 +37,64 @@
 
 /* prototypes of LAPACK routines */
 
-#define GEQRF LM_MK_LAPACK_NAME(geqrf)
-#define ORGQR LM_MK_LAPACK_NAME(orgqr)
-#define TRTRS LM_MK_LAPACK_NAME(trtrs)
+//#define GEQRF LM_MK_LAPACK_NAME(geqrf)
+//#define ORGQR LM_MK_LAPACK_NAME(orgqr)
+//#define TRTRS LM_MK_LAPACK_NAME(trtrs)
 #define POTF2 LM_MK_LAPACK_NAME(potf2)
 #define POTRF LM_MK_LAPACK_NAME(potrf)
 #define POTRS LM_MK_LAPACK_NAME(potrs)
-#define GETRF LM_MK_LAPACK_NAME(getrf)
-#define GETRS LM_MK_LAPACK_NAME(getrs)
-#define GESVD LM_MK_LAPACK_NAME(gesvd)
-#define GESDD LM_MK_LAPACK_NAME(gesdd)
-#define SYTRF LM_MK_LAPACK_NAME(sytrf)
-#define SYTRS LM_MK_LAPACK_NAME(sytrs)
-#define PLASMA_POSV LM_CAT_(PLASMA_, LM_ADD_PREFIX(posv))
+//#define GETRF LM_MK_LAPACK_NAME(getrf)
+//#define GETRS LM_MK_LAPACK_NAME(getrs)
+//#define GESVD LM_MK_LAPACK_NAME(gesvd)
+//#define GESDD LM_MK_LAPACK_NAME(gesdd)
+//#define SYTRF LM_MK_LAPACK_NAME(sytrf)
+//#define SYTRS LM_MK_LAPACK_NAME(sytrs)
+//#define PLASMA_POSV LM_CAT_(PLASMA_, LM_ADD_PREFIX(posv))
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* QR decomposition */
-extern int GEQRF(int *m, int *n, LM_REAL *a, int *lda, LM_REAL *tau, LM_REAL *work, int *lwork, int *info);
-extern int ORGQR(int *m, int *n, int *k, LM_REAL *a, int *lda, LM_REAL *tau, LM_REAL *work, int *lwork, int *info);
+///* QR decomposition */
+//extern int GEQRF(int *m, int *n, LM_REAL *a, int *lda, LM_REAL *tau, LM_REAL *work, int *lwork, int *info);
+//extern int ORGQR(int *m, int *n, int *k, LM_REAL *a, int *lda, LM_REAL *tau, LM_REAL *work, int *lwork, int *info);
 
-/* solution of triangular systems */
-extern int TRTRS(char *uplo, char *trans, char *diag, int *n, int *nrhs, LM_REAL *a, int *lda, LM_REAL *b, int *ldb, int *info);
+///* solution of triangular systems */
+//extern int TRTRS(char *uplo, char *trans, char *diag, int *n, int *nrhs, LM_REAL *a, int *lda, LM_REAL *b, int *ldb, int *info);
 
 /* Cholesky decomposition and systems solution */
 extern int POTF2(char *uplo, int *n, LM_REAL *a, int *lda, int *info);
 extern int POTRF(char *uplo, int *n, LM_REAL *a, int *lda, int *info); /* block version of dpotf2 */
 extern int POTRS(char *uplo, int *n, int *nrhs, LM_REAL *a, int *lda, LM_REAL *b, int *ldb, int *info);
 
-/* LU decomposition and systems solution */
-extern int GETRF(int *m, int *n, LM_REAL *a, int *lda, int *ipiv, int *info);
-extern int GETRS(char *trans, int *n, int *nrhs, LM_REAL *a, int *lda, int *ipiv, LM_REAL *b, int *ldb, int *info);
+///* LU decomposition and systems solution */
+//extern int GETRF(int *m, int *n, LM_REAL *a, int *lda, int *ipiv, int *info);
+//extern int GETRS(char *trans, int *n, int *nrhs, LM_REAL *a, int *lda, int *ipiv, LM_REAL *b, int *ldb, int *info);
 
-/* Singular Value Decomposition (SVD) */
-extern int GESVD(char *jobu, char *jobvt, int *m, int *n, LM_REAL *a, int *lda, LM_REAL *s, LM_REAL *u, int *ldu,
-                   LM_REAL *vt, int *ldvt, LM_REAL *work, int *lwork, int *info);
+///* Singular Value Decomposition (SVD) */
+//extern int GESVD(char *jobu, char *jobvt, int *m, int *n, LM_REAL *a, int *lda, LM_REAL *s, LM_REAL *u, int *ldu,
+//                   LM_REAL *vt, int *ldvt, LM_REAL *work, int *lwork, int *info);
 
-/* lapack 3.0 new SVD routine, faster than xgesvd().
- * In case that your version of LAPACK does not include them, use the above two older routines
- */
-extern int GESDD(char *jobz, int *m, int *n, LM_REAL *a, int *lda, LM_REAL *s, LM_REAL *u, int *ldu, LM_REAL *vt, int *ldvt,
-                   LM_REAL *work, int *lwork, int *iwork, int *info);
+///* lapack 3.0 new SVD routine, faster than xgesvd().
+// * In case that your version of LAPACK does not include them, use the above two older routines
+// */
+//extern int GESDD(char *jobz, int *m, int *n, LM_REAL *a, int *lda, LM_REAL *s, LM_REAL *u, int *ldu, LM_REAL *vt, int *ldvt,
+//                   LM_REAL *work, int *lwork, int *iwork, int *info);
 
-/* LDLt/UDUt factorization and systems solution */
-extern int SYTRF(char *uplo, int *n, LM_REAL *a, int *lda, int *ipiv, LM_REAL *work, int *lwork, int *info);
-extern int SYTRS(char *uplo, int *n, int *nrhs, LM_REAL *a, int *lda, int *ipiv, LM_REAL *b, int *ldb, int *info);
+///* LDLt/UDUt factorization and systems solution */
+//extern int SYTRF(char *uplo, int *n, LM_REAL *a, int *lda, int *ipiv, LM_REAL *work, int *lwork, int *info);
+//extern int SYTRS(char *uplo, int *n, int *nrhs, LM_REAL *a, int *lda, int *ipiv, LM_REAL *b, int *ldb, int *info);
 #ifdef __cplusplus
 }
 #endif
 
 /* precision-specific definitions */
-#define AX_EQ_B_QR LM_ADD_PREFIX(Ax_eq_b_QR)
-#define AX_EQ_B_QRLS LM_ADD_PREFIX(Ax_eq_b_QRLS)
+//#define AX_EQ_B_QR LM_ADD_PREFIX(Ax_eq_b_QR)
+//#define AX_EQ_B_QRLS LM_ADD_PREFIX(Ax_eq_b_QRLS)
 #define AX_EQ_B_CHOL LM_ADD_PREFIX(Ax_eq_b_Chol)
-#define AX_EQ_B_LU LM_ADD_PREFIX(Ax_eq_b_LU)
-#define AX_EQ_B_SVD LM_ADD_PREFIX(Ax_eq_b_SVD)
-#define AX_EQ_B_BK LM_ADD_PREFIX(Ax_eq_b_BK)
-#define AX_EQ_B_PLASMA_CHOL LM_ADD_PREFIX(Ax_eq_b_PLASMA_Chol)
+//#define AX_EQ_B_LU LM_ADD_PREFIX(Ax_eq_b_LU)
+//#define AX_EQ_B_SVD LM_ADD_PREFIX(Ax_eq_b_SVD)
+//#define AX_EQ_B_BK LM_ADD_PREFIX(Ax_eq_b_BK)
+//#define AX_EQ_B_PLASMA_CHOL LM_ADD_PREFIX(Ax_eq_b_PLASMA_Chol)
 
 #if 0
 /*
@@ -816,7 +816,7 @@ LM_REAL *a;
   }
 
   /* solve the system with the computed LU */
-  GETRS("N", (int *)&m, (int *)&nrhs, a, (int *)&m, ipiv, x, (int *)&m, (int *)&info);
+  TRATATA GETRS("N", (int *)&m, (int *)&nrhs, a, (int *)&m, ipiv, x, (int *)&m, (int *)&info);
   if(info!=0){
     if(info<0){
       fprintf(stderr, RCAT(RCAT("argument %d of ", GETRS) " illegal in ", AX_EQ_B_LU) "()\n", -info);

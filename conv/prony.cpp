@@ -201,9 +201,9 @@ void prony()
     //аппроксимировать
 
     {
-        long double levmarInfo[LM_INFO_SZ];
+        sp::real levmarInfo[LM_INFO_SZ];
 
-        static long double levmarOpts[LM_OPTS_SZ] =
+        static sp::real levmarOpts[LM_OPTS_SZ] =
         {
             1e-40,  //LM_INIT_MU,        //mu
             1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
@@ -211,11 +211,11 @@ void prony()
             1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
         };
 
-        static std::vector<long double> args;
+        static std::vector<sp::real> args;
         args.resize(periods.size()*2);
-        std::fill(args.begin(), args.end(), (long double)(0));
+        std::fill(args.begin(), args.end(), (sp::real)(0));
 
-        static std::vector<long double> work;
+        static std::vector<sp::real> work;
         if(work.size() < LM_DIF_WORKSZ(args.size(), scaledFilteredSignal.size()))
         {
             work.resize(LM_DIF_WORKSZ(args.size(), scaledFilteredSignal.size()));
@@ -230,12 +230,12 @@ void prony()
         levmarParams._xs = &scaledFilteredSignalX[0];
         levmarParams._ts = &periods[0];
 
-        std::vector<long double> ys;
+        std::vector<sp::real> ys;
         ys.assign(scaledFilteredSignal.begin(), scaledFilteredSignal.end());
 
 
-        int levmarResult = elevmar_der(
-                    [](long double *p, long double *hx, int m, int n, void *_levmarParams)->void{
+        int levmarResult = levmar_der(
+                    [](sp::real *p, sp::real *hx, int m, int n, void *_levmarParams)->void{
                         LevmarParams *levmarParams = reinterpret_cast<LevmarParams*>(_levmarParams);
                         for(int i(0); i<n; i++)
                         {
@@ -257,7 +257,7 @@ void prony()
                             }
                         }
                     },
-                    [](long double *p, long double *jx, int m, int n, void *_levmarParams){
+                    [](sp::real *p, sp::real *jx, int m, int n, void *_levmarParams){
                         LevmarParams *levmarParams = reinterpret_cast<LevmarParams*>(_levmarParams);
 
                         for(int i(0); i<n; i++)

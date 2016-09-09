@@ -6,8 +6,8 @@
 
 #include <boost/multiprecision/float128.hpp>
 #include <boost/multiprecision/cpp_bin_float.hpp>
-#include <boost/multiprecision/mpfr.hpp>
-#include <boost/multiprecision/gmp.hpp>
+#include <boost/multiprecision/cpp_dec_float.hpp>
+#include <boost/math/constants/constants.hpp>
 
 
 namespace sp
@@ -479,43 +479,49 @@ namespace sp
     {
         complex approxCosPlusPoly(TVReal &ys, std::size_t polyOrder)
         {
-            long double levmarInfo[LM_INFO_SZ];
+            real levmarInfo[LM_INFO_SZ];
 
-            static long double levmarOpts[LM_OPTS_SZ] =
+            static real levmarOpts[LM_OPTS_SZ] =
             {
                 1e-40,  //LM_INIT_MU,        //mu
-                std::numeric_limits<long double>::min(),  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
-                std::numeric_limits<long double>::min(),  //LM_STOP_THRESH,    //||Dp||_2 and
-                std::numeric_limits<long double>::min(),  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
+                std::numeric_limits<real>::min(),  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
+                std::numeric_limits<real>::min(),  //LM_STOP_THRESH,    //||Dp||_2 and
+                std::numeric_limits<real>::min(),  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
             };
 
-            static std::vector<long double> args;
+            static TVReal args;
             args.resize(2+polyOrder+1);
-            std::fill(args.begin(), args.end(), (long double)(0));
+            std::fill(args.begin(), args.end(), real(0));
 
-            static std::vector<long double> dys;
-            dys.assign(ys.begin(), ys.end());
-
-            static std::vector<long double> work;
-            if(work.size() < LM_DIF_WORKSZ(args.size(), dys.size()))
+            static TVReal work;
+            if(work.size() < LM_DIF_WORKSZ(args.size(), ys.size()))
             {
-                work.resize(LM_DIF_WORKSZ(args.size(), dys.size()));
+                work.resize(LM_DIF_WORKSZ(args.size(), ys.size()));
             }
 
 
             using bigreal = boost::multiprecision::float128;
+
             struct Params
             {
                 std::vector<std::vector<bigreal>> _bigbasis;
-                std::vector<std::vector<long double>> _basis;
+                std::vector<TVReal> _basis;
+
+                std::vector<bigreal> _ys;
             };
 
             static Params params;
 
-            if(params._bigbasis.empty())
+            params._ys.assign(ys.begin(), ys.end());
+
+            std::size_t n = ys.size();
+            std::size_t m = args.size();
+            if(params._bigbasis.size() != n || (!params._bigbasis.empty() && params._bigbasis[0].size()!=m))
             {
-                std::size_t n = ys.size();
-                std::size_t m = args.size();
+                using verybigreal = boost::multiprecision::cpp_dec_float_100;
+
+                verybigreal pi = boost::math::constants::pi<verybigreal>();
+                verybigreal pi2 = pi*2;
 
                 params._bigbasis.resize(n);
                 params._basis.resize(n);
@@ -528,18 +534,21 @@ namespace sp
                 /////
                 for(std::size_t i(0); i<n; i++)
                 {
-                    bigreal x = bigreal(i)/n;
-
-                    params._bigbasis[i][0] = cos(g_2pi*x);
-                    params._bigbasis[i][1] = sin(g_2pi*x);
+                    verybigreal x = verybigreal(i)/(n-1);
+                    //verybigreal wnd = 1;//rect
+                    verybigreal wnd = (0.5 - 0.5*cos(pi2*x));//hann
+                    //verybigreal wnd = (0.54 - 0.46*cos(pi2*x));//hamming
+                    //verybigreal wnd = (cos(pi/2*x-pi/4));//hann half
+                    params._bigbasis[i][0] = verybigreal(cos(pi2*x)*wnd).convert_to<bigreal>();
+                    params._bigbasis[i][1] = verybigreal(sin(pi2*x)*wnd).convert_to<bigreal>();
                 }
 
                 /////
-                std::vector<bigreal> poly(polyOrder+1);
+                std::vector<verybigreal> poly(polyOrder+1);
                 for(std::size_t i(0); i<n; i++)
                 {
-                    bigreal time = bigreal(i)/(n-1)*2 - 1;
-                    bigreal time2 = time*2;
+                    verybigreal time = verybigreal(i)/(n-1)*2 - 1;
+                    verybigreal time2 = time*2;
 
                     if(polyOrder == 0)
                     {
@@ -558,51 +567,52 @@ namespace sp
 
                     for(size_t o=0; o<=polyOrder; o++)
                     {
-                        params._bigbasis[i][o+2] = poly[o];
+                        params._bigbasis[i][o+2] = poly[o].convert_to<bigreal>();
                     }
                 }
 
                 /////
                 for(std::size_t i(0); i<n; i++)
                 {
-                    for(int j(0); j<m; j++)
+                    for(std::size_t j(0); j<m; j++)
                     {
-                        params._basis[i][j] = params._bigbasis[i][j].convert_to<long double>();
+                        params._basis[i][j] = params._bigbasis[i][j].convert_to<real>();
                     }
                 }
             }
 
 
-            int levmarResult = elevmar_der(
-                        [](long double *p, long double *hx, int m, int n, void *_params)->void{
+            int levmarResult = levmar_der(
+                        [](real *p, real *hx, int m, int n, void *_params)->void{
                             Params &params = *reinterpret_cast<Params*>(_params);
 
-                            for(int i(0); i<n; i++)
+                            for(std::size_t i(0); i<std::size_t(n); i++)
                             {
-                                Summator<bigreal> sum(0);
+                                //Summator<bigreal> sum(0);
+                                bigreal sum(0);
 
-                                for(int j(0); j<m; j++)
+                                for(std::size_t j(0); j<std::size_t(m); j++)
                                 {
                                     sum += params._bigbasis[i][j] * p[j];
                                 }
 
-                                hx[i] = bigreal(sum).convert_to<long double>();
+                                hx[i] = bigreal(sum - params._ys[i]).convert_to<real>();
                             }
                         },
-                        [](long double *p, long double *jx, int m, int n, void *_params){
+                        [](real *p, real *jx, int m, int n, void *_params){
 
                             Params &params = *reinterpret_cast<Params*>(_params);
 
-                            for(int i(0); i<n; i++)
+                            for(std::size_t i(0); i<std::size_t(n); i++)
                             {
-                                for(int j(0); j<m; j++)
+                                for(std::size_t j(0); j<std::size_t(m); j++)
                                 {
-                                    jx[i*m+j] = params._basis[i][j];
+                                    jx[i*std::size_t(m)+j] = params._basis[i][j];
                                 }
                             }
                         },
                         &args[0],
-                        &dys[0],
+                        NULL, //&dys[0],
                         args.size(),
                         ys.size(),
                         150,
@@ -612,28 +622,28 @@ namespace sp
                         NULL,
                         &params);
 
-            std::cerr<<"result: "<<levmarResult<<std::endl;
-            std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
-            std::cerr<<"||e||_2:"<<levmarInfo[1]<<std::endl;
-            std::cerr<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
-            std::cerr<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
-            std::cerr<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
-            std::cerr<<"# iterations:"<<levmarInfo[5]<<std::endl;
-            std::cerr<<"reason for terminating:";
-            switch(int(levmarInfo[6]+0.5))
-            {
-            case 1: std::cerr<<" - stopped by small gradient J^T e"<<std::endl;break;
-            case 2: std::cerr<<" - stopped by small Dp"<<std::endl;break;
-            case 3: std::cerr<<" - stopped by itmax"<<std::endl;break;
-            case 4: std::cerr<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
-            case 5: std::cerr<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
-            case 6: std::cerr<<" - stopped by small ||e||_2"<<std::endl;break;
-            case 7: std::cerr<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
-            }
-            std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
-            std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
-            std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
-            //exit(1);
+//            std::cerr<<"result: "<<levmarResult<<std::endl;
+//            std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
+//            std::cerr<<"||e||_2:"<<levmarInfo[1]<<std::endl;
+//            std::cerr<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
+//            std::cerr<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
+//            std::cerr<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
+//            std::cerr<<"# iterations:"<<levmarInfo[5]<<std::endl;
+//            std::cerr<<"reason for terminating:";
+//            switch(int(levmarInfo[6]+0.5))
+//            {
+//            case 1: std::cerr<<" - stopped by small gradient J^T e"<<std::endl;break;
+//            case 2: std::cerr<<" - stopped by small Dp"<<std::endl;break;
+//            case 3: std::cerr<<" - stopped by itmax"<<std::endl;break;
+//            case 4: std::cerr<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
+//            case 5: std::cerr<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
+//            case 6: std::cerr<<" - stopped by small ||e||_2"<<std::endl;break;
+//            case 7: std::cerr<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
+//            }
+//            std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
+//            std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
+//            std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
+//            //exit(1);
 
             return complex(args[0], args[1]);
         }
