@@ -23,8 +23,7 @@ namespace sp
             size_t &iters,//макс итераций
             real initialMu,
             real &error0,
-            real &error1,
-            TVReal &work);
+            real &error1);
 
     public:
         void evalKernel(real t, real &rr, real &ri, real &ir, real &ii);

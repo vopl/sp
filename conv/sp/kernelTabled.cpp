@@ -39,6 +39,8 @@ namespace sp
 
     namespace
     {
+        using real4deconv = real;
+
         //////////////////////////////////////////////////////////////////////////
         struct LevmarParams
         {
@@ -59,7 +61,7 @@ namespace sp
         //////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////
-        void evalLevmarFunc(real *p, real *hx, int m, int n, void *levmarParams)
+        void evalLevmarFunc(real4deconv *p, real4deconv *hx, int m, int n, void *levmarParams)
         {
             LevmarParams *params = reinterpret_cast<LevmarParams *>(levmarParams);
 
@@ -97,7 +99,7 @@ namespace sp
         }
 
         //////////////////////////////////////////////////////////////////////////
-        void evalLevmarJaco(real *p, real *jx, int m, int n, void *levmarParams)
+        void evalLevmarJaco(real4deconv *p, real4deconv *jx, int m, int n, void *levmarParams)
         {
             (void)p;
             LevmarParams *params = reinterpret_cast<LevmarParams *>(levmarParams);
@@ -123,6 +125,11 @@ namespace sp
         }
     }
 
+    namespace
+    {
+        std::vector<real4deconv> g_deconvolveWork;
+    }
+
     //////////////////////////////////////////////////////////////////////////
     void KernelTabled::deconvolve(
             size_t esize, const real *et, const complex *ev, //отклик
@@ -130,8 +137,7 @@ namespace sp
             size_t &iters, //макс итераций
             real initialMu,
             real &error0,
-            real &error1,
-            TVReal &work)
+            real &error1)
     {
         LevmarParams params;
         params._et = et;
@@ -139,13 +145,13 @@ namespace sp
         params._st = st;
         params._kernelTabled = this;
 
-        real levmarInfo[LM_INFO_SZ];
-        if(work.size() < LM_DER_WORKSZ(ssize*2, esize*2))
+        real4deconv levmarInfo[LM_INFO_SZ];
+        if(g_deconvolveWork.size() < LM_DER_WORKSZ(ssize*2, esize*2))
         {
-            work.resize(LM_DER_WORKSZ(ssize*2, esize*2));
+            g_deconvolveWork.resize(LM_DER_WORKSZ(ssize*2, esize*2));
         }
 
-        real levmarOpts[LM_OPTS_SZ] =
+        real4deconv levmarOpts[LM_OPTS_SZ] =
         {
             initialMu,  //LM_INIT_MU,        //mu
             1e-140,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
@@ -153,7 +159,7 @@ namespace sp
             1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
         };
 
-        TVReal d_sv(ssize*2);
+        std::vector<real4deconv> d_sv(ssize*2);
         for(std::size_t i(0); i<ssize; ++i)
         {
             d_sv[i*2+0] = (sv[i].re());
@@ -170,7 +176,7 @@ namespace sp
             int(iters),
             levmarOpts,
             levmarInfo,
-            &work[0],
+            &g_deconvolveWork[0],
             NULL,
             &params);
 
