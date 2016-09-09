@@ -535,8 +535,9 @@ namespace sp
                 for(std::size_t i(0); i<n; i++)
                 {
                     verybigreal x = verybigreal(i)/(n-1);
-                    //verybigreal wnd = 1;//rect
-                    verybigreal wnd = (0.5 - 0.5*cos(pi2*x));//hann
+                    verybigreal wnd = 1;//rect -- наилучшее пока что
+                    //verybigreal wnd = (0.5 - 0.5*cos(pi2*x));//hann
+                    //verybigreal wnd = 1-(0.5 - 0.5*cos(pi2*x));//rev hann
                     //verybigreal wnd = (0.54 - 0.46*cos(pi2*x));//hamming
                     //verybigreal wnd = (cos(pi/2*x-pi/4));//hann half
                     params._bigbasis[i][0] = verybigreal(cos(pi2*x)*wnd).convert_to<bigreal>();

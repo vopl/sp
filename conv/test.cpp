@@ -58,7 +58,7 @@ int test()
 #define POW 10.0
 
     std::size_t splp = 100;
-    std::size_t cpo = 11;
+    std::size_t cpo = 12;
 
 
     if(1)
@@ -71,42 +71,42 @@ int test()
 
 
 
-        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        std::cerr<<"make signal"<<std::endl;
-        sp::TVReal signal;
+//        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+//        std::cerr<<"make signal"<<std::endl;
+//        sp::TVReal signal;
 
-        signal.resize(std::size_t(sp::g_periodMax*POW*2.2/sp::g_sampleStep+1));//чтобы уместился максимальный период
-        for(size_t index(0); index<signal.size(); ++index)
-        {
-            sp::real x = index * sp::g_sampleStep;
-            sp::real xTarget = (signal.size()-2)*sp::g_sampleStep;
+//        signal.resize(std::size_t(sp::g_periodMax*POW*2.2/sp::g_sampleStep+1));//чтобы уместился максимальный период
+//        for(size_t index(0); index<signal.size(); ++index)
+//        {
+//            sp::real x = index * sp::g_sampleStep;
+//            sp::real xTarget = (signal.size()-2)*sp::g_sampleStep;
 
-            signal[index] = 0;
+//            signal[index] = 0;
 
-            sp::real a = x/xTarget;
+//            sp::real a = x/xTarget;
 
-            for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
-            {
-                sp::real t = echoPeriods.grid()[k];
-                signal[index] += sin((x-xTarget)*sp::g_2pi/t);
-            }
+//            for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
+//            {
+//                sp::real t = echoPeriods.grid()[k];
+//                signal[index] += sin((x-xTarget)*sp::g_2pi/t);
+//            }
 
 
-            //cout << x<<","<<signal[index]<< endl;
+//            //cout << x<<","<<signal[index]<< endl;
 
-        }
+//        }
 
 
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         sp::TVComplex response(sp::g_periodSteps);
-        sp::SignalConvolver c;
-        c.setup(POW, echoPeriods.grid(), sp::g_sampleStep, splp, cpo, sp::SignalApproxType::poly6p5o32x);
+//        sp::SignalConvolver c;
+//        c.setup(POW, echoPeriods.grid(), sp::g_sampleStep, splp, cpo, sp::SignalApproxType::poly6p5o32x);
 
-        std::cerr<<"push signal"<<std::endl;
-        c.pushSignal(&signal[0], signal.size());
+//        std::cerr<<"push signal"<<std::endl;
+//        c.pushSignal(&signal[0], signal.size());
 
-        std::cerr<<"convolve signal"<<std::endl;
-        response = c.convolve();
+//        std::cerr<<"convolve signal"<<std::endl;
+//        response = c.convolve();
 
 
 
@@ -125,17 +125,16 @@ int test()
             }
         }
 
-//        for(size_t i(0); i<echoPeriods.grid().size(); ++i)
-//        {
-//            //std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
-//            std::cout<<(echoPeriods.grid()[i]/echoPeriods.grid()[500])<<", "<<response[i].re()<<", "<<response[i].im();
-//            std::cout<<std::endl;
-//        }
+        for(size_t i(0); i<echoPeriods.grid().size(); ++i)
+        {
+            //std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
+            std::cout<<(echoPeriods.grid()[i]/echoPeriods.grid()[500])<<", "<<response[i].re()<<", "<<response[i].im();
+            std::cout<<std::endl;
+        }
 
-//        exit(0);
+        exit(0);
 
         std::cerr<<"deconvolve"<<std::endl;
-        std::vector<sp::real> work;
         //for(int iters0(1); iters0<20; iters0++)
         {
             sp::TVComplex spectr(spectrPeriods.grid().size());
@@ -149,8 +148,7 @@ int test()
                     iters,
                     1e-40,
                     error0,
-                    error1,
-                    work);
+                    error1);
 
             cerr<<iters<<": "<<error0<<"->"<<error1<<endl;
             for(size_t i(0); i<spectr.size(); ++i)

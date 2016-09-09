@@ -1,6 +1,6 @@
 set(CMAKE_CXX_FLAGS_RELEASE "")
 
-#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -static-libgcc -static-libstdc++")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -static-libgcc -static-libstdc++")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -DNDEBUG")
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto -march=native -Ofast -funroll-loops -ffast-math -fno-signed-zeros -fno-trapping-math -fomit-frame-pointer")
@@ -15,7 +15,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto -march=native -Ofa
 project(conv)
 cmake_minimum_required(VERSION 2.8)
 
-set(SRC_LIST
+set(SRC
     main.cpp
     test.cpp
     prony.cpp
@@ -110,13 +110,16 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 
 ############################################################################
-add_executable(${PROJECT_NAME} ${SRC_LIST} ${DSP_SRC} ${DSP_INC} ${LAPACK_PART_SRC} ${LEVMAR_SRC})
+add_executable(${PROJECT_NAME} ${SRC} ${LAPACK_PART_SRC} ${LEVMAR_SRC})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 
-target_link_libraries(${PROJECT_NAME} quadmath ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
 #target_link_libraries(${PROJECT_NAME} blas lapack)
+
+target_link_libraries(${PROJECT_NAME} "-Wl,-Bstatic -lquadmath -Wl,-Bdynamic")
+
 
 
 

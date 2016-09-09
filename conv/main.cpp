@@ -58,10 +58,10 @@ void inv();
 
 int main(int argc, char *argv[])
 {
-//    prony();
-//    test();
-//    inv();
-//    return 0;
+//    prony();return 0;
+//    test();return 0;
+//    inv();return 0;
+
 
 
 //    {
@@ -325,7 +325,6 @@ int main(int argc, char *argv[])
 
     auto moment = std::chrono::high_resolution_clock::now();
 
-    TVReal kwork;
     for(; frameIndex<framesAmount; ++frameIndex)
     {
         //std::fill(spectr.begin(), spectr.end(), sp::complex(0));
@@ -372,8 +371,7 @@ int main(int argc, char *argv[])
             iters,
             1e-40,
             error0,
-            error1,
-            kwork);
+            error1);
 
         auto moment1 = std::chrono::high_resolution_clock::now();
 
