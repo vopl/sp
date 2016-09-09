@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Levenberg - Marquardt non-linear minimization algorithm
 //  Copyright (C) 2004-05  Manolis Lourakis (lourakis at ics forth gr)
 //  Institute of Computer Science, Foundation for Research & Technology - Hellas
@@ -76,7 +76,7 @@ static int LEVMAR_LUINVERSE(LM_REAL *A, LM_REAL *B, int m);
  * Since a^T a is symmetric, its computation can be sped up by computing only its
  * upper triangular part and copying it to the lower part.
  *
- * More details on blocking can be found at 
+ * More details on blocking can be found at
  * http://www-2.cs.cmu.edu/afs/cs/academic/class/15213-f02/www/R07/section_a/Recitation07-SectionA.pdf
  */
 void LEVMAR_TRANS_MAT_MAT_MULT(LM_REAL *a, LM_REAL *b, int n, int m)
@@ -210,7 +210,7 @@ register LM_REAL d;
   }
 }
 
-/* 
+/*
  * Check the Jacobian of a n-valued nonlinear function in m variables
  * evaluated at a point p, for consistency with the function itself.
  *
@@ -326,7 +326,7 @@ int fvec_sz=n, fjac_sz=n*m, pp_sz=m, fvecp_sz=n;
 /*
  * This function computes the pseudoinverse of a square matrix A
  * into B using SVD. A and B can coincide
- * 
+ *
  * The function returns 0 in case of error (e.g. A is singular),
  * the rank of A if successful
  *
@@ -344,7 +344,7 @@ LM_REAL *a, *u, *s, *vt, *work;
 int a_sz, u_sz, s_sz, vt_sz, tot_sz;
 LM_REAL thresh, one_over_denom;
 int info, rank, worksz, *iwork, iworksz;
-   
+
   /* calculate required memory size */
   worksz=5*m; // min worksize for GESVD
   //worksz=m*(7*m+4); // min worksize for GESDD
@@ -554,7 +554,7 @@ LM_REAL *a, *x, *work, max, sum, tmp;
  * J is the Jacobian at the solution), sumsq is the sum of squared residuals
  * (i.e. goodnes of fit) at the solution, m is the number of parameters (variables)
  * and n the number of observations. JtJ can coincide with C.
- * 
+ *
  * if JtJ is of full rank, C is computed as sumsq/(n-m)*(JtJ)^-1
  * otherwise and if LAPACK is available, C=sumsq/(n-r)*(JtJ)^+
  * where r is JtJ's rank and ^+ denotes the pseudoinverse
@@ -600,7 +600,7 @@ LM_REAL fact;
 /*  standard deviation of the best-fit parameter i.
  *  covar is the mxm covariance matrix of the best-fit parameters (see also LEVMAR_COVAR()).
  *
- *  The standard deviation is computed as \sigma_{i} = \sqrt{C_{ii}} 
+ *  The standard deviation is computed as \sigma_{i} = \sqrt{C_{ii}}
  */
 LM_REAL LEVMAR_STDDEV(LM_REAL *covar, int m, int i)
 {
@@ -625,7 +625,7 @@ LM_REAL LEVMAR_R2(void (*func)(LM_REAL *p, LM_REAL *hx, int m, int n, void *adat
 {
 register int i;
 register LM_REAL tmp;
-LM_REAL SSerr,  // sum of squared errors, i.e. residual sum of squares \sum_i (x_i-hx_i)^2 
+LM_REAL SSerr,  // sum of squared errors, i.e. residual sum of squares \sum_i (x_i-hx_i)^2
         SStot, // \sum_i (x_i-xavg)^2
         *hx, xavg;
 
@@ -641,7 +641,7 @@ LM_REAL SSerr,  // sum of squared errors, i.e. residual sum of squares \sum_i (x
   for(i=n, tmp=0.0; i-->0; )
     tmp+=x[i];
   xavg=tmp/(LM_REAL)n;
-  
+
   if(x)
     for(i=n, SSerr=SStot=0.0; i-->0; ){
       tmp=x[i]-hx[i];
@@ -733,14 +733,14 @@ int info;
 LM_REAL LEVMAR_L2NRMXMY(LM_REAL *e, LM_REAL *x, LM_REAL *y, int n)
 {
 const int blocksize=8, bpwr=3; /* 8=2^3 */
-register int i;
+int i;
 int j1, j2, j3, j4, j5, j6, j7;
 int blockn;
-register LM_REAL sum0=0.0, sum1=0.0, sum2=0.0, sum3=0.0;
+LM_REAL sum0=0.0, sum1=0.0, sum2=0.0, sum3=0.0;
 
-  /* n may not be divisible by blocksize, 
+  /* n may not be divisible by blocksize,
    * go as near as we can first, then tidy up.
-   */ 
+   */
   blockn = (n>>bpwr)<<bpwr; /* (n / blocksize) * blocksize; */
 
   /* unroll the loop in blocks of `blocksize'; looping downwards gains some more speed */
@@ -758,17 +758,17 @@ register LM_REAL sum0=0.0, sum1=0.0, sum2=0.0, sum3=0.0;
 
    /*
     * There may be some left to do.
-    * This could be done as a simple for() loop, 
-    * but a switch is faster (and more interesting) 
-    */ 
+    * This could be done as a simple for() loop,
+    * but a switch is faster (and more interesting)
+    */
 
     i=blockn;
-    if(i<n){ 
+    if(i<n){
       /* Jump into the case at the place that will allow
-       * us to finish off the appropriate number of items. 
-       */ 
+       * us to finish off the appropriate number of items.
+       */
 
-      switch(n - i){ 
+      switch(n - i){
         case 7 : e[i]=x[i]-y[i]; sum0+=e[i]*e[i]; ++i;
         case 6 : e[i]=x[i]-y[i]; sum1+=e[i]*e[i]; ++i;
         case 5 : e[i]=x[i]-y[i]; sum2+=e[i]*e[i]; ++i;
@@ -793,17 +793,17 @@ register LM_REAL sum0=0.0, sum1=0.0, sum2=0.0, sum3=0.0;
 
    /*
     * There may be some left to do.
-    * This could be done as a simple for() loop, 
-    * but a switch is faster (and more interesting) 
-    */ 
+    * This could be done as a simple for() loop,
+    * but a switch is faster (and more interesting)
+    */
 
     i=blockn;
-    if(i<n){ 
+    if(i<n){
       /* Jump into the case at the place that will allow
-       * us to finish off the appropriate number of items. 
-       */ 
+       * us to finish off the appropriate number of items.
+       */
 
-      switch(n - i){ 
+      switch(n - i){
         case 7 : e[i]=-y[i]; sum0+=e[i]*e[i]; ++i;
         case 6 : e[i]=-y[i]; sum1+=e[i]*e[i]; ++i;
         case 5 : e[i]=-y[i]; sum2+=e[i]*e[i]; ++i;

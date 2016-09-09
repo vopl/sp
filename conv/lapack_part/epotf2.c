@@ -1,7 +1,7 @@
 #include "blaswrap.h"
 #include "f2c.h"
 
-/* Subroutine */ int epotf2_(char *uplo, integer *n, doublereal *a, integer *
+/* Subroutine */ int epotf2_(char *uplo, integer *n, extendedreal *a, integer *
     lda, integer *info)
 {
 /*  -- LAPACK routine (version 3.1) --
@@ -64,28 +64,28 @@
        Parameter adjustments */
     /* Table of constant values */
     static const integer c__1 = 1;
-    static const doublereal c_b10 = -1.;
-    static const doublereal c_b12 = 1.;
+    static const extendedreal c_b10 = -1.;
+    static const extendedreal c_b12 = 1.;
 
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2, i__3;
-    doublereal d__1;
+    extendedreal d__1;
     /* Builtin functions */
-    doublereal sqrtl(doublereal);
+    extendedreal sqrtl(extendedreal);
     /* Local variables */
     _THREAD_STATIC_ integer j;
-    _THREAD_STATIC_ doublereal ajj;
-    extern doublereal edot_(const integer *, const doublereal *, const integer *, const doublereal *,
+    _THREAD_STATIC_ extendedreal ajj;
+    extern extendedreal edot_(const integer *, const extendedreal *, const integer *, const extendedreal *,
         const integer *);
-    extern /* Subroutine */ int dscal_(const integer *, const doublereal *, const doublereal *,
+    extern /* Subroutine */ int dscal_(const integer *, const extendedreal *, const extendedreal *,
         const integer *);
     extern logical lsame_(const char *, const char *);
     extern /* Subroutine */ int egemv_(const char *, const integer *, const integer *,
-        const doublereal *, const doublereal *, const integer *, const doublereal *, const integer *,
-        const doublereal *, const doublereal *, const integer *);
+        const extendedreal *, const extendedreal *, const integer *, const extendedreal *, const integer *,
+        const extendedreal *, const extendedreal *, const integer *);
     _THREAD_STATIC_ logical upper;
     extern /* Subroutine */ int xerbla_(const char *, const integer *);
-    extern /* Subroutine */ int escal_(const integer *n, const doublereal *da, doublereal *dx,
+    extern /* Subroutine */ int escal_(const integer *n, const extendedreal *da, extendedreal *dx,
         const integer *incx);
 
 

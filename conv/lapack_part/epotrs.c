@@ -2,7 +2,7 @@
 #include "f2c.h"
 
 /* Subroutine */ int epotrs_(char *uplo, integer *n, integer *nrhs,
-    doublereal *a, integer *lda, doublereal *b, integer *ldb, integer *
+    extendedreal *a, integer *lda, extendedreal *b, integer *ldb, integer *
     info)
 {
 /*  -- LAPACK routine (version 3.1) --
@@ -56,15 +56,15 @@
 
        Parameter adjustments */
     /* Table of constant values */
-    static const doublereal c_b9 = 1.;
+    static const extendedreal c_b9 = 1.;
 
     /* System generated locals */
     integer a_dim1, a_offset, b_dim1, b_offset, i__1;
     /* Local variables */
     extern logical lsame_(const char *, const char *);
     extern /* Subroutine */ int etrsm_(const char *, const char *, const char *, const char *,
-        const integer *, const integer *, const doublereal *, const doublereal *, const integer *,
-        const doublereal *, const integer *);
+        const integer *, const integer *, const extendedreal *, const extendedreal *, const integer *,
+        const extendedreal *, const integer *);
     _THREAD_STATIC_ logical upper;
     extern /* Subroutine */ int xerbla_(const char *, const integer *);
 

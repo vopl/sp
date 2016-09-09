@@ -1,15 +1,15 @@
 #include "blaswrap.h"
 #include "f2c.h"
 
-/* Subroutine */ int egemv_(const char *trans, const integer *m, const integer *n, const doublereal *
-    alpha, const doublereal *a, const integer *lda, const doublereal *x, const integer *incx,
-    const doublereal *beta, doublereal *y, const integer *incy)
+/* Subroutine */ int egemv_(const char *trans, const integer *m, const integer *n, const extendedreal *
+    alpha, const extendedreal *a, const integer *lda, const extendedreal *x, const integer *incx,
+    const extendedreal *beta, extendedreal *y, const integer *incy)
 {
     /* System generated locals */
     integer a_dim1, a_offset, i__1, i__2;
     /* Local variables */
     _THREAD_STATIC_ integer i__, j, ix, iy, jx, jy, kx, ky, info;
-    _THREAD_STATIC_ doublereal temp;
+    _THREAD_STATIC_ extendedreal temp;
     _THREAD_STATIC_ integer lenx, leny;
     extern logical lsame_(const char *, const char *);
     extern /* Subroutine */ int xerbla_(const char *, const integer *);

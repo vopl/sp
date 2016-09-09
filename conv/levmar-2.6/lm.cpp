@@ -106,8 +106,8 @@
 #define LM_REAL long double
 #define LM_PREFIX e
 
-#define LM_REAL_MAX DBL_MAX
-#define LM_REAL_MIN -DBL_MAX
+#define LM_REAL_MAX LDBL_MAX
+#define LM_REAL_MIN -LDBL_MAX
 #define LM_REAL_EPSILON LDBL_EPSILON
 #define LM_CNST(x) (x)
 

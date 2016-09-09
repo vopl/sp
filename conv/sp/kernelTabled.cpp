@@ -235,10 +235,10 @@ namespace sp
 
             static long double levmarOpts[LM_OPTS_SZ] =
             {
-                1e-4,  //LM_INIT_MU,        //mu
-                std::numeric_limits<long double>::min(),  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
-                std::numeric_limits<long double>::min(),  //LM_STOP_THRESH,    //||Dp||_2 and
-                std::numeric_limits<long double>::min(),  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
+                1e-40,  //LM_INIT_MU,        //mu
+                1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
+                1e-40,  //LM_STOP_THRESH,    //||Dp||_2 and
+                1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
             };
 
             long double p[2]={0,0};
@@ -254,7 +254,7 @@ namespace sp
                             (void)m;
                             for(int i(0); i<n; i++)
                             {
-                                hx[i] = (long double)(p[0]*cos(g_pi*2*i/n) + p[1]*sin(g_pi/2*i/n));
+                                hx[i] = (long double)(p[0]*cos(g_pi*2*i/n) + p[1]*sin(g_pi*2*i/n));
                             }
                         },
                         [](long double *p, long double *jx, int m, int n, void *){

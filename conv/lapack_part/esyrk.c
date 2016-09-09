@@ -2,14 +2,14 @@
 #include "f2c.h"
 
 /* Subroutine */ int esyrk_(char *uplo, char *trans, integer *n, integer *k,
-    doublereal *alpha, doublereal *a, integer *lda, doublereal *beta,
-    doublereal *c__, integer *ldc)
+    extendedreal *alpha, extendedreal *a, integer *lda, extendedreal *beta,
+    extendedreal *c__, integer *ldc)
 {
     /* System generated locals */
     integer a_dim1, a_offset, c_dim1, c_offset, i__1, i__2, i__3;
     /* Local variables */
     _THREAD_STATIC_ integer i__, j, l, info;
-    _THREAD_STATIC_ doublereal temp;
+    _THREAD_STATIC_ extendedreal temp;
     extern logical lsame_(char *, char *);
     _THREAD_STATIC_ integer nrowa;
     _THREAD_STATIC_ logical upper;

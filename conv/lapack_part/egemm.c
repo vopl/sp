@@ -2,8 +2,8 @@
 #include "f2c.h"
 
 /* Subroutine */ int egemm_(char *transa, char *transb, integer *m, integer *
-    n, integer *k, doublereal *alpha, doublereal *a, integer *lda,
-    doublereal *b, integer *ldb, doublereal *beta, doublereal *c__,
+    n, integer *k, extendedreal *alpha, extendedreal *a, integer *lda,
+    extendedreal *b, integer *ldb, extendedreal *beta, extendedreal *c__,
     integer *ldc)
 {
     /* System generated locals */
@@ -12,7 +12,7 @@
     /* Local variables */
     _THREAD_STATIC_ integer i__, j, l, info;
     _THREAD_STATIC_ logical nota, notb;
-    _THREAD_STATIC_ doublereal temp;
+    _THREAD_STATIC_ extendedreal temp;
     _THREAD_STATIC_ integer ncola;
     extern logical lsame_(char *, char *);
     _THREAD_STATIC_ integer nrowa, nrowb;
