@@ -477,7 +477,7 @@ namespace sp
 
     namespace
     {
-        complex approxCosPlusPoly(TVReal &ys, std::size_t polyOrder)
+        complex approxCosPlusPoly(real period, TVReal &ys, std::size_t polyOrder)
         {
             real levmarInfo[LM_INFO_SZ];
 
@@ -504,6 +504,7 @@ namespace sp
 
             struct Params
             {
+                real _period;
                 std::vector<std::vector<bigreal>> _bigbasis;
                 std::vector<TVReal> _basis;
 
@@ -516,8 +517,13 @@ namespace sp
 
             std::size_t n = ys.size();
             std::size_t m = args.size();
-            if(params._bigbasis.size() != n || (!params._bigbasis.empty() && params._bigbasis[0].size()!=m))
+            if(
+               period != params._period ||
+               params._bigbasis.size() != n ||
+               (!params._bigbasis.empty() && params._bigbasis[0].size()!=m))
             {
+                params._period = period;
+
                 using verybigreal = boost::multiprecision::cpp_dec_float_100;
 
                 verybigreal pi = boost::math::constants::pi<verybigreal>();
@@ -540,8 +546,8 @@ namespace sp
                     //verybigreal wnd = 1-(0.5 - 0.5*cos(pi2*x));//rev hann
                     //verybigreal wnd = (0.54 - 0.46*cos(pi2*x));//hamming
                     //verybigreal wnd = (cos(pi/2*x-pi/4));//hann half
-                    params._bigbasis[i][0] = verybigreal(cos(pi2*x)*wnd).convert_to<bigreal>();
-                    params._bigbasis[i][1] = verybigreal(sin(pi2*x)*wnd).convert_to<bigreal>();
+                    params._bigbasis[i][0] = verybigreal(cos(pi2*x/params._period)*wnd).convert_to<bigreal>();
+                    params._bigbasis[i][1] = verybigreal(sin(pi2*x/params._period)*wnd).convert_to<bigreal>();
                 }
 
                 /////
@@ -668,7 +674,7 @@ namespace sp
 
 //        return res / (_period * _ppw);
 
-        complex r2 = approxCosPlusPoly(_valuesFiltered, _polyOrder);
+        complex r2 = approxCosPlusPoly(1, _valuesFiltered, _polyOrder);
 
         return r2;
     }
