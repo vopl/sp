@@ -41,7 +41,7 @@ int test()
           <<", efstep: "<<(echoPeriods.grid()[1]/echoPeriods.grid()[0])
           <<std::endl;
 
-    sp::PeriodGrid spectrPeriods = sp::PeriodGrid(echoPeriods.grid()[0], echoPeriods.grid()[780], 780, sp::PeriodGridType::frequencyLog);
+    sp::PeriodGrid spectrPeriods = sp::PeriodGrid(echoPeriods.grid()[0], echoPeriods.grid()[360], 360, sp::PeriodGridType::frequencyLog);
     std::cerr
             <<"sfmin: "<<(1.0/spectrPeriods.grid().back())
             <<", sfmax: "<<(1.0/spectrPeriods.grid().front())
@@ -55,10 +55,10 @@ int test()
 
 
 
-#define POW 10.0
+#define POW 5.0
 
-    std::size_t splp = 100;
-    std::size_t cpo = 12;
+    std::size_t splp = 20;
+    std::size_t cpo = 0;
 
 
     if(1)
@@ -117,8 +117,8 @@ int test()
             //std::cerr<<"mk echo #"<<i<<std::endl;
 
             response[i] = 0;
-            //std::size_t k = 500;
-            for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
+            std::size_t k = 500;
+            //for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
             {
                 //std::cerr<<(echoPeriods.grid()[i]/echoPeriods.grid()[k])<<std::endl;
                 response[i] += kt.eval(echoPeriods.grid()[i], echoPeriods.grid()[k], sp::complex(0,1));
