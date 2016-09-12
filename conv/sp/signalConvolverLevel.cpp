@@ -360,6 +360,19 @@ namespace sp
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void SignalConvolverLevel::filtrate(const std::vector<std::vector<real>> &halfFirs)
     {
+
+//        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
+//        {
+//            Summator<real> sum = 0;
+
+//            for(std::size_t index2(0); index2<std::size_t(_ppw); ++index2)
+//            {
+//                sum += _values[index2*_valuesFiltered.size() + index];
+//            }
+
+//            _valuesFiltered[index] = sum;
+//        }
+
         for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
         {
             assert(index < halfFirs.size());
@@ -659,22 +672,26 @@ namespace sp
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     complex SignalConvolverLevel::convolve()
     {
-//        Summator<complex> res;
+        Summator<complex> res;
 
-//        for(std::size_t index(0); index<_valuesFiltered.size()-1; ++index)
-//        {
-//            real x0 = index * _sampleStep;
-//            real x1 = x0 + _sampleStep;
+        real x0 = 0;
+        real y0 = _valuesFiltered[0];
 
-//            real y0 = _valuesFiltered[index];
-//            real y1 = _valuesFiltered[index+1];
+        for(std::size_t index(1); index<_valuesFiltered.size(); ++index)
+        {
+            real x1 = index * _sampleStep;
+            real y1 = _valuesFiltered[index];
 
-//            res += evalSegment(_period, x0, y0, x1, y1);
-//        }
+            res += evalSegment(_period, x0, y0, x1, y1);
 
-//        return res / (_period * _ppw);
+            x0 = x1;
+            y0 = y1;
+        }
 
-        complex r2 = approxCosPlusPoly(1, _valuesFiltered, _polyOrder);
+        return res / (_period * _ppw);
+
+        complex r2 =
+                approxCosPlusPoly(1, _valuesFiltered, _polyOrder);
 
         return r2;
     }
