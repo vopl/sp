@@ -327,20 +327,20 @@ int main(int argc, char *argv[])
 
     for(; frameIndex<framesAmount; ++frameIndex)
     {
-        //std::fill(spectr.begin(), spectr.end(), sp::complex(0));
+        std::fill(spectr.begin(), spectr.end(), sp::complex(0));
 
         //std::cerr<<"init: "<<spectr[spectr.size()/2].re()<<", "<<spectr[spectr.size()/2].im()<<std::endl;
 
-        //rotate spectr to new position
-        {
-            sp::real dx = 1/framesPerSecond;
-            for(std::size_t i(0); i<spectr.size(); ++i)
-            {
-                sp::real t = spectrPeriods[i];
-                sp::real dp = dx*sp::g_2pi/t;
-                spectr[i] = spectr[i].rotate(dp);
-            }
-        }
+//        //rotate spectr to new position
+//        {
+//            sp::real dx = 1/framesPerSecond;
+//            for(std::size_t i(0); i<spectr.size(); ++i)
+//            {
+//                sp::real t = spectrPeriods[i];
+//                sp::real dp = dx*sp::g_2pi/t;
+//                spectr[i] = spectr[i].rotate(dp);
+//            }
+//        }
         //std::cerr<<"rot: "<<spectr[spectr.size()/2].re()<<", "<<spectr[spectr.size()/2].im()<<std::endl;
 
 

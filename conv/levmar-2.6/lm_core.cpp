@@ -207,6 +207,8 @@ int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
   for(k=0; k<itmax && !stop; ++k){
     /* Note that p and e have been updated at a previous iteration */
 
+    //fprintf(stderr, "-- errors %.9g %0.9g\n", double(jacTe_inf), double(p_eL2));
+
     if(p_eL2<=eps3){ /* error is small */
       stop=6;
       break;
