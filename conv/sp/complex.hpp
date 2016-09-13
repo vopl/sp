@@ -16,7 +16,7 @@ namespace sp
     {
     public:
 //        complex();
-        complex(real v1=0, real v2=0, EComplexConstructType ecct = CREIM);
+        complex(real v1=real(), real v2=real(), EComplexConstructType ecct = CREIM);
         complex(const complex &z);
 
         void setAP(real a, real p);
@@ -74,7 +74,7 @@ namespace sp
             break;
         default:
             assert(0);
-            _re = _im = 0;
+            _re = _im = real();
         }
     }
 

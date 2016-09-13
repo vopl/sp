@@ -103,27 +103,23 @@ namespace sp
         _samplesPerPeriod = samplesPerPeriod;
         _polyOrder = polyOrder;
 
-        _halfFirs.resize(_samplesPerPeriod);
+        const std::size_t firMult = 20;
 
+        std::size_t firLen = _samplesPerPeriod*firMult-1;
+
+        real lowBndT = (real(firLen-1))/(_ppw*(1+0.05/_ppw))/firMult*2;
+        halfLowPassFir(lowBndT, firLen, _halfFir);
+
+        real highBndT = (real(firLen-1))/(_ppw*(1-0.05/_ppw))/firMult*2;
         TVReal hhpf;
+        halfHighPassFir(highBndT, firLen, hhpf);
 
-        for(std::size_t firIdx(0); firIdx<_halfFirs.size(); ++firIdx)
+
+        for(std::size_t i(0); i<_halfFir.size(); ++i)
         {
-            std::size_t firLen = (firIdx + std::size_t(_samplesPerPeriod*_ppw*(1-1/_ppw)+0.5))*2 + 1;
-
-            real lowBndT = (real(firLen-1))/(_ppw)/2;
-            halfLowPassFir(lowBndT, firLen, _halfFirs[firIdx]);
-
-            real highBndT = (real(firLen-1))/(_ppw*(1-1/_ppw))/2;
-            halfHighPassFir(highBndT, firLen, hhpf);
-
-
-            for(std::size_t i(0); i<_halfFirs[firIdx].size(); ++i)
-            {
-                _halfFirs[firIdx][i] = -(_halfFirs[firIdx][i] + hhpf[i]);
-            }
-            _halfFirs[firIdx].back() += 1.0;
+            _halfFir[i] = -(_halfFir[i] + hhpf[i]);
         }
+        _halfFir.back() += 1.0;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -215,7 +211,7 @@ namespace sp
 
         SignalConvolverLevel level(_ppw, period, _signalSampleStep, _samplesPerPeriod, _polyOrder);
         level.update(signal, signalSize, _sat);
-        level.filtrate(_halfFirs);
+        level.filtrate(_halfFir);
 
         return level.convolve();
     }
@@ -224,8 +220,8 @@ namespace sp
     complex /*echo*/ SignalConvolver::convolveIdentity(real period, real phase)
     {
         SignalConvolverLevel level(_ppw, period, _signalSampleStep, _samplesPerPeriod, _polyOrder);
-        level.updateIdentity(phase);
-        level.filtrate(_halfFirs);
+        level.updateIdentity(period, phase);
+        level.filtrate(_halfFir);
 
         return level.convolve();
     }
@@ -254,7 +250,7 @@ namespace sp
         for(std::size_t i(0); i<_levels.size(); ++i)
         {
             //std::cerr<<"filtrate level "<<i<<std::endl;
-            _levels[i]->filtrate(_halfFirs);
+            _levels[i]->filtrate(_halfFir);
         }
 
     }

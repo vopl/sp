@@ -375,7 +375,7 @@ int main(int argc, char *argv[])
 
         auto moment1 = std::chrono::high_resolution_clock::now();
 
-        sp::real dur = std::chrono::duration<sp::real>(moment1 - moment).count();
+        sp::real dur = std::chrono::duration<double>(moment1 - moment).count();
         cout<<"ok, iters: "<<iters<<", error: "<<error1<<"/"<<error0<<"="<<(error1/error0)<<", dur: "<<dur<< std::endl;
         moment = moment1;
 

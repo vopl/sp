@@ -1,7 +1,6 @@
 #pragma once
 
-#include "sp/types.hpp"
-#include "sp/complex.hpp"
+#include "sp/math.hpp"
 #include "sp/signalConvolver.hpp"
 
 namespace sp
@@ -13,9 +12,14 @@ namespace sp
         ~SignalConvolverLevel();
 
         void update(const real *signal, std::size_t signalSize, SignalApproxType sat);
-        void updateIdentity(real phase);
-        void filtrate(const std::vector<std::vector<real> > &firs);
+        void updateIdentity(real period, real phase);
+        void filtrate(const TVReal &halfFir);
         complex convolve();
+
+    private:
+        void filtrate_fir(const TVReal &halfFir);
+        std::vector<Summator<real>> filtrate_int(const std::vector<Summator<real>> &src);
+        std::vector<Summator<real>> filtrate_dif(const std::vector<Summator<real>> &src);
 
     private:
         real updateOneLinear(const real *signal, std::size_t signalSize, real startTime, real stopTime, std::size_t signalStartIdx, std::size_t signalStopIdx);
@@ -29,6 +33,7 @@ namespace sp
         std::size_t _polyOrder;
         TVReal  _values;
         TVReal  _valuesFiltered;
+        TVReal  _valuesFilteredTmp;
 
     };
 

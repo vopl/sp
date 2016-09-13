@@ -2,6 +2,7 @@
 
 #include "types.hpp"
 #include "complex.hpp"
+#include <boost/math/constants/constants.hpp>
 
 #include <cmath>
 #include <limits>
@@ -9,8 +10,8 @@
 namespace sp
 {
 
-    static const real g_pi = M_PIl;
-    static const real g_2pi = 2*g_pi;
+    static const real g_pi = boost::math::constants::pi<real>();
+    static const real g_2pi = boost::math::constants::two_pi<real>();
 
     static const real g_2piPow2 = g_2pi*g_2pi;
 
@@ -18,7 +19,7 @@ namespace sp
     class Summator
     {
     public:
-        Summator(Value init=0)
+        Summator(Value init=Value())
             : _sum(init)
         {
         }
@@ -43,8 +44,13 @@ namespace sp
             return _sum;
         }
 
+        Value v() const
+        {
+            return _sum;
+        }
+
     private:
-        Value _sum = 0;
-        Value _error = 0;
+        Value _sum = Value();
+        Value _error = Value();
     };
 }

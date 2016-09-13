@@ -43,6 +43,18 @@ namespace sp
     inline long double atan2(long double x, long double y) {return ::atan2l(x, y);}
 
     /////////-/////////-/////////-/////////-/////////-/////////-/////////-/////////-
+    inline boost::multiprecision::float128 fabs(boost::multiprecision::float128 x) {return boost::multiprecision::fabs(x);}
+    inline boost::multiprecision::float128 sqrt(boost::multiprecision::float128 x) {return boost::multiprecision::sqrt(x);}
+
+    inline boost::multiprecision::float128 cos(boost::multiprecision::float128 x) {return boost::multiprecision::cos(x);}
+    inline boost::multiprecision::float128 sin(boost::multiprecision::float128 x) {return boost::multiprecision::sin(x);}
+
+    inline boost::multiprecision::float128 exp(boost::multiprecision::float128 x) {return boost::multiprecision::exp(x);}
+    inline boost::multiprecision::float128 log(boost::multiprecision::float128 x) {return boost::multiprecision::log(x);}
+
+    inline boost::multiprecision::float128 atan2(boost::multiprecision::float128 x, long double y) {return boost::multiprecision::atan2(x, y);}
+
+    /////////-/////////-/////////-/////////-/////////-/////////-/////////-/////////-
     template <class T>
     T sqr(T x)
     {

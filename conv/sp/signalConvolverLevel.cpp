@@ -19,8 +19,9 @@ namespace sp
         , _signalSampleStep(signalSampleStep)
         , _sampleStep(_period/samplesPerPeriod)
         , _polyOrder(polyOrder)
-        , _values(std::size_t(samplesPerPeriod*ppw*2 + 0.5))
-        , _valuesFiltered(samplesPerPeriod)
+        , _values(std::size_t(samplesPerPeriod*ppw + 0.5))
+        , _valuesFiltered(std::size_t(samplesPerPeriod*ppw + 0.5))
+        , _valuesFilteredTmp(std::size_t(samplesPerPeriod*ppw + 0.5))
     {
     }
 
@@ -95,7 +96,7 @@ namespace sp
         //6 point 5th order 32x
 
         //[xStart, xStop]
-        real integrate(real xStart, real xStop, const real *y)
+        void integrate(Summator<real> &res, real xStart, real xStop, const real *y)
         {
             real even1 = y[3]+y[2];
             real even2 = y[4]+y[1];
@@ -130,26 +131,23 @@ namespace sp
             real xStop5 = xStop4*xStop;
             real xStop6 = xStop5*xStop;
 
-            return
-                    (
-                        +(80*c5)*xStop6
-                        +(-240*c5+96*c4)*xStop5
-                        +(300*c5-240*c4+120*c3)*xStop4
-                        +(-200*c5+240*c4-240*c3+160*c2)*xStop3
-                        +(75*c5-120*c4+180*c3-240*c2+240*c1)*xStop2
-                        +(-15*c5+30*c4-60*c3+120*c2-240*c1+480*c0)*xStop
+            res+=(80*c5)*xStop6/480;
+            res+=(-240*c5+96*c4)*xStop5/480;
+            res+=(300*c5-240*c4+120*c3)*xStop4/480;
+            res+=(-200*c5+240*c4-240*c3+160*c2)*xStop3/480;
+            res+=(75*c5-120*c4+180*c3-240*c2+240*c1)*xStop2/480;
+            res+=(-15*c5+30*c4-60*c3+120*c2-240*c1+480*c0)*xStop/480;
 
-                        +(-80*c5)*xStart6
-                        +(240*c5-96*c4)*xStart5
-                        +(-300*c5+240*c4-120*c3)*xStart4
-                        +(200*c5-240*c4+240*c3-160*c2)*xStart3
-                        +(-75*c5+120*c4-180*c3+240*c2-240*c1)*xStart2
-                        +(15*c5-30*c4+60*c3-120*c2+240*c1-480*c0)*xStart
-                    )/480;
+            res+=(-80*c5)*xStart6/480;
+            res+=(240*c5-96*c4)*xStart5/480;
+            res+=(-300*c5+240*c4-120*c3)*xStart4/480;
+            res+=(200*c5-240*c4+240*c3-160*c2)*xStart3/480;
+            res+=(-75*c5+120*c4-180*c3+240*c2-240*c1)*xStart2/480;
+            res+=(15*c5-30*c4+60*c3-120*c2+240*c1-480*c0)*xStart/480;
         }
 
         //[0, 1]
-        real integrate(const real *y)
+        void integrate(Summator<real> &res, const real *y)
         {
             real even1 = y[3]+y[2];
             real even2 = y[4]+y[1];
@@ -171,13 +169,9 @@ namespace sp
 //                    c4/80+c2/12+c0;
 
 
-            Summator<real> res(0);
-
             res += even1 * (real(0.42685983409379380L) + real(-0.217009177221292431L/12) + real( 0.04166946673533273L/80));
             res += even2 * (real(0.07238123511170030L) + real( 0.20051376594086157L /12) + real(-0.06250420114356986L/80));
             res += even3 * (real(0.00075893079450573L) + real( 0.01649541128040211L /12) + real( 0.02083473440841799L/80));
-
-            return res;
         }
     }
 
@@ -238,7 +232,7 @@ namespace sp
 
         if(amount>0)
         {
-            return sum/amount;
+            return sum.v()/amount;
         }
 
         return 0;
@@ -255,7 +249,7 @@ namespace sp
             real first01x = (startTime - (signalStartIdx)*_signalSampleStep) / _signalSampleStep;
             real last01x = (stopTime - (signalStopIdx)*_signalSampleStep) / _signalSampleStep;
 
-            sum += integrate(first01x, last01x, signal+signalStartIdx-2);
+            integrate(sum, first01x, last01x, signal+signalStartIdx-2);
             amount = last01x - first01x;
         }
         else
@@ -266,23 +260,23 @@ namespace sp
             {
                 for(std::size_t signalIndex(signalStartIdx+1); signalIndex<signalStopIdx; ++signalIndex)
                 {
-                    sum += integrate(signal+signalIndex-2);
+                    integrate(sum, signal+signalIndex-2);
                 }
             }
             amount = signalStopIdx - signalStartIdx - 1;
 
             real first01x = (startTime - (signalStartIdx)*_signalSampleStep) / _signalSampleStep;
-            sum += integrate(first01x, 1, signal+signalStartIdx-2);
+            integrate(sum, first01x, 1, signal+signalStartIdx-2);
             amount += 1 - first01x;
 
             real last01x = (stopTime - (signalStopIdx)*_signalSampleStep) / _signalSampleStep;
-            sum += integrate(0, last01x, signal+signalStopIdx-2);
+            integrate(sum, 0, last01x, signal+signalStopIdx-2);
             amount += last01x;
         }
 
         if(amount>0)
         {
-            return sum/amount;
+            return sum.v()/amount;
         }
 
         return 0;
@@ -345,7 +339,7 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolverLevel::updateIdentity(real phase)
+    void SignalConvolverLevel::updateIdentity(real period, real phase)
     {
         real stepMult = real(1)/g_2pi/_sampleStep;
         for(std::size_t valueIndex(0); valueIndex<_values.size(); ++valueIndex)
@@ -358,39 +352,88 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolverLevel::filtrate(const std::vector<std::vector<real>> &halfFirs)
+    void SignalConvolverLevel::filtrate(const TVReal &halfFir)
     {
-
-//        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
-//        {
-//            Summator<real> sum = 0;
-
-//            for(std::size_t index2(0); index2<std::size_t(_ppw); ++index2)
-//            {
-//                sum += _values[index2*_valuesFiltered.size() + index];
-//            }
-
-//            _valuesFiltered[index] = sum;
-//        }
 
         for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
         {
-            assert(index < halfFirs.size());
-            const std::vector<real> &halfFir = halfFirs[index];
-            const std::size_t halfFirSize = halfFir.size();
-            assert(halfFirSize>=2);
-            const std::size_t firSize = (halfFirSize-1)*2+1;
+//            Summator<real> sum = 0;
 
-            Summator<real> sum = 0;
-            sum += (_values[0] + _values[firSize-1]) * halfFir[0] / 2;
-            for(std::size_t i(1); i<halfFirSize-1; ++i)
-            {
-                sum += (_values[i] + _values[firSize-1-i]) * halfFir[i];
-            }
-            sum += _values[halfFirSize-1] * halfFir[halfFirSize-1];
+//            for(std::size_t index2(0); index2<std::size_t(_ppw+0.5); ++index2)
+//            {
+//                sum += _values[index2*_valuesFiltered.size()/std::size_t(_ppw+0.5) + index];
+//            }
 
-            _valuesFiltered[index] = sum;
+            _valuesFiltered[index] = _values[index];
         }
+
+
+        auto cidx = [&](std::size_t idx)
+        {
+            return (idx+_valuesFiltered.size()*100) % _valuesFiltered.size();
+        };
+
+        std::vector<Summator<real>> result(_valuesFiltered.size());
+        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
+        {
+            result[index] += _valuesFiltered[index];
+        }
+
+        for(std::size_t i(0); i<4; ++i)
+        {
+            real phaseStep = _valuesFiltered.size()/_ppw/4;
+
+            real phaseOffset = 0;
+            for(std::size_t k(0); k<1; k++)
+            {
+                auto int_ = filtrate_int(result);
+                phaseOffset += phaseStep;
+                for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
+                {
+                    result[index] += int_[cidx(std::size_t(index + phaseOffset+0.25))];
+                }
+            }
+
+
+            //_valuesFiltered = original;
+
+
+            //phaseOffset = 0;
+            for(std::size_t k(0); k<1; k++)
+            {
+                auto dif = filtrate_dif(result);
+                phaseOffset -= phaseStep;
+                for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
+                {
+                    result[index] += dif[cidx(std::size_t(index + phaseOffset-0.25))];
+                }
+            }
+        }
+
+        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
+        {
+            _valuesFiltered[index] = result[index];
+        }
+
+
+//        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
+//        {
+//            assert(index < halfFirs.size());
+//            const std::vector<real> &halfFir = halfFirs[index];
+//            const std::size_t halfFirSize = halfFir.size();
+//            assert(halfFirSize>=2);
+//            const std::size_t firSize = (halfFirSize-1)*2+1;
+
+//            Summator<real> sum = 0;
+//            sum += (_values[0] + _values[firSize-1]) * halfFir[0] / 2;
+//            for(std::size_t i(1); i<halfFirSize-1; ++i)
+//            {
+//                sum += (_values[i] + _values[firSize-1-i]) * halfFir[i];
+//            }
+//            sum += _values[halfFirSize-1] * halfFir[halfFirSize-1];
+
+//            _valuesFiltered[index] = sum;
+//        }
 
 //        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
 //        {
@@ -399,6 +442,74 @@ namespace sp
 
 //        exit(0);
     }
+
+    void SignalConvolverLevel::filtrate_fir(const TVReal &halfFir)
+    {
+        auto cidx = [&](std::size_t idx)
+        {
+            return (idx+_valuesFiltered.size()) % _valuesFiltered.size();
+        };
+
+        for(std::size_t c(0); c<4; c++)
+        {
+            for(std::size_t index(0); index<_valuesFilteredTmp.size(); ++index)
+            {
+                const std::size_t halfFirSize = halfFir.size();
+                assert(halfFirSize>=2);
+                const std::size_t firSize = (halfFirSize-1)*2+1;
+
+
+                Summator<real> sum;
+                sum += (_valuesFiltered[cidx(0+index)] + _valuesFiltered[cidx(firSize-1+index)]) * halfFir[0] / 2;
+                for(std::size_t i(1); i<halfFirSize-1; ++i)
+                {
+                    sum += (_valuesFiltered[cidx(i+index)] + _valuesFiltered[cidx(firSize-1-i+index)]) * halfFir[i];
+                }
+                sum += _valuesFiltered[cidx(halfFirSize-1+index)] * halfFir[halfFirSize-1];
+
+                _valuesFilteredTmp[cidx(firSize-1+index)] = sum.v();
+            }
+
+            _valuesFilteredTmp.swap(_valuesFiltered);
+        }
+    }
+
+    std::vector<Summator<real>> SignalConvolverLevel::filtrate_int(const std::vector<Summator<real>> &src)
+    {
+        std::vector<Summator<real>> res(src);
+
+        auto cidx = [&](std::size_t idx)
+        {
+            return (idx+src.size()) % src.size();
+        };
+
+        Summator<real> sum;
+        for(std::size_t index(0); index<src.size(); ++index)
+        {
+            sum += src[cidx(index)];
+            res[index] = sum.v()*(g_2pi*_ppw)/src.size();
+        }
+
+        return res;
+    }
+
+    std::vector<Summator<real>> SignalConvolverLevel::filtrate_dif(const std::vector<Summator<real>> &src)
+    {
+        std::vector<Summator<real>> res(src.size());
+
+        auto cidx = [&](std::size_t idx)
+        {
+            return (idx+src.size()) % src.size();
+        };
+
+        for(std::size_t index(0); index<src.size(); ++index)
+        {
+            res[index] = (src[cidx(index+1)]-src[cidx(index)])*src.size()/(g_2pi*_ppw);
+        }
+
+        return res;
+    }
+
 
     namespace
     {
@@ -488,6 +599,7 @@ namespace sp
         }
     }
 
+#if 0
     namespace
     {
         complex approxCosPlusPoly(real period, TVReal &ys, std::size_t polyOrder)
@@ -668,7 +780,7 @@ namespace sp
             return complex(args[0], args[1]);
         }
     }
-
+#endif
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     complex SignalConvolverLevel::convolve()
     {
@@ -690,10 +802,10 @@ namespace sp
 
         return res / (_period * _ppw);
 
-        complex r2 =
-                approxCosPlusPoly(1, _valuesFiltered, _polyOrder);
+//        complex r2 =
+//                approxCosPlusPoly(1, _valuesFiltered, _polyOrder);
 
-        return r2;
+//        return r2;
     }
 
 }
