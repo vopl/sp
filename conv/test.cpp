@@ -31,10 +31,10 @@ int test()
 
 
 
-    sp::real sampleStep = 1.0L/88000;
+    sp::real sampleStep = 1.0L/360000/2;
 
     sp::real tMin = 1.0/20000;
-    sp::real tMax = 1.0/1;
+    sp::real tMax = 1.0/0.4;
     std::size_t tCount = 1000;
 
     sp::PeriodGrid echoPeriods(tMin, tMax, tCount, sp::PeriodGridType::frequencyLog);
@@ -66,7 +66,7 @@ int test()
 
 #define POW 2.0
 
-    std::size_t splp = 10;
+    std::size_t splp = 100;
     std::size_t cpo = 11;
 
 
@@ -75,7 +75,7 @@ int test()
         sp::KernelTabled kt(POW, splp, cpo);
         //sp::Kernel kt(POW);
 
-//        kt.eval(1.2345234, 1, sp::complex(.23452,1.3456));
+//        kt.eval(1, 1, sp::complex(.23452,1.3456));
 //        exit(0);
 
 
@@ -84,7 +84,7 @@ int test()
         std::cerr<<"make signal"<<std::endl;
         sp::TVReal signal;
 
-        signal.resize(std::size_t(tMax*POW*2.2/sampleStep+1));//чтобы уместился максимальный период
+        signal.resize(std::size_t(tMax*POW*1.2/sampleStep+1));//чтобы уместился максимальный период
         for(size_t index(0); index<signal.size(); ++index)
         {
             sp::real x = index * sampleStep;
@@ -94,7 +94,7 @@ int test()
 
             sp::real a = x/xTarget;
 
-            for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
+            for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=5)
             {
                 sp::real t = echoPeriods.grid()[k];
                 signal[index] += sin((x-xTarget)*sp::g_2pi/t);
@@ -148,7 +148,7 @@ int test()
         {
             sp::TVComplex spectr(spectrPeriods.grid().size());
 
-            std::size_t iters = 6;
+            std::size_t iters = 10;
             sp::real error0 = 0;
             sp::real error1 = 0;
             kt.deconvolve(

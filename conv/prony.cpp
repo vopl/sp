@@ -2,6 +2,8 @@
 #include "levmar.h"
 #include <boost/math/special_functions.hpp>
 
+#if 0
+
 using namespace sp;
 
 namespace
@@ -87,7 +89,7 @@ namespace
 //            real kaizerDenominator = kaizerDenom(kaizerBeta);
 
         A[mn] = q;
-        Summator<real> sum = A[mn]/2;
+//        Summator<real> sum = A[mn]/2;
         for(std::size_t k(1); k<n/2; k++)
         {
 
@@ -96,13 +98,13 @@ namespace
             real v = q * boost::math::sinc_pi(x);// * kaizer(kaizerBeta, int(mn+k), int(n-2), kaizerDenominator);
 
             A[mn-k] = v;
-            sum += v;
+//            sum += v;
         }
 
-        for(auto &v : A)
-        {
-            v /= sum*2;
-        }
+//        for(auto &v : A)
+//        {
+//            v /= sum*2;
+//        }
     }
 }
 
@@ -328,3 +330,4 @@ void prony()
 
     return;
 }
+#endif

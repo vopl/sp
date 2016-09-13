@@ -39,7 +39,7 @@ namespace sp
 
     namespace
     {
-        using real4deconv = double;
+        using real4deconv = long double;
 
         //////////////////////////////////////////////////////////////////////////
         struct LevmarParams
@@ -68,8 +68,8 @@ namespace sp
             for(int i(0); i<n/2; i++)
             {
                 real et = params->_et[i];
-                Summator<real> re = 0;
-                Summator<real> im = 0;
+                Summator<real> re;
+                Summator<real> im;
 
                 for(int j(0); j<m/2; j++)
                 {
@@ -93,8 +93,8 @@ namespace sp
                 re += -params->_ev[i].re();
                 im += -params->_ev[i].im();
 
-                hx[i*2+0] = re;
-                hx[i*2+1] = im;
+                hx[i*2+0] = real4deconv(re.v());
+                hx[i*2+1] = real4deconv(im.v());
             }
         }
 
@@ -115,11 +115,11 @@ namespace sp
                     real rr,  ri,  ir,  ii;
                     params->_kernelTabled->evalKernel(et/st, rr, ri, ir, ii);
 
-                    jx[(i*2+0)*m+j*2+0] = rr;
-                    jx[(i*2+0)*m+j*2+1] = -ri;
+                    jx[(i*2+0)*m+j*2+0] = real4deconv(rr);
+                    jx[(i*2+0)*m+j*2+1] = real4deconv(-ri);
 
-                    jx[(i*2+1)*m+j*2+0] = ir;
-                    jx[(i*2+1)*m+j*2+1] = -ii;
+                    jx[(i*2+1)*m+j*2+0] = real4deconv(ir);
+                    jx[(i*2+1)*m+j*2+1] = real4deconv(-ii);
                 }
             }
         }
@@ -153,7 +153,7 @@ namespace sp
 
         real4deconv levmarOpts[LM_OPTS_SZ] =
         {
-            initialMu,  //LM_INIT_MU,        //mu
+            real4deconv(initialMu),  //LM_INIT_MU,        //mu
             1e-140,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
             1e-300,  //LM_STOP_THRESH,    //||Dp||_2 and
             1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
@@ -162,8 +162,8 @@ namespace sp
         std::vector<real4deconv> d_sv(ssize*2);
         for(std::size_t i(0); i<ssize; ++i)
         {
-            d_sv[i*2+0] = (sv[i].re());
-            d_sv[i*2+1] = (sv[i].im());
+            d_sv[i*2+0] = real4deconv(sv[i].re());
+            d_sv[i*2+1] = real4deconv(sv[i].im());
         }
 
         int res = levmar_der(
@@ -218,14 +218,14 @@ namespace sp
     {
         complex approxCos(const TVReal &ys)
         {
-            real levmarInfo[LM_INFO_SZ];
-            TVReal work;
+            real4deconv levmarInfo[LM_INFO_SZ];
+            std::vector<real4deconv> work;
             if(work.size() < LM_DIF_WORKSZ(2, ys.size()*2))
             {
                 work.resize(LM_DIF_WORKSZ(2, ys.size()*2));
             }
 
-            static real levmarOpts[LM_OPTS_SZ] =
+            static real4deconv levmarOpts[LM_OPTS_SZ] =
             {
                 1e-40,  //LM_INIT_MU,        //mu
                 1e-40,  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
@@ -233,26 +233,26 @@ namespace sp
                 1e-40,  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
             };
 
-            real p[2]={0,0};
+            real4deconv p[2]={0,0};
 
-            std::vector<real> dys(ys.begin(), ys.end());
+            std::vector<real4deconv> dys(ys.begin(), ys.end());
 
             int levmarResult = levmar_der(
-                        [](real *p, real *hx, int m, int n, void *)->void{
+                        [](real4deconv *p, real4deconv *hx, int m, int n, void *)->void{
                             (void)m;
                             for(int i(0); i<n; i++)
                             {
-                                hx[i] = p[0]*cos(g_pi*2*i/n) + p[1]*sin(g_pi*2*i/n);
+                                hx[i] = real4deconv(p[0]*cos(g_pi*2*i/n) + p[1]*sin(g_pi*2*i/n));
                             }
                         },
-                        [](real *p, real *jx, int m, int n, void *){
+                        [](real4deconv *p, real4deconv *jx, int m, int n, void *){
                             (void)p;
                             (void)m;
 
                             for(int i(0); i<n; i++)
                             {
-                                jx[i*2+0] = cos(g_pi*2*i/n);
-                                jx[i*2+1] = sin(g_pi*2*i/n);
+                                jx[i*2+0] = real4deconv(cos(g_pi*2*i/n));
+                                jx[i*2+1] = real4deconv(sin(g_pi*2*i/n));
                             }
                         },
                         &p[0],
