@@ -17,11 +17,11 @@ namespace sp
         : _ppw(ppw)
         , _period(period)
         , _signalSampleStep(signalSampleStep)
+        , _samplesPerPeriod(samplesPerPeriod)
         , _sampleStep(_period/samplesPerPeriod)
         , _polyOrder(polyOrder)
-        , _values(std::size_t(samplesPerPeriod*ppw + 0.5))
-        , _valuesFiltered(std::size_t(samplesPerPeriod*ppw + 0.5))
-        , _valuesFilteredTmp(std::size_t(samplesPerPeriod*ppw + 0.5))
+        , _values(std::size_t(_samplesPerPeriod*ppw + 0.5))
+        , _valuesFiltered(_samplesPerPeriod/4)
     {
     }
 
@@ -354,48 +354,34 @@ namespace sp
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void SignalConvolverLevel::filtrate(const TVReal &halfFir)
     {
-
-        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
-        {
-//            Summator<real> sum = 0;
-
-//            for(std::size_t index2(0); index2<std::size_t(_ppw+0.5); ++index2)
-//            {
-//                sum += _values[index2*_valuesFiltered.size()/std::size_t(_ppw+0.5) + index];
-//            }
-
-            _valuesFiltered[index] = _values[index];
-        }
-
-
         auto cidx = [&](std::size_t idx)
         {
-            return (idx+_valuesFiltered.size()*100) % _valuesFiltered.size();
+            return (idx+_samplesPerPeriod*100) % _samplesPerPeriod;
         };
 
-        std::vector<Summator<real>> result(_valuesFiltered.size());
-        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
+        std::vector<Summator<real>> result(_values.size());
+        for(std::size_t index(0); index<_values.size(); ++index)
         {
-            result[index] += _valuesFiltered[index];
+            result[index] += _values[index];
         }
 
-        for(std::size_t i(0); i<4; ++i)
+        for(std::size_t i(0); i<3; ++i)
         {
-            real phaseStep = _valuesFiltered.size()/_ppw/4;
+            real phaseStep = real(_samplesPerPeriod)/4;
 
             real phaseOffset = 0;
             for(std::size_t k(0); k<1; k++)
             {
                 auto int_ = filtrate_int(result);
                 phaseOffset += phaseStep;
-                for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
+                for(std::size_t index(0); index<result.size(); ++index)
                 {
                     result[index] += int_[cidx(std::size_t(index + phaseOffset+0.25))];
                 }
             }
 
 
-            //_valuesFiltered = original;
+            //_values = original;
 
 
             //phaseOffset = 0;
@@ -403,18 +389,30 @@ namespace sp
             {
                 auto dif = filtrate_dif(result);
                 phaseOffset -= phaseStep;
-                for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
+                for(std::size_t index(0); index<result.size(); ++index)
                 {
                     result[index] += dif[cidx(std::size_t(index + phaseOffset-0.25))];
                 }
             }
         }
 
-        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
+        for(std::size_t index(0); index<_samplesPerPeriod; ++index)
         {
-            _valuesFiltered[index] = result[index];
+            for(std::size_t index2(1); index2<std::size_t(_ppw+0.5); ++index2)
+            {
+                result[index] += result[index2*_samplesPerPeriod + index];
+            }
         }
 
+        std::size_t samplesPerPeriodDiv4 = _samplesPerPeriod/4;
+        for(std::size_t index(0); index<samplesPerPeriodDiv4; ++index)
+        {
+            result[index] +=  result[samplesPerPeriodDiv4*2-1 -index];
+            result[index] += -result[samplesPerPeriodDiv4*2   +index];
+            result[index] += -result[samplesPerPeriodDiv4*4-1 -index];
+
+            _valuesFiltered[index] = result[index];
+        }
 
 //        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
 //        {
@@ -443,36 +441,36 @@ namespace sp
 //        exit(0);
     }
 
-    void SignalConvolverLevel::filtrate_fir(const TVReal &halfFir)
-    {
-        auto cidx = [&](std::size_t idx)
-        {
-            return (idx+_valuesFiltered.size()) % _valuesFiltered.size();
-        };
+//    void SignalConvolverLevel::filtrate_fir(const TVReal &halfFir)
+//    {
+//        auto cidx = [&](std::size_t idx)
+//        {
+//            return (idx+_valuesFiltered.size()) % _valuesFiltered.size();
+//        };
 
-        for(std::size_t c(0); c<4; c++)
-        {
-            for(std::size_t index(0); index<_valuesFilteredTmp.size(); ++index)
-            {
-                const std::size_t halfFirSize = halfFir.size();
-                assert(halfFirSize>=2);
-                const std::size_t firSize = (halfFirSize-1)*2+1;
+//        for(std::size_t c(0); c<4; c++)
+//        {
+//            for(std::size_t index(0); index<_valuesFilteredTmp.size(); ++index)
+//            {
+//                const std::size_t halfFirSize = halfFir.size();
+//                assert(halfFirSize>=2);
+//                const std::size_t firSize = (halfFirSize-1)*2+1;
 
 
-                Summator<real> sum;
-                sum += (_valuesFiltered[cidx(0+index)] + _valuesFiltered[cidx(firSize-1+index)]) * halfFir[0] / 2;
-                for(std::size_t i(1); i<halfFirSize-1; ++i)
-                {
-                    sum += (_valuesFiltered[cidx(i+index)] + _valuesFiltered[cidx(firSize-1-i+index)]) * halfFir[i];
-                }
-                sum += _valuesFiltered[cidx(halfFirSize-1+index)] * halfFir[halfFirSize-1];
+//                Summator<real> sum;
+//                sum += (_valuesFiltered[cidx(0+index)] + _valuesFiltered[cidx(firSize-1+index)]) * halfFir[0] / 2;
+//                for(std::size_t i(1); i<halfFirSize-1; ++i)
+//                {
+//                    sum += (_valuesFiltered[cidx(i+index)] + _valuesFiltered[cidx(firSize-1-i+index)]) * halfFir[i];
+//                }
+//                sum += _valuesFiltered[cidx(halfFirSize-1+index)] * halfFir[halfFirSize-1];
 
-                _valuesFilteredTmp[cidx(firSize-1+index)] = sum.v();
-            }
+//                _valuesFilteredTmp[cidx(firSize-1+index)] = sum.v();
+//            }
 
-            _valuesFilteredTmp.swap(_valuesFiltered);
-        }
-    }
+//            _valuesFilteredTmp.swap(_valuesFiltered);
+//        }
+//    }
 
     std::vector<Summator<real>> SignalConvolverLevel::filtrate_int(const std::vector<Summator<real>> &src)
     {
@@ -513,25 +511,17 @@ namespace sp
 
     namespace
     {
-        complex evalSegment(real period, real x0, real y0, real x1, real y1)
+        complex evalSegment(real x0, real y0, real x1, real y1)
         {
             const real pi2 = g_2pi;
             const real pi2_p_2 = pi2*pi2;
 
-            const real t = period;
-            const real t_p_2 = t*t;
-
             const real x1_minus_x0 = x1-x0;
-
-            const real pi2_mul_t = pi2*t;
 
             real re, im;
             {
-                const real _0_1 =  pi2/t;
-
-
-                const real _4_1 = x1*_0_1;
-                const real _4_2 = x0*_0_1;
+                const real _4_1 = x1*pi2;
+                const real _4_2 = x0*pi2;
 
                 const real _6 = cos ( _4_1 ) ;
                 const real _8 = sin ( _4_2 ) ;
@@ -542,9 +532,9 @@ namespace sp
 
 
 
-                const real _0 =  pi2_mul_t * ( x1_minus_x0 ) ;
+                const real _0 =  pi2 * ( x1_minus_x0 ) ;
 
-                const real _7_2 = t_p_2*(_7-_6);
+                const real _7_2 = (_7-_6);
                 const real _9  =  ( _0*_5 - _7_2 ) ;
                 const real _10 =  ( _8*_0 - _7_2 ) ;
                 const real _13 =  ( _9*y1 - _10*y0 ) ;
@@ -552,7 +542,7 @@ namespace sp
                 const real _3 =  pi2_p_2 * ( x1_minus_x0 ) ;
                 re = _13/_3;
 
-                const real _9_1 = t_p_2*(_5-_8);
+                const real _9_1 = (_5-_8);
                 const real _11 =  ( _9_1 -_0*_6 ) ;
                 const real _12 =  ( _9_1 -_7*_0 ) ;
                 const real _14 =  ( _11*y1 - _12*y0 ) ;
@@ -599,7 +589,7 @@ namespace sp
         }
     }
 
-#if 0
+
     namespace
     {
         complex approxCosPlusPoly(real period, TVReal &ys, std::size_t polyOrder)
@@ -665,7 +655,7 @@ namespace sp
                 /////
                 for(std::size_t i(0); i<n; i++)
                 {
-                    verybigreal x = verybigreal(i)/(n-1);
+                    verybigreal x = verybigreal(i)/(n);
                     verybigreal wnd = 1;//rect -- наилучшее пока что
                     //verybigreal wnd = (0.5 - 0.5*cos(pi2*x));//hann
                     //verybigreal wnd = 1-(0.5 - 0.5*cos(pi2*x));//rev hann
@@ -777,35 +767,38 @@ namespace sp
 //            std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
 //            //exit(1);
 
-            return complex(args[0], args[1]);
+            return complex(
+                args[0]/*+args[2]+args[4]+args[6]+args[8]+args[10]*/,
+                args[1]/*+args[3]+args[5]+args[7]+args[9]*/);
         }
     }
-#endif
+
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     complex SignalConvolverLevel::convolve()
     {
+        if(_polyOrder)
+        {
+            return approxCosPlusPoly(4, _valuesFiltered, _polyOrder);
+        }
+
         Summator<complex> res;
+
+        real step01 = real(0.25)/_valuesFiltered.size();
 
         real x0 = 0;
         real y0 = _valuesFiltered[0];
 
         for(std::size_t index(1); index<_valuesFiltered.size(); ++index)
         {
-            real x1 = index * _sampleStep;
+            real x1 = index * step01;
             real y1 = _valuesFiltered[index];
-
-            res += evalSegment(_period, x0, y0, x1, y1);
+            res += evalSegment(x0, y0, x1, y1);
 
             x0 = x1;
             y0 = y1;
         }
 
-        return res / (_period * _ppw);
-
-//        complex r2 =
-//                approxCosPlusPoly(1, _valuesFiltered, _polyOrder);
-
-//        return r2;
+        return res;
     }
 
 }

@@ -17,7 +17,7 @@ namespace sp
         complex convolve();
 
     private:
-        void filtrate_fir(const TVReal &halfFir);
+        //void filtrate_fir(const TVReal &halfFir);
         std::vector<Summator<real>> filtrate_int(const std::vector<Summator<real>> &src);
         std::vector<Summator<real>> filtrate_dif(const std::vector<Summator<real>> &src);
 
@@ -26,15 +26,14 @@ namespace sp
         real updateOnePoly(const real *signal, std::size_t signalSize, real startTime, real stopTime, std::size_t signalStartIdx, std::size_t signalStopIdx);
 
     private:
-        real    _ppw;
-        real    _period;
-        real    _signalSampleStep;
-        real    _sampleStep;
+        real        _ppw;
+        real        _period;
+        real        _signalSampleStep;
+        std::size_t _samplesPerPeriod;
+        real        _sampleStep;
         std::size_t _polyOrder;
-        TVReal  _values;
-        TVReal  _valuesFiltered;
-        TVReal  _valuesFilteredTmp;
-
+        TVReal      _values;
+        TVReal      _valuesFiltered;
     };
 
 }

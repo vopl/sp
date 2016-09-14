@@ -39,7 +39,7 @@ namespace sp
 
     namespace
     {
-        using real4deconv = long double;
+        using real4deconv = double;
 
         //////////////////////////////////////////////////////////////////////////
         struct LevmarParams

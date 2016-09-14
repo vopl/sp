@@ -92,19 +92,19 @@ int main(int argc, char *argv[])
     desc.add_options()
             ("help", "produce help message")
 
-            ("ppw", po::value<sp::real>()->default_value(10), "periods per analyze window")
+            ("ppw", po::value<sp::real>()->default_value(2), "periods per analyze window")
 
-            ("splp", po::value<std::size_t>()->default_value(200), "samples per level period")
+            ("splp", po::value<std::size_t>()->default_value(100), "samples per level period")
 
-            ("cpo", po::value<std::size_t>()->default_value(11), "convolver polynome order")
+            ("cpo", po::value<std::size_t>()->default_value(0), "convolver polynome order")
 
-            ("efmin", po::value<sp::real>()->default_value(5), "echo frequency grid minimum")
+            ("efmin", po::value<sp::real>()->default_value(0.3), "echo frequency grid minimum")
             ("efmax", po::value<sp::real>()->default_value(20000), "echo frequency grid maximum")
             ("efcount", po::value<std::size_t>()->default_value(1000), "echo frequency grid size")
             ("eftype", po::value<std::string>()->default_value("flog"), "echo frequency grid type (plin|plog|flin|flog)")
 
-            ("sfminmult", po::value<sp::real>()->default_value(7.5), "spectr frequency minimum value part")
-            ("sfmaxmult", po::value<sp::real>()->default_value(0.99), "spectr frequency maximum value part")
+            ("sfminmult", po::value<sp::real>()->default_value(80), "spectr frequency minimum value part")
+            ("sfmaxmult", po::value<sp::real>()->default_value(1), "spectr frequency maximum value part")
             ("sfcountmult", po::value<std::size_t>()->default_value(1), "spectr frequency count mult")
 
             ("fps", po::value<sp::real>()->default_value(100), "frames per second")
