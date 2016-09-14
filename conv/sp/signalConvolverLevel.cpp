@@ -365,34 +365,28 @@ namespace sp
             result[index] += _values[index];
         }
 
-        for(std::size_t i(0); i<3; ++i)
+        for(std::size_t i(0); i<1; ++i)
         {
             real phaseStep = real(_samplesPerPeriod)/4;
 
-            real phaseOffset = 0;
-            for(std::size_t k(0); k<1; k++)
+            for(std::size_t k(0); k<3; k++)
             {
                 auto int_ = filtrate_int(result);
-                phaseOffset += phaseStep;
                 for(std::size_t index(0); index<result.size(); ++index)
                 {
-                    result[index] += int_[cidx(std::size_t(index + phaseOffset+0.25))];
+                    int_[index] += result[cidx(std::size_t(index - phaseStep - 0.25))]/2;
                 }
+                result.swap(int_);
             }
 
-
-            //_values = original;
-
-
-            //phaseOffset = 0;
-            for(std::size_t k(0); k<1; k++)
+            for(std::size_t k(0); k<3; k++)
             {
                 auto dif = filtrate_dif(result);
-                phaseOffset -= phaseStep;
                 for(std::size_t index(0); index<result.size(); ++index)
                 {
-                    result[index] += dif[cidx(std::size_t(index + phaseOffset-0.25))];
+                    dif[index] += result[cidx(std::size_t(index + phaseStep + 0.25))]/2;
                 }
+                result.swap(dif);
             }
         }
 
@@ -414,63 +408,7 @@ namespace sp
             _valuesFiltered[index] = result[index];
         }
 
-//        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
-//        {
-//            assert(index < halfFirs.size());
-//            const std::vector<real> &halfFir = halfFirs[index];
-//            const std::size_t halfFirSize = halfFir.size();
-//            assert(halfFirSize>=2);
-//            const std::size_t firSize = (halfFirSize-1)*2+1;
-
-//            Summator<real> sum = 0;
-//            sum += (_values[0] + _values[firSize-1]) * halfFir[0] / 2;
-//            for(std::size_t i(1); i<halfFirSize-1; ++i)
-//            {
-//                sum += (_values[i] + _values[firSize-1-i]) * halfFir[i];
-//            }
-//            sum += _values[halfFirSize-1] * halfFir[halfFirSize-1];
-
-//            _valuesFiltered[index] = sum;
-//        }
-
-//        for(std::size_t index(0); index<_valuesFiltered.size(); ++index)
-//        {
-//            std::cout<<_values[index]<<", "<<_valuesFiltered[index]<<std::endl;
-//        }
-
-//        exit(0);
     }
-
-//    void SignalConvolverLevel::filtrate_fir(const TVReal &halfFir)
-//    {
-//        auto cidx = [&](std::size_t idx)
-//        {
-//            return (idx+_valuesFiltered.size()) % _valuesFiltered.size();
-//        };
-
-//        for(std::size_t c(0); c<4; c++)
-//        {
-//            for(std::size_t index(0); index<_valuesFilteredTmp.size(); ++index)
-//            {
-//                const std::size_t halfFirSize = halfFir.size();
-//                assert(halfFirSize>=2);
-//                const std::size_t firSize = (halfFirSize-1)*2+1;
-
-
-//                Summator<real> sum;
-//                sum += (_valuesFiltered[cidx(0+index)] + _valuesFiltered[cidx(firSize-1+index)]) * halfFir[0] / 2;
-//                for(std::size_t i(1); i<halfFirSize-1; ++i)
-//                {
-//                    sum += (_valuesFiltered[cidx(i+index)] + _valuesFiltered[cidx(firSize-1-i+index)]) * halfFir[i];
-//                }
-//                sum += _valuesFiltered[cidx(halfFirSize-1+index)] * halfFir[halfFirSize-1];
-
-//                _valuesFilteredTmp[cidx(firSize-1+index)] = sum.v();
-//            }
-
-//            _valuesFilteredTmp.swap(_valuesFiltered);
-//        }
-//    }
 
     std::vector<Summator<real>> SignalConvolverLevel::filtrate_int(const std::vector<Summator<real>> &src)
     {
@@ -502,7 +440,7 @@ namespace sp
 
         for(std::size_t index(0); index<src.size(); ++index)
         {
-            res[index] = (src[cidx(index+1)]-src[cidx(index)])*src.size()/(g_2pi*_ppw);
+            res[index] = (src[cidx(index+1)]-src[cidx(index-1)])*src.size()/(g_2pi*_ppw)/2;
         }
 
         return res;
@@ -778,12 +716,12 @@ namespace sp
     {
         if(_polyOrder)
         {
-            return approxCosPlusPoly(4, _valuesFiltered, _polyOrder);
+            return approxCosPlusPoly(real(_valuesFiltered.size())/_samplesPerPeriod, _valuesFiltered, _polyOrder);
         }
 
         Summator<complex> res;
 
-        real step01 = real(0.25)/_valuesFiltered.size();
+        real step01 = real(1)/_samplesPerPeriod;
 
         real x0 = 0;
         real y0 = _valuesFiltered[0];
