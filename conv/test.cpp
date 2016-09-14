@@ -97,7 +97,7 @@ int test()
             for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=5)
             {
                 sp::real t = echoPeriods.grid()[k];
-                signal[index] += sin((x-xTarget)*sp::g_2pi/t);
+                signal[index] += a*sin((x-xTarget)*sp::g_2pi/t);
             }
 
 
