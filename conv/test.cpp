@@ -31,7 +31,7 @@ int test()
 
 
 
-    sp::real sampleStep = 1.0L/360000/2;
+    sp::real sampleStep = 1.0L/360000;
 
     sp::real tMin = 1.0/20000;
     sp::real tMax = 1.0/0.4;
@@ -47,8 +47,8 @@ int test()
 
     sp::PeriodGrid spectrPeriods = sp::PeriodGrid(
             echoPeriods.grid()[0],
-            echoPeriods.grid()[600],
-            600,
+            echoPeriods.grid()[300],
+            300,
             sp::PeriodGridType::frequencyLog);
     std::cerr
             <<"sfmin: "<<(1.0/spectrPeriods.grid().back())
@@ -67,7 +67,7 @@ int test()
 #define POW 2.0
 
     std::size_t splp = 100;
-    std::size_t cpo = 11;
+    std::size_t cpo = 0;
 
 
     if(1)
@@ -75,7 +75,7 @@ int test()
         sp::KernelTabled kt(POW, splp, cpo);
         //sp::Kernel kt(POW);
 
-//        kt.eval(1, 1, sp::complex(.23452,1.3456));
+//        kt.eval(0.5, 1, sp::complex(.23452,1.3456));
 //        exit(0);
 
 
