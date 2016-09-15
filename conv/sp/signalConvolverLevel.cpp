@@ -419,11 +419,18 @@ namespace sp
             return (idx+src.size()) % src.size();
         };
 
-        Summator<real> sum;
+        Summator<real> sum, sum2;
         for(std::size_t index(0); index<src.size(); ++index)
         {
             sum += src[cidx(index)];
             res[index] = sum.v()*(g_2pi*_ppw)/src.size();
+            sum2 += res[index].v();
+        }
+
+        sp::real offset = sum2.v()/src.size();
+        for(std::size_t index(0); index<src.size(); ++index)
+        {
+            res[index] += -offset;
         }
 
         return res;
