@@ -369,7 +369,7 @@ namespace sp
         {
             real phaseStep = real(_samplesPerPeriod)/4;
 
-            for(std::size_t k(0); k<3; k++)
+            for(std::size_t k(0); k<1; k++)
             {
                 auto int_ = filtrate_int(result);
                 for(std::size_t index(0); index<result.size(); ++index)
@@ -379,7 +379,7 @@ namespace sp
                 result.swap(int_);
             }
 
-            for(std::size_t k(0); k<3; k++)
+            for(std::size_t k(0); k<1; k++)
             {
                 auto dif = filtrate_dif(result);
                 for(std::size_t index(0); index<result.size(); ++index)
@@ -438,9 +438,9 @@ namespace sp
             return (idx+src.size()) % src.size();
         };
 
-        for(std::size_t index(0); index<src.size(); ++index)
+        for(std::size_t index(0); index<src.size()-1; ++index)
         {
-            res[index] = (src[cidx(index+1)]-src[cidx(index-1)])*src.size()/(g_2pi*_ppw)/2;
+            res[index] = (src[cidx(index+1)]-src[cidx(index)])*src.size()/(g_2pi*_ppw);
         }
 
         return res;
@@ -721,22 +721,25 @@ namespace sp
 
         Summator<complex> res;
 
-        real step01 = real(1)/_samplesPerPeriod;
-
-        real x0 = 0;
-        real y0 = _valuesFiltered[0];
-
-        for(std::size_t index(1); index<_valuesFiltered.size(); ++index)
+        for(std::size_t mult(1); mult<=16; mult+=1)
         {
-            real x1 = index * step01;
-            real y1 = _valuesFiltered[index];
-            res += evalSegment(x0, y0, x1, y1);
+            real step01 = real(mult)/_samplesPerPeriod;
 
-            x0 = x1;
-            y0 = y1;
+            real x0 = 0;
+            real y0 = _valuesFiltered[0];
+
+            for(std::size_t index(1); index<_valuesFiltered.size(); ++index)
+            {
+                real x1 = index * step01;
+                real y1 = _valuesFiltered[index];
+                res += evalSegment(x0, y0, x1, y1);
+
+                x0 = x1;
+                y0 = y1;
+            }
         }
 
-        return res;
+        return res;// / (_period);
     }
 
 }

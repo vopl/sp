@@ -47,8 +47,8 @@ int test()
 
     sp::PeriodGrid spectrPeriods = sp::PeriodGrid(
             echoPeriods.grid()[0],
-            echoPeriods.grid()[300],
-            300,
+            echoPeriods.grid()[400],
+            400,
             sp::PeriodGridType::frequencyLog);
     std::cerr
             <<"sfmin: "<<(1.0/spectrPeriods.grid().back())
@@ -66,7 +66,7 @@ int test()
 
 #define POW 2.0
 
-    std::size_t splp = 100;
+    std::size_t splp = 12;
     std::size_t cpo = 0;
 
 
@@ -75,7 +75,7 @@ int test()
         sp::KernelTabled kt(POW, splp, cpo);
         //sp::Kernel kt(POW);
 
-//        kt.eval(0.5, 1, sp::complex(.23452,1.3456));
+//        kt.eval(0.8673, 1, sp::complex(.23452,1.3456));
 //        exit(0);
 
 
@@ -94,9 +94,10 @@ int test()
 
             sp::real a = x/xTarget;
 
+            //std::size_t k = spectrPeriods.grid().size()/2;
             for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=5)
             {
-                sp::real t = echoPeriods.grid()[k];
+                sp::real t = spectrPeriods.grid()[k];
                 signal[index] += a*sin((x-xTarget)*sp::g_2pi/t);
             }
 
@@ -126,11 +127,11 @@ int test()
 //            //std::cerr<<"mk echo #"<<i<<std::endl;
 
 //            response[i] = 0;
-//            std::size_t k = 500;
-//            //for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
+//            //std::size_t k = 500;
+//            for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
 //            {
 //                //std::cerr<<(echoPeriods.grid()[i]/echoPeriods.grid()[k])<<std::endl;
-//                response[i] += kt.eval(echoPeriods.grid()[i], echoPeriods.grid()[k], sp::complex(0,1));
+//                response[i] += kt.eval(echoPeriods.grid()[i], echoPeriods.grid()[k], sp::complex(1,0));
 //            }
 //        }
 
@@ -162,7 +163,7 @@ int test()
             cerr<<iters<<": "<<error0<<"->"<<error1<<endl;
             for(size_t i(0); i<spectr.size(); ++i)
             {
-                sp::complex s = spectr[i];// / spectrPeriods.grid()[i];
+                sp::complex s = spectr[i];
                 std::cout<<s.re()<<", "<<s.im()<<std::endl;
             }
         }
