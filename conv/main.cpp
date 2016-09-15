@@ -98,12 +98,12 @@ int main(int argc, char *argv[])
 
             ("cpo", po::value<std::size_t>()->default_value(0), "convolver polynome order")
 
-            ("efmin", po::value<sp::real>()->default_value(0.3), "echo frequency grid minimum")
+            ("efmin", po::value<sp::real>()->default_value(0.2), "echo frequency grid minimum")
             ("efmax", po::value<sp::real>()->default_value(20000), "echo frequency grid maximum")
             ("efcount", po::value<std::size_t>()->default_value(1000), "echo frequency grid size")
             ("eftype", po::value<std::string>()->default_value("flog"), "echo frequency grid type (plin|plog|flin|flog)")
 
-            ("sfminmult", po::value<sp::real>()->default_value(80), "spectr frequency minimum value part")
+            ("sfminmult", po::value<sp::real>()->default_value(100), "spectr frequency minimum value part")
             ("sfmaxmult", po::value<sp::real>()->default_value(1), "spectr frequency maximum value part")
             ("sfcountmult", po::value<std::size_t>()->default_value(1), "spectr frequency count mult")
 
@@ -327,21 +327,30 @@ int main(int argc, char *argv[])
 
     for(; frameIndex<framesAmount; ++frameIndex)
     {
-        std::fill(spectr.begin(), spectr.end(), sp::complex(0));
+        //std::fill(spectr.begin(), spectr.end(), sp::complex(0));
 
-        //std::cerr<<"init: "<<spectr[spectr.size()/2].re()<<", "<<spectr[spectr.size()/2].im()<<std::endl;
+        //std::cerr<<"init: "<<spectr[270].re()<<", "<<spectr[270].im()<<std::endl;
 
-//        //rotate spectr to new position
+        //rotate spectr to new position
+        {
+            sp::real dx = 1/framesPerSecond;
+            for(std::size_t i(0); i<spectr.size(); ++i)
+            {
+                sp::real t = spectrPeriods[i];
+                sp::real dp = dx*sp::g_2pi/t;
+                spectr[i] = spectr[i].rotate(dp);
+            }
+        }
+//        std::cerr<<"rot: "<<spectr[270].re()<<", "<<spectr[270].im()<<std::endl;
+
 //        {
 //            sp::real dx = 1/framesPerSecond;
-//            for(std::size_t i(0); i<spectr.size(); ++i)
-//            {
-//                sp::real t = spectrPeriods[i];
-//                sp::real dp = dx*sp::g_2pi/t;
-//                spectr[i] = spectr[i].rotate(dp);
-//            }
+//            sp::real t = spectrPeriods[270];
+//            sp::real dp = dx*sp::g_2pi/t;
+
+//            sp::complex r2 = spectr[270].rotate(-dp*2);
+//            std::cerr<<"rot: "<<r2.re()<<", "<<r2.im()<<std::endl;
 //        }
-        //std::cerr<<"rot: "<<spectr[spectr.size()/2].re()<<", "<<spectr[spectr.size()/2].im()<<std::endl;
 
 
 
@@ -379,7 +388,7 @@ int main(int argc, char *argv[])
         cout<<"ok, iters: "<<iters<<", error: "<<error1<<"/"<<error0<<"="<<(error1/error0)<<", dur: "<<dur<< std::endl;
         moment = moment1;
 
-        //std::cerr<<"upd: "<<spectr[spectr.size()/2].re()<<", "<<spectr[spectr.size()/2].im()<<std::endl;
+        //std::cerr<<"upd: "<<spectr[270].re()<<", "<<spectr[270].im()<<std::endl;
 
         echoStore.pushFrames(echo);
         spectrStore.pushFrames(spectr);
