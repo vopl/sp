@@ -18,8 +18,9 @@ namespace sp
 
     private:
         //void filtrate_fir(const TVReal &halfFir);
-        std::vector<Summator<real>> filtrate_int(const std::vector<Summator<real>> &src);
-        std::vector<Summator<real>> filtrate_dif(const std::vector<Summator<real>> &src);
+        //std::vector<Summator<real>> filtrate_int(const std::vector<Summator<real>> &src);
+        //std::vector<Summator<real>> filtrate_dif(const std::vector<Summator<real>> &src);
+
 
     private:
         real updateOneLinear(const real *signal, std::size_t signalSize, real startTime, real stopTime, std::size_t signalStartIdx, std::size_t signalStopIdx);
@@ -33,7 +34,19 @@ namespace sp
         real        _sampleStep;
         std::size_t _polyOrder;
         TVReal      _values;
-        TVReal      _valuesFiltered;
+        //TVReal      _valuesFiltered;
+
+        struct Serie
+        {
+            real    _dp = real();
+            TVReal  _points;
+        };
+
+        Serie int_(const Serie &src);
+        Serie dif(const Serie &src);
+        std::size_t /*samples*/ finalize(Serie &src);
+
+        std::vector<Serie> _series;
     };
 
 }

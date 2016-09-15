@@ -47,8 +47,8 @@ int test()
 
     sp::PeriodGrid spectrPeriods = sp::PeriodGrid(
             echoPeriods.grid()[0],
-            echoPeriods.grid()[400],
-            400,
+            echoPeriods.grid()[600],
+            600,
             sp::PeriodGridType::frequencyLog);
     std::cerr
             <<"sfmin: "<<(1.0/spectrPeriods.grid().back())
@@ -66,7 +66,7 @@ int test()
 
 #define POW 2.0
 
-    std::size_t splp = 12;
+    std::size_t splp = 100;
     std::size_t cpo = 0;
 
 
@@ -75,7 +75,7 @@ int test()
         sp::KernelTabled kt(POW, splp, cpo);
         //sp::Kernel kt(POW);
 
-//        kt.eval(0.8673, 1, sp::complex(.23452,1.3456));
+//        kt.eval(1.0, 1, sp::complex(.23452,1.3456));
 //        exit(0);
 
 

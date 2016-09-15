@@ -21,7 +21,6 @@ namespace sp
         , _sampleStep(_period/samplesPerPeriod)
         , _polyOrder(polyOrder)
         , _values(std::size_t(_samplesPerPeriod*ppw + 0.5))
-        , _valuesFiltered(_samplesPerPeriod/4)
     {
     }
 
@@ -354,101 +353,200 @@ namespace sp
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void SignalConvolverLevel::filtrate(const TVReal &halfFir)
     {
-        auto cidx = [&](std::size_t idx)
-        {
-            return (idx+_samplesPerPeriod*100) % _samplesPerPeriod;
-        };
+        _series.clear();
 
-        std::vector<Summator<real>> result(_values.size());
+        ///////////////////////////////
+        Serie serie0;
+
+        serie0._dp = 0;
+        serie0._points.resize(_values.size());
         for(std::size_t index(0); index<_values.size(); ++index)
         {
-            result[index] += _values[index];
+            serie0._points[index] = _values[index];
         }
+        _series.push_back(serie0);
 
-        for(std::size_t i(0); i<1; ++i)
+
+        ///////////////////////////////
+        Serie serie1 = serie0;
+        for(std::size_t i(0); i<4; ++i)
         {
-            real phaseStep = real(_samplesPerPeriod)/4;
-
-            for(std::size_t k(0); k<1; k++)
-            {
-                auto int_ = filtrate_int(result);
-                for(std::size_t index(0); index<result.size(); ++index)
-                {
-                    int_[index] += result[cidx(std::size_t(index - phaseStep - 0.25))]/2;
-                }
-                result.swap(int_);
-            }
-
-            for(std::size_t k(0); k<1; k++)
-            {
-                auto dif = filtrate_dif(result);
-                for(std::size_t index(0); index<result.size(); ++index)
-                {
-                    dif[index] += result[cidx(std::size_t(index + phaseStep + 0.25))]/2;
-                }
-                result.swap(dif);
-            }
+            _series.push_back(serie1 = dif(serie1));
         }
 
-        for(std::size_t index(0); index<_samplesPerPeriod; ++index)
+
+        ///////////////////////////////
+        serie1 = serie0;
+        for(std::size_t i(0); i<4; ++i)
         {
-            for(std::size_t index2(1); index2<std::size_t(_ppw+0.5); ++index2)
-            {
-                result[index] += result[index2*_samplesPerPeriod + index];
-            }
+            _series.push_back(serie1 = int_(serie1));
         }
 
-        std::size_t samplesPerPeriodDiv4 = _samplesPerPeriod/4;
-        for(std::size_t index(0); index<samplesPerPeriodDiv4; ++index)
+
+        std::size_t resultSamples = _samplesPerPeriod;
+        for(std::size_t i(0); i<_series.size(); ++i)
         {
-            result[index] +=  result[samplesPerPeriodDiv4*2-1 -index];
-            result[index] += -result[samplesPerPeriodDiv4*2   +index];
-            result[index] += -result[samplesPerPeriodDiv4*4-1 -index];
-
-            _valuesFiltered[index] = result[index];
+            resultSamples = std::min(resultSamples, finalize(_series[i]));
         }
+
+        for(std::size_t i(0); i<_series.size(); ++i)
+        {
+            _series[i]._points.resize(resultSamples);
+        }
+
+//        return;
+
+
+
+
+
+//        auto cidx = [&](std::size_t idx)
+//        {
+//            return (idx+_samplesPerPeriod*100) % _samplesPerPeriod;
+//        };
+
+//        std::vector<Summator<real>> result(_values.size());
+//        for(std::size_t index(0); index<_values.size(); ++index)
+//        {
+//            result[index] += _values[index];
+//        }
+
+//        for(std::size_t i(0); i<1; ++i)
+//        {
+//            real phaseStep = real(_samplesPerPeriod)/4;
+
+//            for(std::size_t k(0); k<1; k++)
+//            {
+//                auto int_ = filtrate_int(result);
+//                for(std::size_t index(0); index<result.size(); ++index)
+//                {
+//                    int_[index] += result[cidx(std::size_t(index - phaseStep - 0.25))]/2;
+//                }
+//                result.swap(int_);
+//            }
+
+//            for(std::size_t k(0); k<1; k++)
+//            {
+//                auto dif = filtrate_dif(result);
+//                for(std::size_t index(0); index<result.size(); ++index)
+//                {
+//                    dif[index] += result[cidx(std::size_t(index + phaseStep + 0.25))]/2;
+//                }
+//                result.swap(dif);
+//            }
+//        }
+
+//        for(std::size_t index(0); index<_samplesPerPeriod; ++index)
+//        {
+//            for(std::size_t index2(1); index2<std::size_t(_ppw+0.5); ++index2)
+//            {
+//                result[index] += result[index2*_samplesPerPeriod + index];
+//            }
+//        }
+
+//        std::size_t samplesPerPeriodDiv4 = _samplesPerPeriod/4;
+//        for(std::size_t index(0); index<samplesPerPeriodDiv4; ++index)
+//        {
+//            result[index] +=  result[samplesPerPeriodDiv4*2-1 -index];
+//            result[index] += -result[samplesPerPeriodDiv4*2   +index];
+//            result[index] += -result[samplesPerPeriodDiv4*4-1 -index];
+
+//            _valuesFiltered[index] = result[index];
+//        }
 
     }
 
-    std::vector<Summator<real>> SignalConvolverLevel::filtrate_int(const std::vector<Summator<real>> &src)
+//    std::vector<Summator<real>> SignalConvolverLevel::filtrate_int(const std::vector<Summator<real>> &src)
+//    {
+//        std::vector<Summator<real>> res(src);
+
+//        auto cidx = [&](std::size_t idx)
+//        {
+//            return (idx+src.size()) % src.size();
+//        };
+
+//        Summator<real> sum, sum2;
+//        for(std::size_t index(0); index<src.size(); ++index)
+//        {
+//            sum += src[cidx(index)];
+//            res[index] = sum.v()*(g_2pi*_ppw)/src.size();
+//            sum2 += res[index].v();
+//        }
+
+//        sp::real offset = sum2.v()/src.size();
+//        for(std::size_t index(0); index<src.size(); ++index)
+//        {
+//            res[index] += -offset;
+//        }
+
+//        return res;
+//    }
+
+//    std::vector<Summator<real>> SignalConvolverLevel::filtrate_dif(const std::vector<Summator<real>> &src)
+//    {
+//        std::vector<Summator<real>> res(src.size());
+
+//        auto cidx = [&](std::size_t idx)
+//        {
+//            return (idx+src.size()) % src.size();
+//        };
+
+//        for(std::size_t index(0); index<src.size()-1; ++index)
+//        {
+//            res[index] = (src[cidx(index+1)]-src[cidx(index)])*src.size()/(g_2pi*_ppw);
+//        }
+
+//        return res;
+//    }
+
+    SignalConvolverLevel::Serie SignalConvolverLevel::int_(const Serie &src)
     {
-        std::vector<Summator<real>> res(src);
+        Serie res;
+        res._dp = src._dp + g_pi/2 + g_2pi/_samplesPerPeriod/2;
 
-        auto cidx = [&](std::size_t idx)
-        {
-            return (idx+src.size()) % src.size();
-        };
+        res._points.resize(src._points.size());
 
-        Summator<real> sum, sum2;
-        for(std::size_t index(0); index<src.size(); ++index)
+        Summator<real> sum;
+        for(std::size_t index(0); index<res._points.size(); ++index)
         {
-            sum += src[cidx(index)];
-            res[index] = sum.v()*(g_2pi*_ppw)/src.size();
-            sum2 += res[index].v();
-        }
-
-        sp::real offset = sum2.v()/src.size();
-        for(std::size_t index(0); index<src.size(); ++index)
-        {
-            res[index] += -offset;
+            sum += src._points[index];
+            res._points[index] = sum.v()*g_2pi/_samplesPerPeriod;
         }
 
         return res;
     }
 
-    std::vector<Summator<real>> SignalConvolverLevel::filtrate_dif(const std::vector<Summator<real>> &src)
+    SignalConvolverLevel::Serie SignalConvolverLevel::dif(const Serie &src)
     {
-        std::vector<Summator<real>> res(src.size());
+        Serie res;
+        res._dp = src._dp - g_pi/2 - g_2pi/_samplesPerPeriod/2;
 
-        auto cidx = [&](std::size_t idx)
-        {
-            return (idx+src.size()) % src.size();
-        };
+        res._points.resize(src._points.size()-1);
 
-        for(std::size_t index(0); index<src.size()-1; ++index)
+        for(std::size_t index(0); index<res._points.size(); ++index)
         {
-            res[index] = (src[cidx(index+1)]-src[cidx(index)])*src.size()/(g_2pi*_ppw);
+            res._points[index] = (src._points[index+1]-src._points[index])*_samplesPerPeriod/g_2pi;
         }
+
+        return res;
+    }
+
+    std::size_t SignalConvolverLevel::finalize(Serie &src)
+    {
+        TVReal dst(_samplesPerPeriod);
+        for(std::size_t i(0); i<src._points.size(); ++i)
+        {
+            dst[i % _samplesPerPeriod] += src._points[i];
+        }
+
+        std::size_t r = (src._points.size()/_samplesPerPeriod)*_samplesPerPeriod;
+        std::size_t res =
+                r == src._points.size() ?
+                    _samplesPerPeriod :
+                    src._points.size() - r;
+
+        dst.resize(res);
+        src._points.swap(dst);
 
         return res;
     }
@@ -723,30 +821,40 @@ namespace sp
     {
         if(_polyOrder)
         {
-            return approxCosPlusPoly(real(_valuesFiltered.size())/_samplesPerPeriod, _valuesFiltered, _polyOrder);
+            assert(!"not impl");
+            abort();
+            //return approxCosPlusPoly(real(_valuesFiltered.size())/_samplesPerPeriod, _valuesFiltered, _polyOrder);
         }
 
         Summator<complex> res;
 
-        for(std::size_t mult(1); mult<=16; mult+=1)
+        for(std::size_t mult(1); mult<=10; mult+=1)
         {
             real step01 = real(mult)/_samplesPerPeriod;
 
-            real x0 = 0;
-            real y0 = _valuesFiltered[0];
-
-            for(std::size_t index(1); index<_valuesFiltered.size(); ++index)
+            for(std::size_t i(0); i<_series.size(); ++i)
             {
-                real x1 = index * step01;
-                real y1 = _valuesFiltered[index];
-                res += evalSegment(x0, y0, x1, y1);
+                Summator<complex> res2;
 
-                x0 = x1;
-                y0 = y1;
+                const TVReal &points = _series[i]._points;
+                real x0 = 0;
+                real y0 = points[0];
+
+                for(std::size_t index(1); index<points.size(); ++index)
+                {
+                    real x1 = index * step01;
+                    real y1 = points[index];
+                    res2 += evalSegment(x0, y0, x1, y1);
+
+                    x0 = x1;
+                    y0 = y1;
+                }
+
+                res += res2.v().rotate(-_series[i]._dp);
             }
         }
 
-        return res;// / (_period);
+        return res / 1e5;
     }
 
 }
