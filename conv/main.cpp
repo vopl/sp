@@ -113,6 +113,9 @@ int main(int argc, char *argv[])
             ("calibrate", po::value<std::size_t>()->default_value(0), "simulate calibration harminics, N-step in spectr grid")
 
             ("out-dir", po::value<std::string>()->default_value("out"), "output directory")
+
+            ("inititersmax", po::value<std::size_t>()->default_value(15), "maximum initial iterations for lsq")
+            ("itersmax", po::value<std::size_t>()->default_value(15), "maximum iterations for lsq")
             ;
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -325,6 +328,7 @@ int main(int argc, char *argv[])
 
     auto moment = std::chrono::high_resolution_clock::now();
 
+    bool first = true;
     for(; frameIndex<framesAmount; ++frameIndex)
     {
         //std::fill(spectr.begin(), spectr.end(), sp::complex(0));
@@ -371,14 +375,20 @@ int main(int argc, char *argv[])
 
 
 
-        std::size_t iters = 15;
+        std::size_t iters = vars["itersmax"].as<std::size_t>();
+        if(first)
+        {
+            iters = vars["inititersmax"].as<std::size_t>();
+            first = false;
+        }
+
         sp::real error0 = 0;
         sp::real error1 = 0;
         k.deconvolve(
             echo.size(), &echoPeriods[0], &echo[0],
             spectr.size(), &spectrPeriods[0], &spectr[0],
             iters,
-            1e-40,
+            0,//1e-80,
             error0,
             error1);
 
