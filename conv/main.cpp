@@ -59,7 +59,7 @@ void inv();
 int main(int argc, char *argv[])
 {
 //    prony();return 0;
-    test();return 0;
+//    test();return 0;
 //    inv();return 0;
 
 

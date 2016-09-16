@@ -72,10 +72,11 @@ int test()
 
     if(1)
     {
+        sp::TVComplex response(echoPeriods.grid().size());
         sp::KernelTabled kt(POW, splp, cpo);
         //sp::Kernel kt(POW);
 
-//        kt.eval(1.0, 1, sp::complex(.23452,1.3456));
+//        kt.eval(0.75223948756, 1, sp::complex(.23452,1.3456));
 //        exit(0);
 
 
@@ -108,7 +109,6 @@ int test()
 
 
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        sp::TVComplex response(echoPeriods.grid().size());
         sp::SignalConvolver c;
         c.setup(POW, echoPeriods.grid(), sampleStep, splp, cpo, sp::SignalApproxType::poly6p5o32x);
 
@@ -127,8 +127,8 @@ int test()
 //            //std::cerr<<"mk echo #"<<i<<std::endl;
 
 //            response[i] = 0;
-//            //std::size_t k = 500;
-//            for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
+//            std::size_t k = 500;
+//            //for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
 //            {
 //                //std::cerr<<(echoPeriods.grid()[i]/echoPeriods.grid()[k])<<std::endl;
 //                response[i] += kt.eval(echoPeriods.grid()[i], echoPeriods.grid()[k], sp::complex(1,0));
