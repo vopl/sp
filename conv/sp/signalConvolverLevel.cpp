@@ -369,7 +369,7 @@ namespace sp
 
         ///////////////////////////////
         Serie serie1 = serie0;
-        for(std::size_t i(0); i<4; ++i)
+        for(std::size_t i(0); i<3; ++i)
         {
             _series.push_back(serie1 = dif(serie1));
         }
@@ -377,7 +377,7 @@ namespace sp
 
         ///////////////////////////////
         serie1 = serie0;
-        for(std::size_t i(0); i<4; ++i)
+        for(std::size_t i(0); i<3; ++i)
         {
             _series.push_back(serie1 = int_(serie1));
         }
@@ -388,130 +388,28 @@ namespace sp
         {
             resultSamples = std::min(resultSamples, finalize(_series[i]));
         }
-
-        for(std::size_t i(0); i<_series.size(); ++i)
-        {
-            _series[i]._points.resize(resultSamples);
-        }
-
-//        return;
-
-
-
-
-
-//        auto cidx = [&](std::size_t idx)
-//        {
-//            return (idx+_samplesPerPeriod*100) % _samplesPerPeriod;
-//        };
-
-//        std::vector<Summator<real>> result(_values.size());
-//        for(std::size_t index(0); index<_values.size(); ++index)
-//        {
-//            result[index] += _values[index];
-//        }
-
-//        for(std::size_t i(0); i<1; ++i)
-//        {
-//            real phaseStep = real(_samplesPerPeriod)/4;
-
-//            for(std::size_t k(0); k<1; k++)
-//            {
-//                auto int_ = filtrate_int(result);
-//                for(std::size_t index(0); index<result.size(); ++index)
-//                {
-//                    int_[index] += result[cidx(std::size_t(index - phaseStep - 0.25))]/2;
-//                }
-//                result.swap(int_);
-//            }
-
-//            for(std::size_t k(0); k<1; k++)
-//            {
-//                auto dif = filtrate_dif(result);
-//                for(std::size_t index(0); index<result.size(); ++index)
-//                {
-//                    dif[index] += result[cidx(std::size_t(index + phaseStep + 0.25))]/2;
-//                }
-//                result.swap(dif);
-//            }
-//        }
-
-//        for(std::size_t index(0); index<_samplesPerPeriod; ++index)
-//        {
-//            for(std::size_t index2(1); index2<std::size_t(_ppw+0.5); ++index2)
-//            {
-//                result[index] += result[index2*_samplesPerPeriod + index];
-//            }
-//        }
-
-//        std::size_t samplesPerPeriodDiv4 = _samplesPerPeriod/4;
-//        for(std::size_t index(0); index<samplesPerPeriodDiv4; ++index)
-//        {
-//            result[index] +=  result[samplesPerPeriodDiv4*2-1 -index];
-//            result[index] += -result[samplesPerPeriodDiv4*2   +index];
-//            result[index] += -result[samplesPerPeriodDiv4*4-1 -index];
-
-//            _valuesFiltered[index] = result[index];
-//        }
-
     }
-
-//    std::vector<Summator<real>> SignalConvolverLevel::filtrate_int(const std::vector<Summator<real>> &src)
-//    {
-//        std::vector<Summator<real>> res(src);
-
-//        auto cidx = [&](std::size_t idx)
-//        {
-//            return (idx+src.size()) % src.size();
-//        };
-
-//        Summator<real> sum, sum2;
-//        for(std::size_t index(0); index<src.size(); ++index)
-//        {
-//            sum += src[cidx(index)];
-//            res[index] = sum.v()*(g_2pi*_ppw)/src.size();
-//            sum2 += res[index].v();
-//        }
-
-//        sp::real offset = sum2.v()/src.size();
-//        for(std::size_t index(0); index<src.size(); ++index)
-//        {
-//            res[index] += -offset;
-//        }
-
-//        return res;
-//    }
-
-//    std::vector<Summator<real>> SignalConvolverLevel::filtrate_dif(const std::vector<Summator<real>> &src)
-//    {
-//        std::vector<Summator<real>> res(src.size());
-
-//        auto cidx = [&](std::size_t idx)
-//        {
-//            return (idx+src.size()) % src.size();
-//        };
-
-//        for(std::size_t index(0); index<src.size()-1; ++index)
-//        {
-//            res[index] = (src[cidx(index+1)]-src[cidx(index)])*src.size()/(g_2pi*_ppw);
-//        }
-
-//        return res;
-//    }
 
     SignalConvolverLevel::Serie SignalConvolverLevel::int_(const Serie &src)
     {
         Serie res;
-        res._dp = src._dp + g_pi/2 + g_2pi/_samplesPerPeriod/2;
+        res._dp = src._dp + g_pi/2 - g_2pi/_samplesPerPeriod;
 
         res._points.resize(src._points.size());
 
-        Summator<real> sum;
+        Summator<real> sum, sum2;
         for(std::size_t index(0); index<res._points.size(); ++index)
         {
             sum += src._points[index];
             res._points[index] = sum.v()*g_2pi/_samplesPerPeriod;
+            sum2 += res._points[index];
         }
+
+        for(std::size_t index(0); index<res._points.size(); ++index)
+        {
+            res._points[index] += -sum2.v()/res._points.size();
+        }
+
 
         return res;
     }
@@ -533,22 +431,56 @@ namespace sp
 
     std::size_t SignalConvolverLevel::finalize(Serie &src)
     {
-        TVReal dst(_samplesPerPeriod);
-        for(std::size_t i(0); i<src._points.size(); ++i)
-        {
-            dst[i % _samplesPerPeriod] += src._points[i];
-        }
-
         std::size_t r = (src._points.size()/_samplesPerPeriod)*_samplesPerPeriod;
         std::size_t res =
                 r == src._points.size() ?
                     _samplesPerPeriod :
                     src._points.size() - r;
 
+        TVReal dst(_samplesPerPeriod);
+        for(std::size_t i(0); i<src._points.size(); ++i)
+        {
+            dst[i % _samplesPerPeriod] += src._points[i];
+        }
+
         dst.resize(res);
         src._points.swap(dst);
 
         return res;
+
+
+//        std::size_t samplesPerPeriodDiv4 = _samplesPerPeriod/4;
+
+//        std::size_t r = (src._points.size()/samplesPerPeriodDiv4)*samplesPerPeriodDiv4;
+//        std::size_t res =
+//                r == src._points.size() ?
+//                    samplesPerPeriodDiv4 :
+//                    src._points.size() - r;
+
+//        std::size_t extra =
+//                r == src._points.size() ?
+//                    0 :
+//                    (r+samplesPerPeriodDiv4) - src._points.size();
+
+
+//        for(std::size_t index(0); index<res; ++index)
+//        {
+//            std::size_t idx;
+
+//            idx = samplesPerPeriodDiv4*2-1 -index - extra;
+//            dst[index] +=  dst[idx];
+
+//            idx = samplesPerPeriodDiv4*2   +index;
+//            dst[index] -=  dst[idx];
+
+//            idx = samplesPerPeriodDiv4*4-1 -index - extra;
+//            dst[index] -=  dst[idx];
+//        }
+
+//        dst.resize(res);
+//        src._points.swap(dst);
+
+//        return res;
     }
 
 
@@ -632,7 +564,7 @@ namespace sp
         }
     }
 
-
+#if 0
     namespace
     {
         complex approxCosPlusPoly(real period, TVReal &ys, std::size_t polyOrder)
@@ -815,6 +747,7 @@ namespace sp
                 args[1]/*+args[3]+args[5]+args[7]+args[9]*/);
         }
     }
+#endif
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     complex SignalConvolverLevel::convolve()
@@ -828,12 +761,13 @@ namespace sp
 
         Summator<complex> res;
 
-        for(std::size_t mult(1); mult<=10; mult+=1)
+        for(std::size_t mult(1); mult<=16; mult+=1)
         {
             real step01 = real(mult)/_samplesPerPeriod;
 
             for(std::size_t i(0); i<_series.size(); ++i)
             {
+                //std::cout<<"s "<<i<<std::endl;
                 Summator<complex> res2;
 
                 const TVReal &points = _series[i]._points;
@@ -846,15 +780,24 @@ namespace sp
                     real y1 = points[index];
                     res2 += evalSegment(x0, y0, x1, y1);
 
+                    //std::cout<<y0<<std::endl;
+
                     x0 = x1;
                     y0 = y1;
                 }
+                //std::cout<<y0<<std::endl;
 
-                res += res2.v().rotate(-_series[i]._dp);
+                //std::cout<<"------ "<<res2.v().re()<<", "<<res2.v().im()<<", "<<res2.v().a()<<", "<<res2.v().p()<<std::endl;
+
+                res += res2.v().rotate(-_series[i]._dp)*points.size()/_samplesPerPeriod/mult;
             }
         }
 
-        return res / 1e5;
+        //std::cout<<"------ "<<res.v().re()<<", "<<res.v().im()<<", "<<res.v().a()<<", "<<res.v().p()<<std::endl;
+
+        //exit(0);
+
+        return res;
     }
 
 }
