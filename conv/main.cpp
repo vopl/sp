@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
     desc.add_options()
             ("help", "produce help message")
 
-            ("ppw", po::value<sp::real>()->default_value(2), "periods per analyze window")
+            ("ppw", po::value<sp::real>()->default_value(1), "periods per analyze window")
 
             ("splp", po::value<std::size_t>()->default_value(100), "samples per level period")
 
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
             ("sfmaxmult", po::value<sp::real>()->default_value(1), "spectr frequency maximum value part")
             ("sfcountmult", po::value<std::size_t>()->default_value(1), "spectr frequency count mult")
 
-            ("fps", po::value<sp::real>()->default_value(100), "frames per second")
+            ("fps", po::value<sp::real>()->default_value(1000), "frames per second")
 
             ("in-file", po::value<std::string>()->default_value("in.wav"), "input wav file name")
             ("calibrate", po::value<std::size_t>()->default_value(0), "simulate calibration harminics, N-step in spectr grid")
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
             ("out-dir", po::value<std::string>()->default_value("out"), "output directory")
 
             ("inititersmax", po::value<std::size_t>()->default_value(15), "maximum initial iterations for lsq")
-            ("itersmax", po::value<std::size_t>()->default_value(15), "maximum iterations for lsq")
+            ("itersmax", po::value<std::size_t>()->default_value(1), "maximum iterations for lsq")
             ;
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -140,6 +140,12 @@ int main(int argc, char *argv[])
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     if(vars.count("help"))
     {
+#ifndef GIT_COMMIT
+#   define GIT_COMMIT unknown
+#endif
+#define STR(x) STR2(x)
+#define STR2(x) #x
+        std::cout << "git: "<<STR(GIT_COMMIT) << std::endl;
         std::cout << desc << std::endl;
         return EXIT_SUCCESS;
     }
