@@ -1,4 +1,5 @@
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wextra -Wpedantic")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
 
 set(CMAKE_CXX_FLAGS_RELEASE "")
@@ -14,7 +15,12 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto -Ofast -funroll-lo
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=core2")
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-align-double")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden -fvisibility-inlines-hidden")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -finline-limit=8192")
+
+
 
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
@@ -122,7 +128,13 @@ set(LEVMAR_SRC
   ${LEVMAR_DIR}/compiler.h
 )
 
+set(LEVMAR_SRC_INC
+  ${LEVMAR_DIR}/lm_core.cpp
+  ${LEVMAR_DIR}/Axb_core.cpp
+  ${LEVMAR_DIR}/misc_core.cpp
+)
 
+set_source_files_properties(${LEVMAR_SRC_INC} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 
 ############################################################################
@@ -138,7 +150,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 
 ############################################################################
-add_executable(${PROJECT_NAME} ${SRC} ${LAPACK_PART_SRC} ${LEVMAR_SRC})
+add_executable(${PROJECT_NAME} ${SRC} ${LAPACK_PART_SRC} ${LEVMAR_SRC} ${LEVMAR_SRC_INC})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)

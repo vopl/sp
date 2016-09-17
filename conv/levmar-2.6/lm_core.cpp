@@ -275,7 +275,7 @@ int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
       /* Cache efficient computation of J^T J based on blocking
        */
       LEVMAR_TRANS_MAT_MAT_MULT(jac, jacTjac, n, m);
-      for(i=0; i<m*m; ++i)
+      for(i=0; i<n*m; ++i)
       {
           jacTjac_fix[i] = 0;
       }

@@ -97,29 +97,11 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolver::setupFirs(real ppw, std::size_t samplesPerPeriod, std::size_t polyOrder)
+    void SignalConvolver::setup(real ppw, std::size_t samplesPerPeriod, std::size_t polyOrder)
     {
         _ppw = ppw;
         _samplesPerPeriod = samplesPerPeriod;
         _polyOrder = polyOrder;
-
-        const std::size_t firMult = 20;
-
-        std::size_t firLen = _samplesPerPeriod*firMult-1;
-
-        real lowBndT = (real(firLen-1))/(_ppw*(1+0.05/_ppw))/firMult*2;
-        halfLowPassFir(lowBndT, firLen, _halfFir);
-
-        real highBndT = (real(firLen-1))/(_ppw*(1-0.05/_ppw))/firMult*2;
-        TVReal hhpf;
-        halfHighPassFir(highBndT, firLen, hhpf);
-
-
-        for(std::size_t i(0); i<_halfFir.size(); ++i)
-        {
-            _halfFir[i] = -(_halfFir[i] + hhpf[i]);
-        }
-        _halfFir.back() += 1.0;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -133,15 +115,13 @@ namespace sp
         std::fill(_signal.begin(), _signal.end(), real(0));
 
         _sat = sat;
-
-        _dirty = true;
     }
 
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     void SignalConvolver::setup(real ppw, const TVReal &periods, real sampleStep, std::size_t samplesPerPeriod, std::size_t polyOrder, SignalApproxType sat)
     {
-        setupFirs(ppw, samplesPerPeriod, polyOrder);
+        setup(ppw, samplesPerPeriod, polyOrder);
         setupSignal(periods.back(), sampleStep, sat);
 
         _levels.resize(periods.size());
@@ -172,7 +152,6 @@ namespace sp
         }
 
         _signalSamplesPushed += amount;
-        _dirty = true;
     }
 
 
@@ -185,20 +164,15 @@ namespace sp
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     TVComplex /*echo*/ SignalConvolver::convolve()
     {
-        /*
-        что дальше
-
-            обрезка по частоте, попробовать через сигмоид переключать сигнал-результат фильтра
-        */
-
-        prepareValues();
+        const real *signal = &_signal[0];
+        std::size_t signalSize = _signal.size();
 
         TVComplex res(_levels.size());
 
         for(std::size_t i(0); i<_levels.size(); ++i)
         {
             //std::cerr<<"convolve level "<<i<<std::endl;
-            res[i] = _levels[i]->convolve();
+            res[i] = _levels[i]->convolve(signal, signalSize, _sat);
         }
 
         return res;
@@ -210,48 +184,13 @@ namespace sp
         std::size_t signalSize = _signal.size();
 
         SignalConvolverLevel level(_ppw, period, _signalSampleStep, _samplesPerPeriod, _polyOrder);
-        level.update(signal, signalSize, _sat);
-        level.filtrate(_halfFir);
-
-        return level.convolve();
+        return level.convolve(signal, signalSize, _sat);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     complex /*echo*/ SignalConvolver::convolveIdentity(real period, real phase)
     {
         SignalConvolverLevel level(_ppw, period, _signalSampleStep, _samplesPerPeriod, _polyOrder);
-        level.updateIdentity(period, phase);
-        level.filtrate(_halfFir);
-
-        return level.convolve();
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolver::prepareValues()
-    {
-        if(!_dirty)
-        {
-            return;
-        }
-
-        _dirty = false;
-
-        {
-            const real *signal = &_signal[0];
-            std::size_t signalSize = _signal.size();
-
-            for(std::size_t i(0); i<_levels.size(); ++i)
-            {
-                //std::cerr<<"update level "<<i<<std::endl;
-                _levels[i]->update(signal, signalSize, _sat);
-            }
-        }
-
-        for(std::size_t i(0); i<_levels.size(); ++i)
-        {
-            //std::cerr<<"filtrate level "<<i<<std::endl;
-            _levels[i]->filtrate(_halfFir);
-        }
-
+        return level.convolveIdentity(period, phase);
     }
 }

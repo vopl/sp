@@ -21,7 +21,7 @@ namespace sp
         ~SignalConvolver();
 
 
-        void setupFirs(real ppw, std::size_t samplesPerPeriod, std::size_t polyOrder);
+        void setup(real ppw, std::size_t samplesPerPeriod, std::size_t polyOrder);
         void setupSignal(real sampleStep, real maxPeriod, SignalApproxType sat = SignalApproxType::linear);
         void setup(real ppw, const TVReal &periods, real sampleStep, std::size_t samplesPerPeriod, std::size_t polyOrder, SignalApproxType sat = SignalApproxType::linear);
 
@@ -34,9 +34,6 @@ namespace sp
         complex /*echo*/ convolveIdentity(real period, real phase);
 
     private:
-        void prepareValues();
-
-    private:
         real                            _ppw = 0;
         SignalApproxType                _sat = SignalApproxType::linear;
         real                            _signalSampleStep = 0;
@@ -44,14 +41,9 @@ namespace sp
         std::size_t                     _samplesPerPeriod = 0;
         std::size_t                     _polyOrder = 0;
         TVReal                          _signal;
-        bool                            _dirty = true;
 
         using LevelPtr = std::unique_ptr<SignalConvolverLevel>;
         std::vector<LevelPtr> _levels;
-
-        //std::vector<std::vector<real>> _halfFirs;
-        TVReal _halfFir;
-
     };
 
 }

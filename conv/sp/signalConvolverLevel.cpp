@@ -20,7 +20,6 @@ namespace sp
         , _samplesPerPeriod(samplesPerPeriod)
         , _sampleStep(_period/samplesPerPeriod)
         , _polyOrder(polyOrder)
-        , _values(std::size_t(_samplesPerPeriod*ppw + 0.5))
     {
     }
 
@@ -282,12 +281,12 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolverLevel::update(const real *signal, std::size_t signalSize, SignalApproxType sat)
+    void SignalConvolverLevel::update(TVReal &values, const real *signal, std::size_t signalSize, SignalApproxType sat)
     {
         switch(sat)
         {
         case SignalApproxType::linear:
-            for(std::size_t valueIndex(0); valueIndex<_values.size(); ++valueIndex)
+            for(std::size_t valueIndex(0); valueIndex<values.size(); ++valueIndex)
             {
                 real startTime = _sampleStep*valueIndex;
                 real stopTime = startTime+_sampleStep;
@@ -298,12 +297,12 @@ namespace sp
                 assert(signalStartIdx >= 0);
                 assert(signalStopIdx < signalSize-1);
 
-                _values[valueIndex] = updateOneLinear(signal, signalSize, startTime, stopTime, signalStartIdx, signalStopIdx);
+                values[valueIndex] = updateOneLinear(signal, signalSize, startTime, stopTime, signalStartIdx, signalStopIdx);
             }
             break;
 
         case SignalApproxType::poly6p5o32x:
-            for(std::size_t valueIndex(0); valueIndex<_values.size(); ++valueIndex)
+            for(std::size_t valueIndex(0); valueIndex<values.size(); ++valueIndex)
             {
                 real startTime = _sampleStep*valueIndex+ 2*_signalSampleStep;
                 real stopTime = startTime+_sampleStep;
@@ -320,7 +319,7 @@ namespace sp
                 assert(signalStartIdx >= 2);
                 assert(signalStopIdx < signalSize-1-3);
 
-                _values[valueIndex] = updateOnePoly(signal, signalSize, startTime, stopTime, signalStartIdx, signalStopIdx);
+                values[valueIndex] = updateOnePoly(signal, signalSize, startTime, stopTime, signalStartIdx, signalStopIdx);
             }
             break;
 
@@ -338,40 +337,40 @@ namespace sp
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolverLevel::updateIdentity(real period, real phase)
+    void SignalConvolverLevel::updateIdentity(TVReal &values, real period, real phase)
     {
         real stepMult = real(1)/g_2pi/_sampleStep;
-        for(std::size_t valueIndex(0); valueIndex<_values.size(); ++valueIndex)
+        for(std::size_t valueIndex(0); valueIndex<values.size(); ++valueIndex)
         {
             real startTime = _sampleStep*valueIndex;
             real stopTime = startTime+_sampleStep;
 
-            _values[valueIndex] = stepMult * (sin(g_2pi*stopTime + phase) - sin(g_2pi*startTime + phase));
+            values[valueIndex] = stepMult * (sin(g_2pi*stopTime + phase) - sin(g_2pi*startTime + phase));
         }
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolverLevel::filtrate(const TVReal &halfFir)
+    void SignalConvolverLevel::filtrate(const TVReal &values, std::vector<Serie> &series)
     {
-        _series.clear();
+        series.clear();
 
         ///////////////////////////////
         Serie serie0;
 
         serie0._dp = 0;
-        serie0._points.resize(_values.size());
-        for(std::size_t index(0); index<_values.size(); ++index)
+        serie0._points.resize(values.size());
+        for(std::size_t index(0); index<values.size(); ++index)
         {
-            serie0._points[index] = _values[index];
+            serie0._points[index] = values[index];
         }
-        _series.push_back(serie0);
+        series.push_back(serie0);
 
 
         ///////////////////////////////
         Serie serie1 = serie0;
         for(std::size_t i(0); i<3; ++i)
         {
-            _series.push_back(serie1 = dif(serie1));
+            series.push_back(serie1 = dif(serie1));
         }
 
 
@@ -379,14 +378,14 @@ namespace sp
         serie1 = serie0;
         for(std::size_t i(0); i<3; ++i)
         {
-            _series.push_back(serie1 = int_(serie1));
+            series.push_back(serie1 = int_(serie1));
         }
 
 
         std::size_t resultSamples = _samplesPerPeriod;
-        for(std::size_t i(0); i<_series.size(); ++i)
+        for(std::size_t i(0); i<series.size(); ++i)
         {
-            resultSamples = std::min(resultSamples, finalize(_series[i]));
+            resultSamples = std::min(resultSamples, finalize(series[i]));
         }
     }
 
@@ -750,7 +749,31 @@ namespace sp
 #endif
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    complex SignalConvolverLevel::convolve()
+    complex SignalConvolverLevel::convolve(const real *signal, std::size_t signalSize, SignalApproxType sat)
+    {
+        TVReal _values(std::size_t(_samplesPerPeriod*_ppw + 0.5));
+        update(_values, signal, signalSize, sat);
+
+        std::vector<Serie> _series;
+        filtrate(_values, _series);
+
+        return convolve(_series);
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    complex SignalConvolverLevel::convolveIdentity(real period, real phase)
+    {
+        TVReal _values(std::size_t(_samplesPerPeriod*_ppw + 0.5));
+        updateIdentity(_values, period, phase);
+
+        std::vector<Serie> _series;
+        filtrate(_values, _series);
+
+        return convolve(_series);
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    complex SignalConvolverLevel::convolve(const std::vector<Serie> &_series)
     {
         if(_polyOrder)
         {
