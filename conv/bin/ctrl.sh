@@ -17,13 +17,13 @@ fi
 dir=`readlink -f $0`
 dir=`dirname $dir`
 cd $dir
-exe=$dir/${exename}
+exe=`realpath $dir/${exename}`
 
 
 
 function start
 {
-    pid=`pidof $exe`
+    pid=`pidof -x $exe`
     if [ -z "$pid" ];
     then
         ($exe >stdout 2>stderr)&
@@ -35,7 +35,7 @@ function start
         else
             echo "started, pid: $pid"
             sleep 0.1
-            pid=`pidof $exe`
+            pid=`pidof -x $exe`
             if [ -z "$pid" ];
             then
                 echo "stopped"
@@ -48,18 +48,18 @@ function start
 
 function status
 {
-    pid=`pidof $exe`
+    pid=`pidof -x $exe`
     if [ -z "$pid" ];
     then
-        echo "stopped"
+        echo "$exe stopped"
     else
-        echo "started, pid:$pid"
+        echo "$exe started, pid:$pid"
     fi
 }
 
 function stop
 {
-    pid=`pidof $exe`
+    pid=`pidof -x $exe`
     if [ -z "$pid" ];
     then
         echo "already stopped" > /dev/null
@@ -68,25 +68,25 @@ function stop
         cnt=0
         while [ $cnt -lt 10 ] && [ -n "$pid" ] && kill $pid 2>/dev/null; do
             sleep 0.02
-            pid=`pidof $exe`
+            pid=`pidof -x $exe`
             let cnt=cnt+1
             echo -n "."
         done
 
         while [ $cnt -lt 20 ] && [ -n "$pid" ] && kill $pid 2>/dev/null; do
             sleep 0.2
-            pid=`pidof $exe`
+            pid=`pidof -x $exe`
             let cnt=cnt+1
             echo -n "."
         done
 
-        pid=`pidof $exe`
+        pid=`pidof -x $exe`
         if [ -n "$pid" ]; then
             echo -n " force"
             kill -s KILL $pid 2>/dev/null
         fi
 
-        pid=`pidof $exe`
+        pid=`pidof -x $exe`
         if [ -n "$pid" ]; then
             echo -n " force2"
             kill -s ABRT $pid 2>/dev/null
@@ -94,7 +94,7 @@ function stop
             kill -s ILL $pid 2>/dev/null
         fi
 
-        pid=`pidof $exe`
+        pid=`pidof -x $exe`
         echo " done$pid"
     fi
 }
@@ -119,4 +119,3 @@ case $1 in
         exit 2
     ;;
 esac
-

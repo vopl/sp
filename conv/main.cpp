@@ -34,17 +34,20 @@ volatile bool g_stopBlocked = false;
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 void signal_handler(int)
 {
+    std::cerr<<"stop request "<<std::endl;
+    std::cerr.flush();
+
     if(!g_stopBlocked)
     {
         exit(-4);
     }
 
     g_stop++;
-    std::cerr<<"stop request "<<g_stop<<std::endl;
 
     if(g_stop > 20)
     {
         std::cerr<<"force termination"<<std::endl;
+        std::cerr.flush();
         exit(-5);
     }
 }

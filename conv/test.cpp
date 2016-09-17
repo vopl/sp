@@ -93,10 +93,10 @@ int test()
 
             signal[index] = 0;
 
-            sp::real a = x/xTarget;
+            sp::real a = 1;//x/xTarget;
 
-            //std::size_t k = spectrPeriods.grid().size()/2;
-            for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=5)
+            std::size_t k = spectrPeriods.grid().size()/2;
+            //for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=5)
             {
                 sp::real t = spectrPeriods.grid()[k];
                 signal[index] += a*sin((x-xTarget)*sp::g_2pi/t);

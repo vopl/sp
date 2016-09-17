@@ -8,7 +8,7 @@
 #include <set>
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-static const std::size_t phasesAmountForKernelApproximator = 37;//MAGIC
+static const std::size_t phasesAmountForKernelApproximator = 3;//MAGIC
 
 
 
@@ -39,7 +39,7 @@ namespace sp
 
     namespace
     {
-        using real4deconv = long double;
+        using real4deconv = double;
 
         //////////////////////////////////////////////////////////////////////////
         struct LevmarParams
@@ -488,7 +488,7 @@ namespace sp
         if(!_scp)
         {
             _scp.reset(new SignalConvolver);
-            _scp->setupFirs(_ppw, _samplesPerLevelPeriod, _convolverPolyOrder);
+            _scp->setup(_ppw, _samplesPerLevelPeriod, _convolverPolyOrder);
         }
 
         return *_scp;
