@@ -4,6 +4,7 @@
 set(CMAKE_CXX_FLAGS_RELEASE "")
 
 
+#################################################################################
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -static-libgcc -static-libstdc++")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG")
 
@@ -26,6 +27,19 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 
 
+#################################################################################
+execute_process(
+    COMMAND git log -n1 --pretty=format:%H
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    OUTPUT_VARIABLE "GIT_COMMIT"
+    ERROR_QUIET
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+message(STATUS "Git commit: ${GIT_COMMIT}")
+
+add_definitions(-DGIT_COMMIT=${GIT_COMMIT})
+
+
+#################################################################################
 project(conv)
 cmake_minimum_required(VERSION 2.8)
 
