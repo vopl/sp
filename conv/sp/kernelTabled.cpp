@@ -220,9 +220,9 @@ namespace sp
         {
             real4deconv levmarInfo[LM_INFO_SZ];
             std::vector<real4deconv> work;
-            if(work.size() < LM_DIF_WORKSZ(2, ys.size()*2))
+            if(work.size() < LM_DER_WORKSZ(2, ys.size()*2))
             {
-                work.resize(LM_DIF_WORKSZ(2, ys.size()*2));
+                work.resize(LM_DER_WORKSZ(2, ys.size()*2));
             }
 
             static real4deconv levmarOpts[LM_OPTS_SZ] =

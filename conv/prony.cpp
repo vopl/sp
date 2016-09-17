@@ -218,9 +218,9 @@ void prony()
         std::fill(args.begin(), args.end(), (sp::real)(0));
 
         static std::vector<sp::real> work;
-        if(work.size() < LM_DIF_WORKSZ(args.size(), scaledFilteredSignal.size()))
+        if(work.size() < LM_DER_WORKSZ(args.size(), scaledFilteredSignal.size()))
         {
-            work.resize(LM_DIF_WORKSZ(args.size(), scaledFilteredSignal.size()));
+            work.resize(LM_DER_WORKSZ(args.size(), scaledFilteredSignal.size()));
         }
 
         struct LevmarParams

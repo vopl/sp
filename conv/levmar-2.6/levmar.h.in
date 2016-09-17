@@ -68,8 +68,8 @@
 /* work arrays size for ?levmar_der and ?levmar_dif functions.
  * should be multiplied by sizeof(double) or sizeof(float) to be converted to bytes
  */
-#define LM_DER_WORKSZ(npar, nmeas) ((2*(nmeas) + 4*(npar) + (nmeas)*(npar) + (npar)*(npar))*4)
-#define LM_DIF_WORKSZ(npar, nmeas) ((4*(nmeas) + 4*(npar) + (nmeas)*(npar) + (npar)*(npar))*4)
+#define LM_DER_WORKSZ(npar, nmeas) (2*(nmeas) + 4*(npar) + (nmeas)*(npar) + (npar)*(npar))
+#define LM_DIF_WORKSZ(npar, nmeas) (4*(nmeas) + 4*(npar) + (nmeas)*(npar) + (npar)*(npar))
 
 /* work arrays size for ?levmar_bc_der and ?levmar_bc_dif functions.
  * should be multiplied by sizeof(double) or sizeof(float) to be converted to bytes
