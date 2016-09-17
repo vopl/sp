@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include <csignal>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 
@@ -19,38 +20,34 @@ using namespace sp;
 
 
 
-//hann, hann2
-
-
-
-    /*
-     * параметры ядра
-     * ppw
-     * splp - samples per leveled period = 800
-     *
-     * сетка периода отклика
-     * efmin, efmax, efcount, efscaletype
-     *
-     * сетка периода спектра
-     * sfmin, sfmax, sfcount, sfscaletype
-     *
-     *
-     * входной файл (wav моно, отфильтрованый, в высоком разрешении)
-     * in
-     *
-     * выходной файл с откликом (поток вещественных блоков)
-     * eout
-     *
-     * выходной файл со спектром (поток вещественных блоков)
-     * sout
-     */
-
 
 
 
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
+
+
+volatile std::size_t g_stop = 0;
+volatile bool g_stopBlocked = false;
+
+/////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+void signal_handler(int)
+{
+    if(!g_stopBlocked)
+    {
+        exit(-4);
+    }
+
+    g_stop++;
+    std::cerr<<"stop request "<<g_stop<<std::endl;
+
+    if(g_stop > 20)
+    {
+        std::cerr<<"force termination"<<std::endl;
+        exit(-5);
+    }
+}
 
 void prony();
 void test();
@@ -82,6 +79,10 @@ int main(int argc, char *argv[])
 
 
 
+    std::signal(SIGTERM, signal_handler);
+    std::signal(SIGQUIT, signal_handler);
+    std::signal(SIGINT, signal_handler);
+    std::signal(SIGSTOP, signal_handler);
 
 
 
@@ -400,8 +401,15 @@ int main(int argc, char *argv[])
 
         //std::cerr<<"upd: "<<spectr[270].re()<<", "<<spectr[270].im()<<std::endl;
 
+        g_stopBlocked = true;
         echoStore.pushFrames(echo);
         spectrStore.pushFrames(spectr);
+        g_stopBlocked = false;
+
+        if(g_stop)
+        {
+            break;
+        }
     }
 
     return EXIT_SUCCESS;
