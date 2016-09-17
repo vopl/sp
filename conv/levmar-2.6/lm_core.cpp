@@ -110,19 +110,16 @@ int worksz, freework=0, issolved;
 LM_REAL *e,          /* nx1 */
        *hx,         /* \hat{x}_i, nx1 */
        *jacTe,      /* J^T e_i mx1 */
-       *jacTe_fix,
        *jac,        /* nxm */
        *jacTjac,    /* mxm */
-       *jacTjac_fix,
        *Dp,         /* mx1 */
    *diag_jacTjac,   /* diagonal of J^T J, mx1 */
-   *diag_jacTjac_fix,
        *pDp;        /* p + Dp, mx1 */
 
 LM_REAL mu,  /* damping constant */
                 tmp; /* mainly used in matrix & vector multiplications */
 LM_REAL p_eL2, jacTe_inf, pDp_eL2; /* ||e(p)||_2, ||J^T e||_inf, ||e(p+Dp)||_2 */
-LM_REAL p_L2, p_L2_fix, Dp_L2=LM_REAL_MAX, Dp_L2_fix=0, dF, dL, dL_fix;
+LM_REAL p_L2, Dp_L2=LM_REAL_MAX, dF, dL;
 LM_REAL tau, eps1, eps2, eps2_sq, eps3;
 LM_REAL init_p_eL2;
 long long nu=1, nu2;
@@ -172,23 +169,17 @@ int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
   /* set up work arrays */
   e=work;
   hx=e + n;
-
   jacTe=hx + n;
-  jacTe_fix=jacTe + n;//TODO размер ворка проконтролировать
-
-  jac=jacTe_fix + m;
-
+  jac=jacTe + m;
   jacTjac=jac + nm;
-  jacTjac_fix=jacTjac + nm,
-
-  Dp=jacTjac_fix + m*m;
-
+  Dp=jacTjac + m*m;
   diag_jacTjac=Dp + m;
-  diag_jacTjac_fix=diag_jacTjac + m;
-
-  pDp=diag_jacTjac_fix + m;
+  pDp=diag_jacTjac + m;
 
   assert(pDp+m <= work+worksz);
+  for(i=0; i<worksz; ++i){
+      work[i] = 0;
+  }
 
   /* compute e=x - f(p) and its L2 norm */
   (*func)(p, hx, m, n, adata); nfev=1;
@@ -275,34 +266,27 @@ int (*linsolver)(LM_REAL *A, LM_REAL *B, LM_REAL *x, int m)=NULL;
       /* Cache efficient computation of J^T J based on blocking
        */
       LEVMAR_TRANS_MAT_MAT_MULT(jac, jacTjac, n, m);
-      for(i=0; i<n*m; ++i)
-      {
-          jacTjac_fix[i] = 0;
-      }
 
       /* cache efficient computation of J^T e */
       for(i=0; i<m; ++i){
         jacTe[i]=0.0;
-        jacTe_fix[i]=0.0;
       }
 
       for(i=0; i<n; ++i){
         LM_REAL *jacrow;
 
         for(l=0, jacrow=jac+i*m, tmp=e[i]; l<m; ++l) {
-          //jacTe[l]+=jacrow[l]*tmp;
-          add(jacTe[l], jacTe_fix[l], jacrow[l]*tmp);
+          jacTe[l]+=jacrow[l]*tmp;
         }
       }
     }
 
       /* Compute ||J^T e||_inf and ||p||^2 */
-    for(i=0, p_L2=p_L2_fix=jacTe_inf=0.0; i<m; ++i){
+    for(i=0, p_L2=jacTe_inf=0.0; i<m; ++i){
       if(jacTe_inf < (tmp=FABS(jacTe[i]))) jacTe_inf=tmp;
 
       diag_jacTjac[i]=jacTjac[i*m+i]; /* save diagonal entries so that augmentation can be later canceled */
-      diag_jacTjac_fix[i]=jacTjac_fix[i*m+i]; /* save diagonal entries so that augmentation can be later canceled */
-      add(p_L2, p_L2_fix, p[i]*p[i]);
+      p_L2+=p[i]*p[i];
     }
     //p_L2=sqrt(p_L2);
 
@@ -318,7 +302,6 @@ if(!(k%100)){
     /* check for convergence */
     if((jacTe_inf <= eps1)){
       Dp_L2=0.0; /* no increment for p in this case */
-      Dp_L2_fix=0.0;
       stop=1;
       break;
     }
@@ -334,7 +317,7 @@ if(!(k%100)){
     while(1){
       /* augment normal equations */
       for(i=0; i<m; ++i){
-        add(jacTjac[i*m+i], jacTjac_fix[i*m+i], mu);
+        jacTjac[i*m+i]+=mu;
       }
 
       /* solve augmented equations */
@@ -363,9 +346,9 @@ if(!(k%100)){
 
       if(issolved){
         /* compute p's new estimate and ||Dp||^2 */
-        for(i=0, Dp_L2=0.0, Dp_L2_fix=0.0; i<m; ++i){
+        for(i=0, Dp_L2=0.0; i<m; ++i){
           pDp[i]=p[i] + (tmp=Dp[i]);
-          add(Dp_L2, Dp_L2_fix, tmp*tmp);
+          Dp_L2+=tmp*tmp;
         }
         //Dp_L2=sqrt(Dp_L2);
 
@@ -400,9 +383,8 @@ if(!(k%100)){
           break;
         }
 
-        for(i=0, dL=0.0, dL_fix=0.0; i<m; ++i){
-          add(dL, dL_fix, Dp[i]*(mu*Dp[i]));
-          add(dL, dL_fix, Dp[i]*(jacTe[i]));
+        for(i=0, dL=0.0; i<m; ++i){
+          dL+=Dp[i]*(mu*Dp[i] + jacTe[i]);
         }
 
         dF=p_eL2-pDp_eL2;
@@ -437,7 +419,6 @@ if(!(k%100)){
 
       for(i=0; i<m; ++i){ /* restore diagonal J^T J entries */
         jacTjac[i*m+i]=diag_jacTjac[i];
-        jacTjac_fix[i*m+i]=diag_jacTjac_fix[i];
       }
     } /* inner loop */
   }
@@ -446,7 +427,6 @@ if(!(k%100)){
 
   for(i=0; i<m; ++i) {/* restore diagonal J^T J entries */
     jacTjac[i*m+i]=diag_jacTjac[i];
-    jacTjac_fix[i*m+i]=diag_jacTjac_fix[i];
   }
 
   if(info){

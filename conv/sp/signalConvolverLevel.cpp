@@ -583,9 +583,9 @@ namespace sp
             std::fill(args.begin(), args.end(), real(0));
 
             static TVReal work;
-            if(work.size() < LM_DIF_WORKSZ(args.size(), ys.size()))
+            if(work.size() < LM_DER_WORKSZ(args.size(), ys.size()))
             {
-                work.resize(LM_DIF_WORKSZ(args.size(), ys.size()));
+                work.resize(LM_DER_WORKSZ(args.size(), ys.size()));
             }
 
 
