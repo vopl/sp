@@ -26,7 +26,7 @@ function start
     pid=`pidof -x $exe`
     if [ -z "$pid" ];
     then
-        ($exe >stdout 2>stderr)&
+        ($exe >>stdout 2>>stderr)&
         pid=$!
         disown
         if [ -z "$pid" ];
