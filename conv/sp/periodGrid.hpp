@@ -1,6 +1,6 @@
 #pragma once
 
-#include "types.hpp"
+#include "sp/math.hpp"
 
 namespace sp
 {

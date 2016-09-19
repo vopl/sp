@@ -1,6 +1,5 @@
 #pragma once
 
-#include "types.hpp"
 #include <cmath>
 #include <cassert>
 
@@ -16,7 +15,7 @@ namespace sp
     {
     public:
 //        complex();
-        complex(real v1=0, real v2=0, EComplexConstructType ecct = CREIM);
+        complex(real v1=real(), real v2=real(), EComplexConstructType ecct = CREIM);
         complex(const complex &z);
 
         void setAP(real a, real p);
@@ -74,7 +73,7 @@ namespace sp
             break;
         default:
             assert(0);
-            _re = _im = 0;
+            _re = _im = real();
         }
     }
 
@@ -264,32 +263,32 @@ namespace sp
 
 
     //////////////////////////////////////////////////////////////////////////
-    inline const bool operator==(const complex &lhs, const complex &rhs)
+    inline bool operator==(const complex &lhs, const complex &rhs)
     {
         return lhs.re() == rhs.re() && lhs.im() == rhs.im();
     }
 
-    inline const bool operator==(const real &lhs, const complex &rhs)
+    inline bool operator==(const real &lhs, const complex &rhs)
     {
         return lhs == rhs.re() && 0 == rhs.im();
     }
 
-    inline const bool operator==(const complex &lhs, const real &rhs)
+    inline bool operator==(const complex &lhs, const real &rhs)
     {
         return lhs.re() == rhs && lhs.im() == 0;
     }
 
-    inline const bool operator!=(const complex &lhs, const complex &rhs)
+    inline bool operator!=(const complex &lhs, const complex &rhs)
     {
         return !operator==(lhs, rhs);
     }
 
-    inline const bool operator!=(const real &lhs, const complex &rhs)
+    inline bool operator!=(const real &lhs, const complex &rhs)
     {
         return !operator==(lhs, rhs);
     }
 
-    inline const bool operator!=(const complex &lhs, const real &rhs)
+    inline bool operator!=(const complex &lhs, const real &rhs)
     {
         return !operator==(lhs, rhs);
     }
@@ -347,7 +346,7 @@ namespace sp
     {
         return complex(lhs.re()*rhs,  lhs.im()*rhs);
     }
-    
+
     inline const complex operator*(const real &lhs, const complex &rhs)
     {
         return complex(lhs*rhs.re(),  lhs*rhs.im());
@@ -358,12 +357,12 @@ namespace sp
     {
         return complex(lhs) /= rhs;
     }
-    
+
     inline const complex operator/(const real &lhs, const complex &rhs)
     {
         return complex(lhs) /= rhs;
     }
-    
+
     inline const complex operator/(const complex &lhs, const real &rhs)
     {
         return complex(lhs.re()/rhs, lhs.im()/rhs);

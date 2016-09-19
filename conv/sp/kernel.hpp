@@ -10,7 +10,7 @@ namespace sp
     class Kernel
     {
     public:
-        Kernel(real pow);
+        Kernel(real ppw);
         ~Kernel();
 
         complex eval(real t, real st, const complex &sv);
@@ -19,9 +19,9 @@ namespace sp
             size_t esize, const real *et, const complex *ev,//отклик
             size_t ssize, const real *st,       complex *sv,//спектр
             size_t itMax,//макс итераций
-            TVReal &work);
+            std::vector<double> &work);
 
     private:
-        real _pow;
+        real _ppw;
     };
 }
