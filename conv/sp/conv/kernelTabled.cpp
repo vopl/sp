@@ -1,4 +1,4 @@
-#include "sp/kernelTabled.hpp"
+#include "sp/conv/kernelTabled.hpp"
 #include "sp/math.hpp"
 #include "levmar.h"
 
@@ -12,7 +12,7 @@ static const std::size_t phasesAmountForKernelApproximator = 3;//MAGIC
 
 
 
-namespace sp
+namespace sp { namespace conv
 {
     KernelTabled::KernelTabled(real ppw, std::size_t samplesPerLevelPeriod, std::size_t convolverPolyOrder)
         : _ppw(ppw)
@@ -494,4 +494,4 @@ namespace sp
         return *_scp;
     }
 
-}
+}}

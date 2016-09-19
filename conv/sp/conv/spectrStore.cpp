@@ -1,9 +1,9 @@
-#include "sp/spectrStore.hpp"
+#include "sp/conv/spectrStore.hpp"
 #include <iostream>
 #include <limits>
 #include <cassert>
 
-namespace sp
+namespace sp { namespace conv
 {
     SpectrStore::SpectrStore(const std::string &fName, const TVReal &periodGrid)
         : _periodGrid(periodGrid)
@@ -103,4 +103,4 @@ namespace sp
 
         return _re && _im;
     }
-}
+}}
