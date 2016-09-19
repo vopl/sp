@@ -1,4 +1,4 @@
-#include "sp/signalConvolverLevel.hpp"
+#include "sp/conv/signalConvolverLevel.hpp"
 #include "sp/math.hpp"
 #include "levmar.h"
 #include <cassert>
@@ -10,7 +10,7 @@
 #include <boost/math/constants/constants.hpp>
 
 
-namespace sp
+namespace sp { namespace conv
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     SignalConvolverLevel::SignalConvolverLevel(real ppw, real period, real signalSampleStep, std::size_t samplesPerPeriod, std::size_t polyOrder)
@@ -823,4 +823,4 @@ namespace sp
         return res;
     }
 
-}
+}}

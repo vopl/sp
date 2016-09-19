@@ -1,9 +1,9 @@
 #pragma once
 
 #include "sp/math.hpp"
-#include "sp/signalConvolver.hpp"
+#include "sp/conv/signalConvolver.hpp"
 
-namespace sp
+namespace sp { namespace conv
 {
     class SignalConvolverLevel
     {
@@ -48,4 +48,4 @@ namespace sp
         complex convolve(const std::vector<Serie> &_series);
     };
 
-}
+}}

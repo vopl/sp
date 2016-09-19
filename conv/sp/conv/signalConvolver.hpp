@@ -1,11 +1,11 @@
 #pragma once
 
-#include "sp/periodGrid.hpp"
+#include "sp/conv/periodGrid.hpp"
 #include "sp/math.hpp"
 
 #include <memory>
 
-namespace sp
+namespace sp { namespace conv
 {
     enum class SignalApproxType
     {
@@ -46,4 +46,4 @@ namespace sp
         std::vector<LevelPtr> _levels;
     };
 
-}
+}}

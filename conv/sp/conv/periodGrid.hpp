@@ -2,7 +2,7 @@
 
 #include "sp/math.hpp"
 
-namespace sp
+namespace sp { namespace conv
 {
     enum class PeriodGridType
     {
@@ -23,4 +23,4 @@ namespace sp
     private:
         TVReal _grid;
     };
-}
+}}

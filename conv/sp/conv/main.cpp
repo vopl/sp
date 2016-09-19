@@ -6,15 +6,16 @@
 #include <boost/filesystem.hpp>
 
 #include "sp/math.hpp"
-#include "sp/kernelTabled.hpp"
-#include "sp/periodGrid.hpp"
-#include "sp/signalConvolver.hpp"
+#include "sp/conv/kernelTabled.hpp"
+#include "sp/conv/periodGrid.hpp"
+#include "sp/conv/signalConvolver.hpp"
 
-#include "sp/loadWav.hpp"
-#include "sp/spectrStore.hpp"
+#include "sp/conv/loadWav.hpp"
+#include "sp/conv/spectrStore.hpp"
 
 using namespace std;
 using namespace sp;
+using namespace sp::conv;
 
 
 

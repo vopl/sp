@@ -1,8 +1,8 @@
-#include "sp/loadWav.hpp"
+#include "sp/conv/loadWav.hpp"
 #include <iostream>
 #include <fstream>
 
-namespace sp
+namespace sp { namespace conv
 {
     using namespace std;
     namespace
@@ -122,4 +122,4 @@ namespace sp
 
         return true;
     }
-}
+}}

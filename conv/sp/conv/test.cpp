@@ -1,12 +1,13 @@
 #include <iostream>
 
 #include "sp/math.hpp"
-#include "sp/kernel.hpp"
-#include "sp/kernelTabled.hpp"
-#include "sp/periodGrid.hpp"
-#include "sp/signalConvolver.hpp"
+#include "sp/conv/kernelTabled.hpp"
+#include "sp/conv/periodGrid.hpp"
+#include "sp/conv/signalConvolver.hpp"
 
 using namespace std;
+using namespace sp;
+using namespace sp::conv;
 
 
 
@@ -35,7 +36,7 @@ int test()
     sp::real tMax = 1.0/0.4;
     std::size_t tCount = 1000;
 
-    sp::PeriodGrid echoPeriods(tMin, tMax, tCount, sp::PeriodGridType::frequencyLog);
+    PeriodGrid echoPeriods(tMin, tMax, tCount, PeriodGridType::frequencyLog);
     std::cerr
           <<"efmin: "<<(1.0/echoPeriods.grid().back())
           <<", efmax: "<<(1.0/echoPeriods.grid().front())
@@ -43,11 +44,11 @@ int test()
           <<", efstep: "<<(echoPeriods.grid()[1]/echoPeriods.grid()[0])
           <<std::endl;
 
-    sp::PeriodGrid spectrPeriods = sp::PeriodGrid(
+    PeriodGrid spectrPeriods = PeriodGrid(
             echoPeriods.grid()[0],
             echoPeriods.grid()[600],
             600,
-            sp::PeriodGridType::frequencyLog);
+            PeriodGridType::frequencyLog);
     std::cerr
             <<"sfmin: "<<(1.0/spectrPeriods.grid().back())
             <<", sfmax: "<<(1.0/spectrPeriods.grid().front())
@@ -70,18 +71,18 @@ int test()
 
     if(1)
     {
-        sp::TVComplex response(echoPeriods.grid().size());
-        sp::KernelTabled kt(POW, splp, cpo);
+        TVComplex response(echoPeriods.grid().size());
+        KernelTabled kt(POW, splp, cpo);
         //sp::Kernel kt(POW);
 
-//        kt.eval(0.75223948756, 1, sp::complex(.23452,1.3456));
+//        kt.eval(0.75223948756, 1, complex(.23452,1.3456));
 //        exit(0);
 
 
 
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         std::cerr<<"make signal"<<std::endl;
-        sp::TVReal signal;
+        TVReal signal;
 
         signal.resize(std::size_t(tMax*POW*1.2/sampleStep+1));//чтобы уместился максимальный период
         for(size_t index(0); index<signal.size(); ++index)
@@ -97,7 +98,7 @@ int test()
             for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=5)
             {
                 sp::real t = spectrPeriods.grid()[k];
-                signal[index] += a*sin((x-xTarget)*sp::g_2pi/t);
+                signal[index] += a*sp::sin((x-xTarget)*sp::g_2pi/t);
             }
 
 
@@ -107,8 +108,8 @@ int test()
 
 
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        sp::SignalConvolver c;
-        c.setup(POW, echoPeriods.grid(), sampleStep, splp, cpo, sp::SignalApproxType::poly6p5o32x);
+        SignalConvolver c;
+        c.setup(POW, echoPeriods.grid(), sampleStep, splp, cpo, SignalApproxType::poly6p5o32x);
 
         std::cerr<<"push signal"<<std::endl;
         c.pushSignal(&signal[0], signal.size());
@@ -129,7 +130,7 @@ int test()
 //            //for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
 //            {
 //                //std::cerr<<(echoPeriods.grid()[i]/echoPeriods.grid()[k])<<std::endl;
-//                response[i] += kt.eval(echoPeriods.grid()[i], echoPeriods.grid()[k], sp::complex(1,0));
+//                response[i] += kt.eval(echoPeriods.grid()[i], echoPeriods.grid()[k], complex(1,0));
 //            }
 //        }
 
@@ -145,7 +146,7 @@ int test()
         std::cerr<<"deconvolve"<<std::endl;
         //for(int iters0(1); iters0<20; iters0++)
         {
-            sp::TVComplex spectr(spectrPeriods.grid().size());
+            TVComplex spectr(spectrPeriods.grid().size());
 
             std::size_t iters = 10;
             sp::real error0 = 0;

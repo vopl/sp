@@ -1,5 +1,5 @@
-#include "sp/signalConvolver.hpp"
-#include "sp/signalConvolverLevel.hpp"
+#include "sp/conv/signalConvolver.hpp"
+#include "sp/conv/signalConvolverLevel.hpp"
 #include "sp/math.hpp"
 #include <cassert>
 #include <numeric>
@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-namespace sp
+namespace sp { namespace conv
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     SignalConvolver::SignalConvolver()
@@ -193,4 +193,4 @@ namespace sp
         SignalConvolverLevel level(_ppw, period, _signalSampleStep, _samplesPerPeriod, _polyOrder);
         return level.convolveIdentity(period, phase);
     }
-}
+}}

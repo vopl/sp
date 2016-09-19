@@ -3,7 +3,7 @@
 
 #include <fstream>
 
-namespace sp
+namespace sp { namespace conv
 {
     class SpectrStore
     {
@@ -20,4 +20,4 @@ namespace sp
         std::fstream _im;
         std::size_t _framesPushed = 0;
     };
-}
+}}

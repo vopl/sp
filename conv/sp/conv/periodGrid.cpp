@@ -1,7 +1,7 @@
 #include "periodGrid.hpp"
 #include <cassert>
 
-namespace sp
+namespace sp { namespace conv
 {
     PeriodGrid::PeriodGrid(real periodMin, real periodMax, std::size_t steps, PeriodGridType type)
     {
@@ -70,4 +70,4 @@ namespace sp
         return _grid;
     }
 
-}
+}}

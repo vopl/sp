@@ -1,11 +1,11 @@
 #pragma once
 
 #include "sp/math.hpp"
-#include "sp/signalConvolver.hpp"
+#include "sp/conv/signalConvolver.hpp"
 #include <string>
 #include <map>
 
-namespace sp
+namespace sp { namespace conv
 {
     class KernelTabled
     {
@@ -56,4 +56,4 @@ namespace sp
         ValuesByPeriod _valuesByPeriod;
         std::size_t _addedValuesAmount = 0;
     };
-}
+}}

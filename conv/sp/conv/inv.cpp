@@ -2,10 +2,9 @@
 #include <eigen3/Eigen/SVD>
 
 #include "sp/math.hpp"
-#include "sp/kernel.hpp"
-#include "sp/kernelTabled.hpp"
-#include "sp/periodGrid.hpp"
-#include "sp/signalConvolver.hpp"
+#include "sp/conv/kernelTabled.hpp"
+#include "sp/conv/periodGrid.hpp"
+#include "sp/conv/signalConvolver.hpp"
 
 using namespace std;
 
