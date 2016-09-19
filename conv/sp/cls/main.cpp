@@ -13,10 +13,10 @@ int main(int argc, char *argv[])
 
     SOM som;
 
-    std::size_t shapeCols = 8;
-    std::size_t shapeRows = 12;
+    std::size_t shapeCols = 20;
+    std::size_t shapeRows = 10;
 
-    som.init(shapeCols, shapeRows, 24);
+    som.init(shapeCols, shapeRows, 100);
 
     std::size_t periodsAmount = sf.periodGrid().size();
 
@@ -43,14 +43,31 @@ int main(int argc, char *argv[])
                     break;
                 }
 
-                som.push4Learn(shape);
+                //выровнять амплитуду на 1 и фазу на 0
+                complex middle;
+                for(const complex &v : shape->_values)
+                {
+                    middle += v;
+                }
+                middle /= shape->_values.size();
+
+                if(middle.a() > 0)
+                {
+                    for(complex &v : shape->_values)
+                    {
+                        v /= middle;
+                    }
+
+                    som.push4Learn(shape);
+                }
             }
 
             frame++;
 
-            if(!(frame%10))
+            if(!(frame%30))
             {
-                som.fixLearn(0.001);
+                std::cout<<frame<<std::endl;
+                som.fixLearn(0.0001);
             }
         }
     }
