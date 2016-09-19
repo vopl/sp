@@ -23,8 +23,11 @@ namespace sp
 
         real &re();
         real &im();
+        real &operator[](std::size_t idx);
+
         const real &re() const;
         const real &im() const;
+        const real &operator[](std::size_t idx) const;
 
         real a() const;
         real p() const;
@@ -111,6 +114,13 @@ namespace sp
     }
 
     //////////////////////////////////////////////////////////////////////////
+    inline real &complex::operator[](std::size_t idx)
+    {
+        assert(idx<2);
+        return idx ? _im : _re;
+    }
+
+    //////////////////////////////////////////////////////////////////////////
     inline const real &complex::re() const
     {
         return _re;
@@ -120,6 +130,13 @@ namespace sp
     inline const real &complex::im() const
     {
         return _im;
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    inline const real &complex::operator[](std::size_t idx) const
+    {
+        assert(idx<2);
+        return idx ? _im : _re;
     }
 
     //////////////////////////////////////////////////////////////////////////

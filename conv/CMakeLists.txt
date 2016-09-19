@@ -56,7 +56,9 @@ set(LEVMAR_DIR "levmar-2.6")
 include_directories(${LEVMAR_DIR})
 
 
-add_subdirectory(sp/conv)
 add_subdirectory(${LEVMAR_DIR})
 add_subdirectory(lapack_part)
+
+add_subdirectory(sp/conv)
+add_subdirectory(sp/cls)
 
