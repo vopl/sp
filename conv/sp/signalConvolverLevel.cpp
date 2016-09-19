@@ -751,29 +751,29 @@ namespace sp
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     complex SignalConvolverLevel::convolve(const real *signal, std::size_t signalSize, SignalApproxType sat)
     {
-        TVReal _values(std::size_t(_samplesPerPeriod*_ppw + 0.5));
-        update(_values, signal, signalSize, sat);
+        TVReal values(std::size_t(_samplesPerPeriod*_ppw + 0.5));
+        update(values, signal, signalSize, sat);
 
-        std::vector<Serie> _series;
-        filtrate(_values, _series);
+        std::vector<Serie> series;
+        filtrate(values, series);
 
-        return convolve(_series);
+        return convolve(series);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     complex SignalConvolverLevel::convolveIdentity(real period, real phase)
     {
-        TVReal _values(std::size_t(_samplesPerPeriod*_ppw + 0.5));
-        updateIdentity(_values, period, phase);
+        TVReal values(std::size_t(_samplesPerPeriod*_ppw + 0.5));
+        updateIdentity(values, period, phase);
 
-        std::vector<Serie> _series;
-        filtrate(_values, _series);
+        std::vector<Serie> series;
+        filtrate(values, series);
 
-        return convolve(_series);
+        return convolve(series);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    complex SignalConvolverLevel::convolve(const std::vector<Serie> &_series)
+    complex SignalConvolverLevel::convolve(const std::vector<Serie> &series)
     {
         if(_polyOrder)
         {
@@ -788,12 +788,12 @@ namespace sp
         {
             real step01 = real(mult)/_samplesPerPeriod;
 
-            for(std::size_t i(0); i<_series.size(); ++i)
+            for(std::size_t i(0); i<series.size(); ++i)
             {
                 //std::cout<<"s "<<i<<std::endl;
                 Summator<complex> res2;
 
-                const TVReal &points = _series[i]._points;
+                const TVReal &points = series[i]._points;
                 real x0 = 0;
                 real y0 = points[0];
 
@@ -812,7 +812,7 @@ namespace sp
 
                 //std::cout<<"------ "<<res2.v().re()<<", "<<res2.v().im()<<", "<<res2.v().a()<<", "<<res2.v().p()<<std::endl;
 
-                res += res2.v().rotate(-_series[i]._dp)*points.size()/_samplesPerPeriod/mult;
+                res += res2.v().rotate(-series[i]._dp)*points.size()/_samplesPerPeriod/mult;
             }
         }
 
