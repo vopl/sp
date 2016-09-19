@@ -11,12 +11,12 @@ namespace sp { namespace cls
     public:
         TVComplex   _values;//periods X frames
 
-        std::size_t _frameRotor = 0;
-        std::size_t _periodRotor = 0;
+//        std::size_t _frameRotor = 0;
+//        std::size_t _periodRotor = 0;
 
-        real        _phaseRotor = 0;
-        real        _amplitudeOffset = 0;
-        real        _amplitudeMult = 1;
+//        real        _phaseRotor = 0;
+//        real        _amplitudeOffset = 0;
+//        real        _amplitudeMult = 1;
     };
     using ShapePtr = std::shared_ptr<Shape>;
 
@@ -33,6 +33,10 @@ namespace sp { namespace cls
         void fixLearn(real rate = 0.01);
 
     private:
+
+        std::size_t _shapeCols;
+        std::size_t _shapeRows;
+
         struct SOMShape
             : public Shape
         {

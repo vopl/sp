@@ -1,4 +1,5 @@
 #include "sp/cls/som.hpp"
+#include <QtGui/QImage>
 
 namespace sp { namespace cls
 {
@@ -15,6 +16,9 @@ namespace sp { namespace cls
 
     void SOM::init(std::size_t shapeCols, std::size_t shapeRows, std::size_t shapes)
     {
+        _shapeCols = shapeCols;
+        _shapeRows = shapeRows;
+
         _somShapes.resize(shapes);
         for(std::size_t idx(0); idx<shapes; ++idx)
         {
@@ -24,8 +28,8 @@ namespace sp { namespace cls
 
             for(auto &v : somShape._values)
             {
-                v.re() = real(rand())/RAND_MAX;
-                v.im() = real(rand())/RAND_MAX;
+                v.re() = real(rand())/RAND_MAX-0.5;
+                v.im() = real(rand())/RAND_MAX-0.5;
             }
         }
 
@@ -48,7 +52,7 @@ namespace sp { namespace cls
             SOMShape::Shape4Learn shape4Learn{shape, weight};
             somShape._shapes4Learn.emplace_back(shape4Learn);
 
-            weight *= 0.7;
+            weight *= 0.5;
         }
     }
 
@@ -90,31 +94,105 @@ namespace sp { namespace cls
                 somShapeLearnedAmountMin = somShape._learnedAmount;
                 somShapeIndexMin = somShapeIndex;
             }
+
+            somShape._learnedAmount *= 0.99;
         }
 
 
         SOMShape &somShapeMax = _somShapes[somShapeIndexMax];
 
         SOMShape somShapeMax2;
-        somShapeMax2._learnedAmount = somShapeMax._learnedAmount/=2;
+        somShapeMax2._learnedAmount = 0;
         somShapeMax2._values = somShapeMax._values;
 
         for(std::size_t idx(0); idx<somShapeMax._values.size(); ++idx)
         {
-            complex delta = somShapeMax._values[idx] * (real(0.2) * rand()/RAND_MAX - 0.1);
-
-            somShapeMax._values[idx] += delta;
-            somShapeMax2._values[idx] -= delta;
+            somShapeMax2._values[idx] = complex(real(1) * rand()/RAND_MAX - 0.5, real(1) * rand()/RAND_MAX - 0.5);
         }
         _somShapes.push_back(somShapeMax2);
 
-        if(_somShapes.size() > 100)
+        if(_somShapes.size() > 10*13)
         {
             _somShapes.erase(_somShapes.begin() + somShapeIndexMin);
         }
 
 
+        std::sort(_somShapes.begin(), _somShapes.end(), [](const SOMShape &a, const SOMShape &b){
+            return a._learnedAmount >= b._learnedAmount;
+        });
+
+        /////////-/////////-/////////-/////////-/////////-/////////-/////////-/////////-
+        {
+            const std::size_t k = 2;
+
+            std::size_t cols = sqrt(real(_somShapes.size()));
+            cols++;
+            std::size_t rows = _somShapes.size()/cols;
+            while(cols*rows < _somShapes.size())
+            {
+                cols++;
+            }
+
+            QImage imgRe((_shapeCols*k+1)*cols, (_shapeRows*k+1)*rows, QImage::Format_RGB32);
+            QImage imgIm((_shapeCols*k+1)*cols, (_shapeRows*k+1)*rows, QImage::Format_RGB32);
+            QImage imgA((_shapeCols*k+1)*cols, (_shapeRows*k+1)*rows, QImage::Format_RGB32);
+            imgRe.fill(QColor::fromRgb(255,255,255));
+            imgIm.fill(QColor::fromRgb(255,255,255));
+            imgA.fill(QColor::fromRgb(255,255,255));
+
+            for(std::size_t somShapeIndex(0); somShapeIndex<_somShapes.size(); ++somShapeIndex)
+            {
+                SOMShape &somShape = _somShapes[somShapeIndex];
+                real maxa(0);
+                for(const complex &v : somShape._values)
+                {
+                    maxa = std::max(maxa, abs(v.a()));
+                }
+
+                std::size_t col = somShapeIndex%cols;
+                std::size_t row = somShapeIndex/cols;
+
+                for(std::size_t idx(0); idx<somShape._values.size(); ++idx)
+                {
+                    real grayRe = maxa ? abs(somShape._values[idx].re())/maxa : 0;
+                    real grayIm = maxa ? abs(somShape._values[idx].im())/maxa : 0;
+                    real grayA = maxa ? abs(somShape._values[idx].a())/maxa : 0;
+
+                    QColor colorRe = QColor::fromRgbF(grayRe, grayRe, grayRe);
+                    QColor colorIm = QColor::fromRgbF(grayIm, grayIm, grayIm);
+                    QColor colorA = QColor::fromRgbF(grayA, grayA, grayA);
+
+                    std::size_t shapeCol = idx/_shapeRows;
+                    std::size_t shapeRow = idx%_shapeRows;
+
+                    for(std::size_t i(0); i<k; i++)
+                    {
+                        for(std::size_t j(0); j<k; j++)
+                        {
+                            imgRe.setPixelColor(
+                                        col * (_shapeCols*k+1) + (shapeCol)*k + i,
+                                        row * (_shapeRows*k+1) + (shapeRow)*k + j,
+                                        colorRe);
+                            imgIm.setPixelColor(
+                                        col * (_shapeCols*k+1) + (shapeCol)*k + i,
+                                        row * (_shapeRows*k+1) + (shapeRow)*k + j,
+                                        colorIm);
+                            imgA.setPixelColor(
+                                        col * (_shapeCols*k+1) + (shapeCol)*k + i,
+                                        row * (_shapeRows*k+1) + (shapeRow)*k + j,
+                                        colorA);
+                        }
+                    }
+                }
+            }
+
+            imgRe.save("somShape/lastLearn_re.png");
+            imgIm.save("somShape/lastLearn_im.png");
+            imgA.save("somShape/lastLearn_a.png");
+        }
 
         _kdTreePtr.reset(new KDTree(-1, _somShapes));
+
+        std::cout<<"learned"<<std::endl;
     }
 }}

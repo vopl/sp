@@ -217,21 +217,24 @@ namespace sp { namespace cls
 
         prefetchedFrame.clear();
 
-         std::istringstream inRe(linebufRe);
-         std::istringstream inIm(linebufIm);
+        std::istringstream inRe(linebufRe);
+        std::istringstream inIm(linebufIm);
 
-         for(;;)
-         {
-             complex v;
-             inRe >> v.re();
-             inIm >> v.im();
+        real x = frame*0.001;//HARDCODED frameStep
 
-             if(!inRe || !inIm)
-             {
-                 break;
-             }
+        for(std::size_t periodIndex(0); periodIndex<_periodGrid.size(); ++periodIndex)
+        {
+            complex v;
+            inRe >> v.re();
+            inIm >> v.im();
 
-             prefetchedFrame.push_back(v);
-         }
+            if(!inRe || !inIm)
+            {
+                break;
+            }
+
+            real xphase = x*g_2pi/_periodGrid[periodIndex];
+            prefetchedFrame.push_back(v.rotate(-xphase));
+        }
     }
 }}
