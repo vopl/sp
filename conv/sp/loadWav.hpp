@@ -1,5 +1,5 @@
 #pragma once
-#include "sp/types.hpp"
+#include "sp/math.hpp"
 
 namespace sp
 {

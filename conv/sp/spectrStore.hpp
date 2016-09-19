@@ -1,6 +1,5 @@
 #pragma once
-#include "sp/types.hpp"
-#include "sp/complex.hpp"
+#include "sp/math.hpp"
 
 #include <fstream>
 

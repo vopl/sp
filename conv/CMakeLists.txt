@@ -63,17 +63,11 @@ set(SRC
     sp/spectrStore.hpp
     sp/spectrStore.cpp
 
-    sp/types.hpp
-    sp/complex.hpp
     sp/math.hpp
-
-    sp/config.hpp
+    sp/complex.hpp
 
     sp/periodGrid.hpp
     sp/periodGrid.cpp
-
-#    sp/convolver.hpp
-#    sp/convolver.cpp
 
     sp/signalConvolver.hpp
     sp/signalConvolver.cpp
@@ -81,23 +75,8 @@ set(SRC
     sp/signalConvolverLevel.hpp
     sp/signalConvolverLevel.cpp
 
-#    sp/kernel.hpp
-#    sp/kernel.cpp
-
     sp/kernelTabled.hpp
     sp/kernelTabled.cpp
-
-
-#    test/responseModel.h
-#    test/responseModel.cpp
-
-#    test/signalProcessor.h
-#    test/signalProcessor.cpp
-
-#    test/scaledData.h
-#    test/scaledData.cpp
-
-#    test/settings.h
 )
 
 include_directories(.)
