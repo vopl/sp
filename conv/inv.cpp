@@ -1,11 +1,9 @@
 #include <iostream>
 #include <eigen3/Eigen/SVD>
 
-#include "sp/config.hpp"
 #include "sp/math.hpp"
 #include "sp/kernel.hpp"
 #include "sp/kernelTabled.hpp"
-#include "sp/convolver.hpp"
 #include "sp/periodGrid.hpp"
 #include "sp/signalConvolver.hpp"
 

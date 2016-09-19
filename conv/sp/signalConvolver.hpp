@@ -1,7 +1,7 @@
 #pragma once
 
 #include "sp/periodGrid.hpp"
-#include "sp/complex.hpp"
+#include "sp/math.hpp"
 
 #include <memory>
 

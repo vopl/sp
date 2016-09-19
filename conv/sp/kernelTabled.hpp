@@ -1,7 +1,6 @@
 #pragma once
 
-#include "sp/types.hpp"
-#include "sp/complex.hpp"
+#include "sp/math.hpp"
 #include "sp/signalConvolver.hpp"
 #include <string>
 #include <map>
