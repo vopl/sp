@@ -1,10 +1,12 @@
 #include "sp/cls/spectrFetcher.hpp"
 #include <sstream>
+#include <iostream>
 
 namespace sp { namespace cls
 {
 
-    SpectrFetcher::SpectrFetcher(const std::string &inDir)
+    template <class real>
+    SpectrFetcher<real>::SpectrFetcher(const std::string &inDir)
     {
         std::ifstream in(inDir+"/spectr.period");
         if(!in)
@@ -39,22 +41,23 @@ namespace sp { namespace cls
         }
     }
 
-    SpectrFetcher::~SpectrFetcher()
+    template <class real>
+    SpectrFetcher<real>::~SpectrFetcher()
     {
 
     }
 
-    const TVReal &SpectrFetcher::periodGrid()
+    template <class real>
+    const std::vector<real> &SpectrFetcher<real>::periodGrid()
     {
         return _periodGrid;
     }
 
-    bool SpectrFetcher::fetchRect(TVComplex &rect,
+    template <class real>
+    bool SpectrFetcher<real>::fetchRect(complex_tmpl<real> *rect,
                    std::size_t frame0, std::size_t framesAmount,
                    std::size_t period0, std::size_t periodsAmount)
     {
-        rect.resize(framesAmount*periodsAmount);
-
         for(std::size_t frame(0); frame<framesAmount; ++frame)
         {
             if(!fetchRectColumn(&rect[frame*periodsAmount], frame + frame0, period0, periodsAmount))
@@ -66,7 +69,8 @@ namespace sp { namespace cls
         return true;
     }
 
-    bool SpectrFetcher::fetchRectColumn(complex *col, std::size_t frame, std::size_t period0, std::size_t periodsAmount)
+    template <class real>
+    bool SpectrFetcher<real>::fetchRectColumn(complex_tmpl<real> *col, std::size_t frame, std::size_t period0, std::size_t periodsAmount)
     {
         if(!prefetch(frame))
         {
@@ -76,7 +80,7 @@ namespace sp { namespace cls
         std::size_t index = frame - _prefetchedFrame0;
         assert(index < _prefetchedFrames.size());
 
-        const TVComplex &prefetchedFrame = _prefetchedFrames[index];
+        const std::vector<complex_tmpl<real>> &prefetchedFrame = _prefetchedFrames[index];
 
         if(prefetchedFrame.size() < period0 + periodsAmount)
         {
@@ -87,7 +91,8 @@ namespace sp { namespace cls
         return true;
     }
 
-    bool SpectrFetcher::prefetch(std::size_t frame)
+    template <class real>
+    bool SpectrFetcher<real>::prefetch(std::size_t frame)
     {
         bool loaded = false;
         while(_lineIndexRe.size()<=frame)
@@ -141,7 +146,8 @@ namespace sp { namespace cls
         return true;
     }
 
-    bool SpectrFetcher::loadNextLine()
+    template <class real>
+    bool SpectrFetcher<real>::loadNextLine()
     {
         std::pair<std::size_t, std::size_t> indexRe;
         std::pair<std::size_t, std::size_t> indexIm;
@@ -189,7 +195,8 @@ namespace sp { namespace cls
         return true;
     }
 
-    void SpectrFetcher::pushFrame(const char *linebufRe, std::size_t linebufReSize, const char *linebufIm, std::size_t linebufImSize, std::size_t frame)
+    template <class real>
+    void SpectrFetcher<real>::pushFrame(const char *linebufRe, std::size_t linebufReSize, const char *linebufIm, std::size_t linebufImSize, std::size_t frame)
     {
         if(_prefetchedFrames.empty())
         {
@@ -210,10 +217,10 @@ namespace sp { namespace cls
 
         while(index >= _prefetchedFrames.size())
         {
-            _prefetchedFrames.push_back(TVComplex());
+            _prefetchedFrames.push_back(std::vector<complex_tmpl<real>>());
         }
 
-        TVComplex &prefetchedFrame = _prefetchedFrames[index];
+        std::vector<complex_tmpl<real>> &prefetchedFrame = _prefetchedFrames[index];
 
         prefetchedFrame.clear();
 
@@ -224,7 +231,7 @@ namespace sp { namespace cls
 
         for(std::size_t periodIndex(0); periodIndex<_periodGrid.size(); ++periodIndex)
         {
-            complex v;
+            complex_tmpl<real> v;
             inRe >> v.re();
             inIm >> v.im();
 
@@ -233,8 +240,12 @@ namespace sp { namespace cls
                 break;
             }
 
-            real xphase = x*g_2pi/_periodGrid[periodIndex];
+            real xphase = x*real(M_PIl*2)/_periodGrid[periodIndex];
             prefetchedFrame.push_back(v.rotate(-xphase));
         }
     }
+
+    template class SpectrFetcher<float>;
+    template class SpectrFetcher<double>;
+    template class SpectrFetcher<long double>;
 }}

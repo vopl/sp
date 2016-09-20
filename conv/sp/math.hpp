@@ -123,3 +123,10 @@ namespace sp
 }
 
 #include "complex.hpp"
+
+namespace sp
+{
+    using complex = complex_tmpl<real>;
+    //////////////////////////////////////////////////////////////////////////
+    typedef std::vector<complex> TVComplex;
+}

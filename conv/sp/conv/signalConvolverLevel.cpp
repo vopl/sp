@@ -812,7 +812,7 @@ namespace sp { namespace conv
 
                 //std::cout<<"------ "<<res2.v().re()<<", "<<res2.v().im()<<", "<<res2.v().a()<<", "<<res2.v().p()<<std::endl;
 
-                res += res2.v().rotate(-series[i]._dp)*points.size()/_samplesPerPeriod/mult;
+                res += res2.v().rotate(-series[i]._dp)*real(points.size()/_samplesPerPeriod/mult);
             }
         }
 
