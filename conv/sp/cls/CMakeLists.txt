@@ -16,8 +16,16 @@ set(SRC
     som.hpp
     som.cpp
 
+    patternExtractor.hpp
+    patternExtractor.cpp
+
+
+    shape.hpp
+    shape.cpp
+
+
     nanoflann.hpp
-    KDTreeVectorOfVectorsAdaptor.h
+    kdTree.hpp
 )
 
 

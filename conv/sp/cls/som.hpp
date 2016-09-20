@@ -6,10 +6,22 @@
 namespace sp { namespace cls
 {
 
-    class Shape
+    class ShapeOld
     {
     public:
         TVComplex   _values;//periods X frames
+
+        ShapeOld &operator *= (const ShapeOld &to)
+        {
+            assert(_values.size() == to._values.size());
+
+            for(std::size_t i(0); i<_values.size(); ++i)
+            {
+                _values[i] *= to._values[i];
+            }
+
+            return *this;
+        }
 
 //        std::size_t _frameRotor = 0;
 //        std::size_t _periodRotor = 0;
@@ -18,7 +30,7 @@ namespace sp { namespace cls
 //        real        _amplitudeOffset = 0;
 //        real        _amplitudeMult = 1;
     };
-    using ShapePtr = std::shared_ptr<Shape>;
+    using ShapeOldPtr = std::shared_ptr<ShapeOld>;
 
     class SOM
     {
@@ -28,7 +40,7 @@ namespace sp { namespace cls
 
         void init(std::size_t shapeCols, std::size_t shapeRows, std::size_t shapes);
 
-        void push4Learn(ShapePtr shape);
+        void push4Learn(ShapeOldPtr shape);
 
         void fixLearn(real rate = 0.01);
 
@@ -38,11 +50,11 @@ namespace sp { namespace cls
         std::size_t _shapeRows;
 
         struct SOMShape
-            : public Shape
+            : public ShapeOld
         {
             struct Shape4Learn
             {
-                ShapePtr    _shape;
+                ShapeOldPtr    _shape;
                 real        _weight;
             };
 
@@ -50,6 +62,8 @@ namespace sp { namespace cls
 
             real _learnedAmount = 0;
         };
+
+        ShapeOld _window;
 
         std::vector<SOMShape> _somShapes;
 
@@ -92,12 +106,12 @@ namespace sp { namespace cls
               *  The user can also call index->... methods as desired.
               * \note nChecks_IGNORED is ignored but kept for compatibility with the original FLANN interface.
               */
-            inline void query(const Shape &query_point, const size_t num_closest, IndexType *out_indices, num_t *out_distances_sq, const int nChecks_IGNORED = 10) const
+            inline void query(const ShapeOld &query_point, const size_t num_closest, IndexType *out_indices, num_t *out_distances_sq, const int nChecks_IGNORED = 10) const
             {
                 nanoflann::KNNResultSet<num_t,IndexType> resultSet(num_closest);
                 resultSet.init(out_indices, out_distances_sq);
                 //AHTUNG complex used as array of two reals
-                index->findNeighbors(resultSet, &query_point._values[0][0], nanoflann::SearchParams());
+                index->findNeighbors(resultSet, &query_point._values[0].re(), nanoflann::SearchParams());
             }
 
             /** @name Interface expected by KDTreeSingleIndexAdaptor
@@ -120,7 +134,7 @@ namespace sp { namespace cls
             {
                 num_t s=0;
                 for (size_t i=0; i<size; i++) {
-                    const num_t d= p1[i]-m_data[idx_p2]._values[i/2][i&1];
+                    const num_t d= p1[i]-(&m_data[idx_p2]._values[0].re())[i];
                     s+=d*d;
                 }
                 return s;
@@ -128,7 +142,7 @@ namespace sp { namespace cls
 
             // Returns the dim'th component of the idx'th point in the class:
             inline num_t kdtree_get_pt(const size_t idx, int dim) const {
-                return m_data[idx]._values[dim/2][dim&1];
+                return (&m_data[idx]._values[0].re())[dim];
             }
 
             // Optional bounding-box computation: return false to default to a standard bbox computation loop.

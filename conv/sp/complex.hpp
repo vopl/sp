@@ -11,12 +11,13 @@ namespace sp
         CAP=1,
     };
 
-    class complex
+    template <class real>
+    class complex_tmpl
     {
     public:
-//        complex();
-        complex(real v1=real(), real v2=real(), EComplexConstructType ecct = CREIM);
-        complex(const complex &z);
+//        complex_tmpl();
+        complex_tmpl(real v1=real(), real v2=real(), EComplexConstructType ecct = CREIM);
+        complex_tmpl(const complex_tmpl &z);
 
         void setAP(real a, real p);
         void set(real re, real im);
@@ -32,24 +33,24 @@ namespace sp
         real a() const;
         real p() const;
 
-        complex conj() const;
-        complex sqr() const;
-        complex ln() const;
+        complex_tmpl conj() const;
+        complex_tmpl sqr() const;
+        complex_tmpl ln() const;
 
-        complex rotate(real p) const;
+        complex_tmpl rotate(real p) const;
 
-        complex &operator=(const complex &z);
-        complex &operator=(const real &re);
+        complex_tmpl &operator=(const complex_tmpl &z);
+        complex_tmpl &operator=(const real &re);
 
-        complex &operator+=(const real &re);
-        complex &operator-=(const real &re);
-        complex &operator*=(const real &re);
-        complex &operator/=(const real &re);
+        complex_tmpl &operator+=(const real &re);
+        complex_tmpl &operator-=(const real &re);
+        complex_tmpl &operator*=(const real &re);
+        complex_tmpl &operator/=(const real &re);
 
-        complex &operator+=(const complex &z);
-        complex &operator-=(const complex &z);
-        complex &operator*=(const complex &z);
-        complex &operator/=(const complex &z);
+        complex_tmpl &operator+=(const complex_tmpl &z);
+        complex_tmpl &operator-=(const complex_tmpl &z);
+        complex_tmpl &operator*=(const complex_tmpl &z);
+        complex_tmpl &operator/=(const complex_tmpl &z);
 
     private:
         real _re;
@@ -58,12 +59,11 @@ namespace sp
 
 
 
-    //////////////////////////////////////////////////////////////////////////
-    typedef std::vector<complex> TVComplex;
 
 
     //////////////////////////////////////////////////////////////////////////
-    inline complex::complex(real v1, real v2, EComplexConstructType ecct)
+    template <class real>
+    complex_tmpl<real>::complex_tmpl(real v1, real v2, EComplexConstructType ecct)
         : _re(v1), _im(v2)
     {
         switch(ecct)
@@ -81,104 +81,120 @@ namespace sp
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline complex::complex(const complex &z)
+    template <class real>
+    complex_tmpl<real>::complex_tmpl(const complex_tmpl &z)
         : _re(z._re)
         , _im(z._im)
     {
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline void complex::setAP(real a, real p)
+    template <class real>
+    void complex_tmpl<real>::setAP(real a, real p)
     {
         _re = a*cos(p);
         _im = a*sin(p);
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline void complex::set(real re, real im)
+    template <class real>
+    void complex_tmpl<real>::set(real re, real im)
     {
         _re = re;
         _im = im;
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline real &complex::re()
+    template <class real>
+    real &complex_tmpl<real>::re()
     {
         return _re;
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline real &complex::im()
+    template <class real>
+    real &complex_tmpl<real>::im()
     {
         return _im;
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline real &complex::operator[](std::size_t idx)
+    template <class real>
+    real &complex_tmpl<real>::operator[](std::size_t idx)
     {
         assert(idx<2);
         return idx ? _im : _re;
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline const real &complex::re() const
+    template <class real>
+    const real &complex_tmpl<real>::re() const
     {
         return _re;
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline const real &complex::im() const
+    template <class real>
+    const real &complex_tmpl<real>::im() const
     {
         return _im;
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline const real &complex::operator[](std::size_t idx) const
+    template <class real>
+    const real &complex_tmpl<real>::operator[](std::size_t idx) const
     {
         assert(idx<2);
         return idx ? _im : _re;
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline real complex::a() const
+    template <class real>
+    real complex_tmpl<real>::a() const
     {
-        return sqrt(sp::sqr(_re) + sp::sqr(_im));
+        return sqrt(_re*_re + _im*_im);
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline real complex::p() const
+    template <class real>
+    real complex_tmpl<real>::p() const
     {
         return atan2(_im, _re);
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline complex complex::conj() const
+    template <class real>
+    complex_tmpl<real> complex_tmpl<real>::conj() const
     {
-        return complex(_re, -_im);
+        return complex_tmpl<real>(_re, -_im);
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline complex complex::sqr() const
+    template <class real>
+    complex_tmpl<real> complex_tmpl<real>::sqr() const
     {
-        return complex(sp::sqr(_re) - sp::sqr(_im), 2*_re*_im);
+        return complex_tmpl<real>(_re*_re - _im*_im, 2*_re*_im);
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline complex complex::ln() const
+    template <class real>
+    complex_tmpl<real> complex_tmpl<real>::ln() const
     {
-        return complex(0.5*log(_re*_re+_im*_im), p());
+        return complex_tmpl(0.5*log(_re*_re+_im*_im), p());
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline     complex complex::rotate(real p) const
+    template <class real>
+    complex_tmpl<real> complex_tmpl<real>::rotate(real p) const
     {
         real cosVal = cos(p);
         real sinVal = sin(p);
-        return complex(_re*cosVal - _im*sinVal, _re*sinVal + _im*cosVal);
+        return complex_tmpl(_re*cosVal - _im*sinVal, _re*sinVal + _im*cosVal);
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline complex &complex::operator=(const complex &z)
+    template <class real>
+    complex_tmpl<real> &complex_tmpl<real>::operator=(const complex_tmpl &z)
     {
         _re = z._re;
         _im = z._im;
@@ -186,7 +202,8 @@ namespace sp
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline complex &complex::operator=(const real &re)
+    template <class real>
+    complex_tmpl<real> &complex_tmpl<real>::operator=(const real &re)
     {
         _re = re;
         _im = 0;
@@ -194,21 +211,24 @@ namespace sp
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline complex &complex::operator+=(const real &re)
+    template <class real>
+    complex_tmpl<real> &complex_tmpl<real>::operator+=(const real &re)
     {
         _re += re;
         return *this;
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline complex &complex::operator-=(const real &re)
+    template <class real>
+    complex_tmpl<real> &complex_tmpl<real>::operator-=(const real &re)
     {
         _re -= re;
         return *this;
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline complex &complex::operator*=(const real &re)
+    template <class real>
+    complex_tmpl<real> &complex_tmpl<real>::operator*=(const real &re)
     {
         _re *= re;
         _im *= re;
@@ -216,7 +236,8 @@ namespace sp
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline complex &complex::operator/=(const real &re)
+    template <class real>
+    complex_tmpl<real> &complex_tmpl<real>::operator/=(const real &re)
     {
         _re /= re;
         _im /= re;
@@ -224,7 +245,8 @@ namespace sp
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline complex &complex::operator+=(const complex &z)
+    template <class real>
+    complex_tmpl<real> &complex_tmpl<real>::operator+=(const complex_tmpl &z)
     {
         _re += z._re;
         _im += z._im;
@@ -232,7 +254,8 @@ namespace sp
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline complex &complex::operator-=(const complex &z)
+    template <class real>
+    complex_tmpl<real> &complex_tmpl<real>::operator-=(const complex_tmpl &z)
     {
         _re -= z._re;
         _im -= z._im;
@@ -240,7 +263,8 @@ namespace sp
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline complex &complex::operator*=(const complex &z)
+    template <class real>
+    complex_tmpl<real> &complex_tmpl<real>::operator*=(const complex_tmpl &z)
     {
         real t = _re*z._re - _im*z._im;
         _im = _re*z._im + _im*z._re;
@@ -249,7 +273,8 @@ namespace sp
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline complex &complex::operator/=(const complex &z)
+    template <class real>
+    complex_tmpl<real> &complex_tmpl<real>::operator/=(const complex_tmpl &z)
     {
         if( fabs(z._im)<fabs(z._re) )
         {
@@ -280,108 +305,128 @@ namespace sp
 
 
     //////////////////////////////////////////////////////////////////////////
-    inline bool operator==(const complex &lhs, const complex &rhs)
+    template <class real>
+    bool operator==(const complex_tmpl<real> &lhs, const complex_tmpl<real> &rhs)
     {
         return lhs.re() == rhs.re() && lhs.im() == rhs.im();
     }
 
-    inline bool operator==(const real &lhs, const complex &rhs)
+    template <class real>
+    bool operator==(const real &lhs, const complex_tmpl<real> &rhs)
     {
         return lhs == rhs.re() && 0 == rhs.im();
     }
 
-    inline bool operator==(const complex &lhs, const real &rhs)
+    template <class real>
+    bool operator==(const complex_tmpl<real> &lhs, const real &rhs)
     {
         return lhs.re() == rhs && lhs.im() == 0;
     }
 
-    inline bool operator!=(const complex &lhs, const complex &rhs)
+    template <class real>
+    bool operator!=(const complex_tmpl<real> &lhs, const complex_tmpl<real> &rhs)
     {
         return !operator==(lhs, rhs);
     }
 
-    inline bool operator!=(const real &lhs, const complex &rhs)
+    template <class real>
+    bool operator!=(const real &lhs, const complex_tmpl<real> &rhs)
     {
         return !operator==(lhs, rhs);
     }
 
-    inline bool operator!=(const complex &lhs, const real &rhs)
+    template <class real>
+    bool operator!=(const complex_tmpl<real> &lhs, const real &rhs)
     {
         return !operator==(lhs, rhs);
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline const complex operator+(const complex &rhs)
+    template <class real>
+    const complex_tmpl<real> operator+(const complex_tmpl<real> &rhs)
     {
         return rhs;
     }
 
-    inline const complex operator-(const complex &rhs)
+    template <class real>
+    const complex_tmpl<real> operator-(const complex_tmpl<real> &rhs)
     {
-        return complex(-rhs.re(), -rhs.im());
+        return complex_tmpl<real>(-rhs.re(), -rhs.im());
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline const complex operator+(const complex &lhs, const complex &rhs)
+    template <class real>
+    const complex_tmpl<real> operator+(const complex_tmpl<real> &lhs, const complex_tmpl<real> &rhs)
     {
-        return complex(lhs.re()+rhs.re(), lhs.im()+rhs.im());
+        return complex_tmpl<real>(lhs.re()+rhs.re(), lhs.im()+rhs.im());
     }
 
-    inline const complex operator+(const real &lhs, const complex &rhs)
+    template <class real>
+    const complex_tmpl<real> operator+(const real &lhs, const complex_tmpl<real> &rhs)
     {
-        return complex(lhs+rhs.re(), 0+rhs.im());
+        return complex_tmpl<real>(lhs+rhs.re(), 0+rhs.im());
     }
 
-    inline const complex operator+(const complex &lhs, const real &rhs)
+    template <class real>
+    const complex_tmpl<real> operator+(const complex_tmpl<real> &lhs, const real &rhs)
     {
-        return complex(lhs.re()+rhs, lhs.im()+0);
-    }
-
-    //////////////////////////////////////////////////////////////////////////
-    inline const complex operator-(const complex &lhs, const complex &rhs)
-    {
-        return complex(lhs.re()-rhs.re(), lhs.im()-rhs.im());
-    }
-
-    inline const complex operator-(const real &lhs, const complex &rhs)
-    {
-        return complex(lhs-rhs.re(), 0-rhs.im());
-    }
-
-    inline const complex operator-(const complex &lhs, const real &rhs)
-    {
-        return complex(lhs.re()-rhs, lhs.im()-0);
+        return complex_tmpl<real>(lhs.re()+rhs, lhs.im()+0);
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline const complex operator*(const complex &lhs, const complex &rhs)
+    template <class real>
+    const complex_tmpl<real> operator-(const complex_tmpl<real> &lhs, const complex_tmpl<real> &rhs)
     {
-        return complex(lhs.re()*rhs.re() - lhs.im()*rhs.im(),  lhs.re()*rhs.im() + lhs.im()*rhs.re());
+        return complex_tmpl<real>(lhs.re()-rhs.re(), lhs.im()-rhs.im());
     }
 
-    inline const complex operator*(const complex &lhs, const real &rhs)
+    template <class real>
+    const complex_tmpl<real> operator-(const real &lhs, const complex_tmpl<real> &rhs)
     {
-        return complex(lhs.re()*rhs,  lhs.im()*rhs);
+        return complex_tmpl<real>(lhs-rhs.re(), 0-rhs.im());
     }
 
-    inline const complex operator*(const real &lhs, const complex &rhs)
+    template <class real>
+    const complex_tmpl<real> operator-(const complex_tmpl<real> &lhs, const real &rhs)
     {
-        return complex(lhs*rhs.re(),  lhs*rhs.im());
+        return complex_tmpl<real>(lhs.re()-rhs, lhs.im()-0);
     }
 
     //////////////////////////////////////////////////////////////////////////
-    inline const complex operator/(const complex &lhs, const complex &rhs)
+    template <class real>
+    const complex_tmpl<real> operator*(const complex_tmpl<real> &lhs, const complex_tmpl<real> &rhs)
     {
-        return complex(lhs) /= rhs;
+        return complex_tmpl<real>(lhs.re()*rhs.re() - lhs.im()*rhs.im(),  lhs.re()*rhs.im() + lhs.im()*rhs.re());
     }
 
-    inline const complex operator/(const real &lhs, const complex &rhs)
+    template <class real>
+    const complex_tmpl<real> operator*(const complex_tmpl<real> &lhs, const real &rhs)
     {
-        return complex(lhs) /= rhs;
+        return complex_tmpl<real>(lhs.re()*rhs,  lhs.im()*rhs);
     }
 
-    inline const complex operator/(const complex &lhs, const real &rhs)
+    template <class real>
+    const complex_tmpl<real> operator*(const real &lhs, const complex_tmpl<real> &rhs)
     {
-        return complex(lhs.re()/rhs, lhs.im()/rhs);
+        return complex_tmpl<real>(lhs*rhs.re(),  lhs*rhs.im());
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    template <class real>
+    const complex_tmpl<real> operator/(const complex_tmpl<real> &lhs, const complex_tmpl<real> &rhs)
+    {
+        return complex_tmpl<real>(lhs) /= rhs;
+    }
+
+    template <class real>
+    const complex_tmpl<real> operator/(const real &lhs, const complex_tmpl<real> &rhs)
+    {
+        return complex_tmpl<real>(lhs) /= rhs;
+    }
+
+    template <class real>
+    const complex_tmpl<real> operator/(const complex_tmpl<real> &lhs, const real &rhs)
+    {
+        return complex_tmpl<real>(lhs.re()/rhs, lhs.im()/rhs);
     }
 }
