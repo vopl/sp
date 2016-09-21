@@ -5,6 +5,7 @@ set(SRC
 
     ../math.hpp
     ../complex.hpp
+    ../serialization.hpp
 
 
     ###########################################################
@@ -12,9 +13,6 @@ set(SRC
 
     spectrFetcher.hpp
     spectrFetcher.cpp
-
-    som.hpp
-    som.cpp
 
     patternExtractor.hpp
     patternExtractor.cpp
@@ -31,7 +29,7 @@ set(SRC
 
 ############################################################################
 set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost COMPONENTS program_options filesystem)
+find_package(Boost COMPONENTS program_options filesystem serialization)
 if(NOT Boost_FOUND)
     message(FATAL_ERROR "boost not found")
 endif()
