@@ -3,12 +3,70 @@
 
 namespace sp { namespace cls
 {
+    namespace details
+    {
+        template<class T, class DataSource, typename _DistanceType = T>
+        struct Conv_Adaptor
+        {
+            typedef T ElementType;
+            typedef _DistanceType DistanceType;
+
+            const DataSource &data_source;
+
+            Conv_Adaptor(const DataSource &_data_source) : data_source(_data_source) { }
+
+            inline DistanceType operator()(const T* a, const size_t b_idx, size_t size, DistanceType worst_dist = -1) const
+            {
+                DistanceType result = DistanceType();
+                const T* last = a + size;
+                const T* lastgroup = last - 3;
+                size_t d = 0;
+
+                /* Process 4 items with each loop for efficiency. */
+                while (a < lastgroup) {
+                    const DistanceType diff0 = a[0] * data_source.kdtree_get_pt(b_idx,d++);
+                    const DistanceType diff1 = a[1] * data_source.kdtree_get_pt(b_idx,d++);
+                    const DistanceType diff2 = a[2] * data_source.kdtree_get_pt(b_idx,d++);
+                    const DistanceType diff3 = a[3] * data_source.kdtree_get_pt(b_idx,d++);
+                    result += diff0 + diff1 + diff2 + diff3;
+                    a += 4;
+                    if ((worst_dist>0)&&(result>worst_dist)) {
+                        return result;
+                    }
+                }
+                /* Process last 0-3 components.  Not needed for standard vector lengths. */
+                while (a < last) {
+                    const DistanceType diff0 = *a++ * data_source.kdtree_get_pt(b_idx,d++);
+                    result += diff0;
+                }
+                return 1.0/result;
+            }
+
+            template <typename U, typename V>
+            inline DistanceType accum_dist(const U a, const V b, int ) const
+            {
+                return (a*b);
+            }
+        };
+
+        struct metric_Conv
+        {
+            template<class T, class DataSource>
+            struct traits {
+                    typedef Conv_Adaptor<T,DataSource> distance_t;
+            };
+        };
+
+
+    }
+
     template <class Element>
     struct KDTree
     {
         using num_t = typename Element::real;
         static const int DIM = Element::_valuesAmount*2;
         using Distance = nanoflann::metric_L2;
+        //using Distance = details::metric_Conv;
         using IndexType = size_t;
         using VectorOfVectorsType = const std::vector<Element>;
 
