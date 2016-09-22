@@ -32,27 +32,34 @@ namespace sp { namespace cls
                 v.im() = real(rand())/RAND_MAX-0.5;
             }
 
-            normilize();
+            normalize();
         }
 
-        void normilize(bool withPhase = false)
+        void normalize(bool withPhase = true)
         {
             //выровнять амплитуду на 1 и фазу на 0
             complex_tmpl<real> middle;
+            real middleA = 0;
             for(const complex_tmpl<real> &v : _values)
             {
                 middle += v;
+                middleA += v.a();
             }
-            middle /= rows*cols;
+            middleA /= _valuesAmount;
+            middle /= _valuesAmount;
 
-            if(!middle.a())
+            if(!middleA)
             {
                 return;
             }
 
-            if(!withPhase)
+            if(withPhase)
             {
-                middle = middle.a();
+                middle = middle*middleA/middle.a();
+            }
+            else
+            {
+                middle = middleA;
             }
 
             for(complex_tmpl<real> &v : _values)
@@ -110,6 +117,34 @@ namespace sp { namespace cls
             }
         }
 
+        void smooth()
+        {
+            complex_tmpl<real> copy[_valuesAmount];
+            for(std::size_t i(0); i<_valuesAmount; ++i)
+            {
+                copy[i] = _values[i];
+            }
+
+            for(int row(0); row<rows; ++row)
+            {
+                for(int col(0); col<cols; ++col)
+                {
+                    for(int drow(-1); drow<2; ++drow)
+                    {
+                        for(int dcol(-1); dcol<2; ++dcol)
+                        {
+                            //if(drow && dcol)
+                            {
+                                _values[(col%cols)*rows + (row)%rows] += copy[((col+dcol)%cols)*rows + (row+drow)%rows];
+                            }
+                        }
+                    }
+                }
+            }
+
+            normalize();
+        }
+
         void draw(QImage &img, std::size_t x, std::size_t y, std::size_t mult, real weight, bool re, bool im)
         {
             real maxa(0);
@@ -117,6 +152,7 @@ namespace sp { namespace cls
             {
                 maxa = std::max(maxa, v.a());
             }
+            maxa = 2;
 
             for(std::size_t idx(0); idx<_valuesAmount; ++idx)
             {
@@ -137,13 +173,16 @@ namespace sp { namespace cls
                     gray = (maxa ? gray/maxa : 0)/2+0.5;
                 }
 
+                gray *= pow(weight, 0.25);
+
                 gray = std::min(gray, real(1));
                 gray = std::max(gray, real(0));
 
-                real accent = std::min(weight/4+gray, real(1));
-                accent = std::max(accent, real(0));
+                QColor color = QColor::fromRgbF(gray, gray, gray);
+//                real accent = std::min(weight/4+gray, real(1));
+//                accent = std::max(accent, real(0));
 
-                QColor color = QColor::fromRgbF(gray, gray, accent);
+//                QColor color = QColor::fromRgbF(gray, gray, accent);
 
                 std::size_t shapeCol = idx/rows;
                 std::size_t shapeRow = idx%rows;
