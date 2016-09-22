@@ -30,6 +30,7 @@ namespace sp { namespace cls
         void export_(std::vector<Shape> &learnedShapes4Export);
 
         void mergeSames(real eps);//линейная дистанция нормированная на одну ось
+        void replaceNulls();
 
     public:
         void save(const std::string &prefix);
@@ -145,59 +146,27 @@ namespace sp { namespace cls
     template <class Shape>
     std::size_t PatternExtractor<Shape>::push4Learn(typename Shape::Ptr shape)
     {
-        shape->normilize();
+        shape->normalize();
 
-        LocalShape mshape;
-
-        real bestShapeDistance(1e100);
-        Shape bestShape;
-
-        std::vector<std::size_t> indices(1);
+        std::vector<std::size_t> indices(20);
         std::vector<typename Shape::real> distances(indices.size());
-
-        for(std::size_t rphase(0); rphase<36; rphase+=1)
-        {
-
-            real phase = real(M_PIl*2)*rphase/36;
-
-            for(std::size_t i(0); i<Shape::_valuesAmount; ++i)
-            {
-                mshape.data()[i] = shape->data()[i].rotate(phase);
-            }
-
-//            mshape *= _window;
-//            mshape.normilize();
-
-            _kdTreePtr->query(mshape.rawdata(), indices.size(), &indices[0], &distances[0]);
-
-            if(distances[0] < bestShapeDistance)
-            {
-                bestShapeDistance = distances[0];
-                bestShape = mshape;
-            }
-        }
-
-        *shape = bestShape;
-
-        indices.resize(20);
-        distances.resize(indices.size());
-
         std::size_t foundAmount = _kdTreePtr->query(shape->rawdata(), indices.size(), &indices[0], &distances[0]);
 
-        real weight(1);
-
-        _shapesInLearn.push_back(std::move(shape));
-
-        for(std::size_t idx(0); idx<foundAmount; ++idx)
+        if(foundAmount)
         {
-            std::size_t index = indices[idx];
+            real weightNorma = sqrt(distances[0]);
 
-            LocalShape &localShape  = _localShapes[index];
+            _shapesInLearn.push_back(std::move(shape));
 
-            typename LocalShape::Shape4Learn shape4Learn{_shapesInLearn.back().get(), weight};
-            localShape._shapes4Learn.emplace_back(shape4Learn);
+            for(std::size_t idx(0); idx<foundAmount; ++idx)
+            {
+                std::size_t index = indices[idx];
 
-            weight *= 0.5;
+                LocalShape &localShape  = _localShapes[index];
+
+                typename LocalShape::Shape4Learn shape4Learn{_shapesInLearn.back().get(), weightNorma/real(sqrt(distances[idx]))};
+                localShape._shapes4Learn.emplace_back(shape4Learn);
+            }
         }
 
         return _shapesInLearn.size();
@@ -209,13 +178,19 @@ namespace sp { namespace cls
         for(std::size_t localShapeIndex(0); localShapeIndex<_localShapes.size(); ++localShapeIndex)
         {
             LocalShape &localShape = _localShapes[localShapeIndex];
+            localShape._learnedAmount *= 0.75;
 
             if(!localShape._shapes4Learn.empty())
             {
                 real amount = 0;
+                for(std::size_t idx(0); idx<localShape._valuesAmount; ++idx)
+                {
+                    localShape.data()[idx] *= real(localShape._shapes4Learn.size());
+                }
+
                 for(typename LocalShape::Shape4Learn &shape4Learn : localShape._shapes4Learn)
                 {
-                    real localRate = rate * shape4Learn._weight;// / localShape._shapes4Learn.size();
+                    real localRate = rate * shape4Learn._weight;
 
                     for(std::size_t idx(0); idx<localShape._valuesAmount; ++idx)
                     {
@@ -223,18 +198,16 @@ namespace sp { namespace cls
                     }
                     amount += localRate;
                 }
-                localShape._learnedAmount += amount;
-                localShape.normilize();
+                localShape._learnedAmount += amount / real(localShape._shapes4Learn.size());
+                localShape.normalize();
                 localShape._shapes4Learn.clear();
             }
-
-            //localShape._learnedAmount *= 0.99;
         }
         _shapesInLearn.clear();
 
-        std::sort(_localShapes.begin(), _localShapes.end(), [](const LocalShape &a, const LocalShape &b)->bool{
-            return a._learnedAmount > b._learnedAmount;
-        });
+//        std::sort(_localShapes.begin(), _localShapes.end(), [](const LocalShape &a, const LocalShape &b)->bool{
+//            return a._learnedAmount > b._learnedAmount;
+//        });
 
         _kdTreePtr.reset(new KDTree<LocalShape>(-1, _localShapes));
 
@@ -244,22 +217,34 @@ namespace sp { namespace cls
     template <class Shape>
     void PatternExtractor<Shape>::export_(std::vector<Shape> &learnedShapes4Export)
     {
-        if(learnedShapes4Export.size() > _localShapes.size())
-        {
-            learnedShapes4Export.resize(_localShapes.size());
-        }
-
-        for(std::size_t i(0); i<learnedShapes4Export.size(); ++i)
-        {
-            learnedShapes4Export[i] = _localShapes[i];
-            _localShapes[i].randomize();
-            _localShapes[i] *= _window;
-            _localShapes[i]._learnedAmount = 0;
-        }
-
         std::sort(_localShapes.begin(), _localShapes.end(), [](const LocalShape &a, const LocalShape &b)->bool{
             return a._learnedAmount > b._learnedAmount;
         });
+
+        std::size_t exportIndex = 0;
+
+        for(std::size_t i(0); i<_localShapes.size(); ++i)
+        {
+            if(exportIndex >= learnedShapes4Export.size())
+            {
+                break;
+            }
+
+            if(_localShapes[i]._learnedAmount>0)
+            {
+                learnedShapes4Export[exportIndex] = _localShapes[i];
+                _localShapes[i].randomize();
+                _localShapes[i] *= _window;
+                _localShapes[i]._learnedAmount = 0;
+                exportIndex++;
+            }
+        }
+
+        learnedShapes4Export.resize(exportIndex);
+
+//        std::sort(_localShapes.begin(), _localShapes.end(), [](const LocalShape &a, const LocalShape &b)->bool{
+//            return a._learnedAmount > b._learnedAmount;
+//        });
 
         _kdTreePtr.reset(new KDTree<LocalShape>(-1, _localShapes));
     }
@@ -268,31 +253,25 @@ namespace sp { namespace cls
     template <class Shape>
     void PatternExtractor<Shape>::mergeSames(real eps)
     {
-        real boundSameDistance = eps*eps*Shape::_valuesAmount*Shape::_valuesAmount;
+        real boundSameDistance = eps*eps;
 
         std::vector<std::size_t> indices(2);
         std::vector<typename Shape::real> distances(indices.size());
 
-        LocalShape mshape;
+        bool doWork = true;
 
-        for(std::size_t localShapeIndex(0); localShapeIndex<_localShapes.size(); ++localShapeIndex)
+        while(doWork)
         {
-            Shape localShapeRotated;
-            real sameShapeDistance(1e100);
-            std::size_t sameShapeIndex = 0;
+            doWork = false;
 
-            LocalShape &target = _localShapes[localShapeIndex];
-
-            for(std::size_t rphase(0); rphase<36; rphase+=1)
+            for(std::size_t localShapeIndex(0); localShapeIndex<_localShapes.size(); ++localShapeIndex)
             {
-                real phase = real(M_PIl*2)*rphase/36;
+                real sameShapeDistance(1e100);
+                std::size_t sameShapeIndex = 0;
 
-                for(std::size_t i(0); i<Shape::_valuesAmount; ++i)
-                {
-                    mshape.data()[i] = target.data()[i].rotate(phase);
-                }
+                LocalShape &target = _localShapes[localShapeIndex];
 
-                if(2 <= _kdTreePtr->query(mshape.rawdata(), indices.size(), &indices[0], &distances[0]))
+                if(2 <= _kdTreePtr->query(target.rawdata(), indices.size(), &indices[0], &distances[0]))
                 {
                     for(std::size_t iidx(0); iidx<indices.size(); iidx++)
                     {
@@ -304,51 +283,78 @@ namespace sp { namespace cls
                         if(distances[iidx] < sameShapeDistance)
                         {
                             sameShapeDistance = distances[iidx];
-                            localShapeRotated = mshape;
                             sameShapeIndex = indices[iidx];
                         }
                     }
                 }
-            }
 
-            if(sameShapeDistance < boundSameDistance)
-            {
-                LocalShape &same = _localShapes[sameShapeIndex];
-
-                //std::cout<<"merge "<<localShapeIndex<<" - "<<sameShapeIndex<<" with eps "<<sameShapeDistance<<std::endl;
-
-                for(std::size_t i(0); i<Shape::_valuesAmount; ++i)
+                if(sameShapeDistance < boundSameDistance)
                 {
-                    target.data()[i] = (localShapeRotated.data()[i] + same.data()[i])/real(2);
+                    //std::cout<<"merge "<<localShapeIndex<<" <- "<<sameShapeIndex<<", dist2: "<<sqrt(sameShapeDistance)<<" < "<<sqrt(boundSameDistance)<<std::endl;
+
+                    LocalShape &same = _localShapes[sameShapeIndex];
+                    for(std::size_t i(0); i<Shape::_valuesAmount; ++i)
+                    {
+                        target.data()[i] += same.data()[i];
+                    }
+                    target.normalize();
+                    target._learnedAmount += same._learnedAmount;
+                    target._learnedAmount /= 2;
+
+                    same.randomize();
+                    same *= _window;
+                    same._learnedAmount = 0;
+
+                    _kdTreePtr.reset(new KDTree<LocalShape>(-1, _localShapes));
+
+                    doWork = true;
                 }
-
-                same.randomize();
-                same *= _window;
-                same._learnedAmount = 0;
-
-                _kdTreePtr.reset(new KDTree<LocalShape>(-1, _localShapes));
             }
         }
 
-        std::sort(_localShapes.begin(), _localShapes.end(), [](const LocalShape &a, const LocalShape &b)->bool{
-            return a._learnedAmount > b._learnedAmount;
-        });
+//        std::sort(_localShapes.begin(), _localShapes.end(), [](const LocalShape &a, const LocalShape &b)->bool{
+//            return a._learnedAmount > b._learnedAmount;
+//        });
+
+//        _kdTreePtr.reset(new KDTree<LocalShape>(-1, _localShapes));
+    }
+
+    template <class Shape>
+    void PatternExtractor<Shape>::replaceNulls()
+    {
+        for(std::size_t localShapeIndex(0); localShapeIndex<_localShapes.size(); ++localShapeIndex)
+        {
+            LocalShape &target = _localShapes[localShapeIndex];
+
+            if(target._learnedAmount<=0)
+            {
+                target.randomize();
+                target *= _window;
+                target._learnedAmount = 0;
+            }
+        }
+
+        _kdTreePtr.reset(new KDTree<LocalShape>(-1, _localShapes));
     }
 
     template <class Shape>
     void PatternExtractor<Shape>::save(const std::string &prefix)
     {
         {
-            std::ofstream ofs(prefix+"/pe.ser");
+            std::ofstream ofs(prefix+"/pe.ser.tmp");
             if(!ofs)
             {
-                std::cerr<<"unable to create file "<<prefix+"/pe.ser";
+                std::cerr<<"unable to create file "<<prefix+"/pe.ser.tmp";
                 return;
             }
 
             boost::archive::text_oarchive oa(ofs);
 
             oa << SER_NVP(pe, *this);
+
+            ofs.close();
+
+            rename((prefix+"/pe.ser.tmp").c_str(), (prefix+"/pe.ser").c_str());
         }
 
 
