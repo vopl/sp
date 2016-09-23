@@ -173,16 +173,16 @@ namespace sp { namespace cls
                     gray = (maxa ? gray/maxa : 0)/2+0.5;
                 }
 
-                gray *= pow(weight, 0.25);
+                //gray *= pow(weight, 0.25);
 
                 gray = std::min(gray, real(1));
                 gray = std::max(gray, real(0));
 
-                QColor color = QColor::fromRgbF(gray, gray, gray);
-//                real accent = std::min(weight/4+gray, real(1));
-//                accent = std::max(accent, real(0));
+//                QColor color = QColor::fromRgbF(gray, gray, gray);
+                real accent = std::min(weight/4+gray, real(1));
+                accent = std::max(accent, real(0));
 
-//                QColor color = QColor::fromRgbF(gray, gray, accent);
+                QColor color = QColor::fromRgbF(gray, gray, accent);
 
                 std::size_t shapeCol = idx/rows;
                 std::size_t shapeRow = idx%rows;

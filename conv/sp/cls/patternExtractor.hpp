@@ -178,7 +178,7 @@ namespace sp { namespace cls
         for(std::size_t localShapeIndex(0); localShapeIndex<_localShapes.size(); ++localShapeIndex)
         {
             LocalShape &localShape = _localShapes[localShapeIndex];
-            localShape._learnedAmount *= 0.75;
+            localShape._learnedAmount *= 0.95;
 
             if(!localShape._shapes4Learn.empty())
             {
