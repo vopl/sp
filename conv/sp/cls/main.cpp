@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 
 
     PatternExtractor<Shape> pe1(10*10, false);
-    PatternExtractor<Shape> pe2(70*70, false);
+    PatternExtractor<Shape> pe2(100*100, false);
 
     pe1.load("pe1");
     pe2.load("pe2");
@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
             std::cout<<frameCounters[0]<<", pe1: "<<pushed1<<", pe2: "<<pushed2<<std::endl;
             pushed1 = 0;
 
-            if(pushed2 > 100000)
+            if(pushed2 > 1000*1000)
             {
                 pushed2 = 0;
                 pe2.fixLearn(0.1);
