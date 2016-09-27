@@ -13,13 +13,14 @@ namespace sp { namespace cls
     {
     public:
         using real = real_;
+        using complex = complex_tmpl<real>;
         using Ptr = std::unique_ptr<Shape>;
         static constexpr std::size_t cols = cols_;
         static constexpr std::size_t rows = rows_;
         static constexpr std::size_t _valuesAmount = cols*rows;
 
-        complex_tmpl<real> *data(){return _values;}
-        const complex_tmpl<real> *data() const {return _values;}
+        complex *data(){return _values;}
+        const complex *data() const {return _values;}
 
         real *rawdata(){return &_values[0].re();}
         const real *rawdata() const {return &_values[0].re();}
@@ -35,12 +36,76 @@ namespace sp { namespace cls
             normalize();
         }
 
+        void dropSmalls(real part)
+        {
+            real middleA = 0;
+            for(const complex &v : _values)
+            {
+                middleA += v.a();
+            }
+            middleA /= _valuesAmount;
+
+            for(complex &v : _values)
+            {
+                if(v.a() < middleA*part)
+                {
+                    v = 0;
+                }
+            }
+        }
+
+        real w() const
+        {
+            real sum = 0;
+            for(const complex &v : _values)
+            {
+                sum += v.a() * v.a();
+            }
+
+            return sum;
+        }
+
+        real symmetry() const
+        {
+            real sv(0), sh(0);
+
+            {
+                real sum = 0;
+                for(std::size_t col(0); col<cols; ++col)
+                {
+                    for(std::size_t row(0); row<rows; ++row)
+                    {
+                        complex v = _values[col*rows + row];
+
+                        real wh = pow(
+                                     real(rows-1)/4 - fabs(real(rows-1)/2 - real(row)),
+                                     1);
+
+                        real wv = pow(
+                                     real(cols-1)/4 - fabs(real(cols-1)/2 - real(col)),
+                                     1);
+
+
+                        sh += wh*v.a();
+                        sv += wv*v.a();
+
+                        sum += v.a();
+                    }
+                }
+
+                sh /= sum;
+                sv /= sum;
+            }
+
+            return /*sv +*/ sh;
+        }
+
         void normalize(bool withPhase = true)
         {
             //выровнять амплитуду на 1 и фазу на 0
-            complex_tmpl<real> middle;
+            complex middle;
             real middleA = 0;
-            for(const complex_tmpl<real> &v : _values)
+            for(const complex &v : _values)
             {
                 middle += v;
                 middleA += v.a();
@@ -62,7 +127,7 @@ namespace sp { namespace cls
                 middle = middleA;
             }
 
-            for(complex_tmpl<real> &v : _values)
+            for(complex &v : _values)
             {
                 v /= middle;
             }
@@ -91,7 +156,7 @@ namespace sp { namespace cls
             real maxValue = 0;
             std::size_t maxIndex = 0;
 
-            complex_tmpl<real> copy[_valuesAmount];
+            complex copy[_valuesAmount];
             for(std::size_t i(0); i<_valuesAmount; ++i)
             {
                 real v = fabs(mid - _values[i].a());
@@ -108,18 +173,29 @@ namespace sp { namespace cls
             std::size_t ccol = maxIndex / rows;
             std::size_t crow = maxIndex % rows;
 
-            for(std::size_t row(0); row<rows; ++row)
+            for(int row(0); row<rows; ++row)
             {
-                for(std::size_t col(0); col<cols; ++col)
+                for(int col(0); col<cols; ++col)
                 {
-                    _values[((col+cols/2)%cols)*rows + (row+rows/2)%rows] = copy[((col+ccol)%cols)*rows + (row+crow)%rows];
+                    int c2 = col - int(ccol) + int(cols/2);
+                    int r2 = row - int(crow) + int(rows/2);
+
+                    if(c2 >=0 && c2<cols &&
+                       r2 >=0 && r2<rows)
+                    {
+                        _values[col*rows + row] = copy[c2*rows + r2];
+                    }
+                    else
+                    {
+                        _values[col*rows + row] = 0;
+                    }
                 }
             }
         }
 
         void smooth()
         {
-            complex_tmpl<real> copy[_valuesAmount];
+            complex copy[_valuesAmount];
             for(std::size_t i(0); i<_valuesAmount; ++i)
             {
                 copy[i] = _values[i];
@@ -202,7 +278,7 @@ namespace sp { namespace cls
 
 
     private:
-        complex_tmpl<real> _values[_valuesAmount];
+        complex _values[_valuesAmount];
 
         friend class boost::serialization::access;
 

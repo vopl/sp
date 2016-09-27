@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
             }
     }
 
-    using Shape = sp::cls::Shape<5, 5, float>;
+    using Shape = sp::cls::Shape<5, 5, double>;
 
     std::vector<SpectrFetcher<Shape::real>*> sfs;
     std::vector<std::size_t> frameCounters;
@@ -99,14 +99,21 @@ int main(int argc, char *argv[])
 
 
 
-    PatternExtractor<Shape> pe1(10*10, false);
-    PatternExtractor<Shape> pe2(100*100, false);
+    PatternExtractor<Shape> pe1(0, false);
+//    PatternExtractor<Shape> pe2(150*150, false);
 
-    pe1.load("pe1");
-    pe2.load("pe2");
+    //pe1.load("pe1");
+    //pe2.load("pe2");
 
-    pe1.save("pe1");
-    pe2.save("pe2");
+//    {
+//        pe2.load("pe2.10x10");
+//        pe2.pca2();
+//        pe2.save("pe2.pca");
+//        return 0;
+//    }
+
+    //pe1.save("pe1");
+    //pe2.save("pe2");
 
 
     std::size_t periodsAmount = sfs[0]->periodGrid().size();
@@ -121,52 +128,57 @@ int main(int argc, char *argv[])
             {
                 std::size_t &frameCounter = frameCounters[idx];
                 auto &sf = *sfs[idx];
-                Shape::Ptr shape(new Shape);
+                Shape shape;
 
-                if(!sf.fetchRect(shape->data(), frameCounter, Shape::cols, periodOffset, Shape::rows))
+                if(!sf.fetchRect(shape.data(), frameCounter, Shape::cols, periodOffset, Shape::rows))
                 {
                     frameCounter = 0;
-                    sf.fetchRect(shape->data(), frameCounter, Shape::cols, periodOffset, Shape::rows);
+                    sf.fetchRect(shape.data(), frameCounter, Shape::cols, periodOffset, Shape::rows);
                 }
 
                 //shape1->smooth();
-                pushed1 = pe1.push4Learn(std::move(shape));
+                pushed1 = pe1.pushBasis(shape);
             }
         }
 
-        if(pushed1 > 10000)
+
+        std::cout<<frameCounters[0]<<", pe1: "<<pushed1<<std::endl;
+
+        if(pushed1 > 1000*1000*50)
         {
-            pe1.fixLearn(1000000.0);
+            pe1.pca2();
+            //pe1.fixLearn(1e10);
             //pe1.mergeSames(0.005);
-            //pe1.save("pe1");
+            pe1.save("pe1");
+            save("frameCounters", frameCounters);
 
-            std::vector<Shape> learnedShapes1(2000);
-            pe1.export_(learnedShapes1);
-            //learnedShapes1.resize(learnedShapes1.size()/2);
+//            std::vector<Shape> learnedShapes1(2000);
+//            pe1.export_(learnedShapes1);
+//            //learnedShapes1.resize(learnedShapes1.size()/2);
 
-            std::size_t pushed2 = 0;
-            for(Shape &shape : learnedShapes1)
-            {
-                pushed2 = pe2.push4Learn(Shape::Ptr(new Shape(shape)));
+//            std::size_t pushed2 = 0;
+//            for(Shape &shape : learnedShapes1)
+//            {
+//                pushed2 = pe2.push4Learn(Shape::Ptr(new Shape(shape)));
 
-                //shape.centrate();
-                //pushed2 = pe2.push4Learn(Shape::Ptr(new Shape(shape)));
-            }
+//                //shape.centrate();
+//                //pushed2 = pe2.push4Learn(Shape::Ptr(new Shape(shape)));
+//            }
 
-            std::cout<<frameCounters[0]<<", pe1: "<<pushed1<<", pe2: "<<pushed2<<std::endl;
             pushed1 = 0;
 
-            if(pushed2 > 1000*1000)
-            {
-                pushed2 = 0;
-                pe2.fixLearn(0.1);
-                pe2.mergeSames(0.1);
-                pe2.replaceNulls();
-                pe2.save("pe2");
-                //pe1.save("pe1");
+//            if(pushed2 > 1000*1000)
+//            {
+//                pushed2 = 0;
+//                pe2.fixLearn(1e6);
+//                //pe2.mergeSames(0.1);
+//                pe2.replaceNulls();
+//                //pe2.test();
+//                pe2.save("pe2");
+//                //pe1.save("pe1");
 
-                save("frameCounters", frameCounters);
-            }
+//                save("frameCounters", frameCounters);
+//            }
         }
 
         for(std::size_t idx(0); idx<sfs.size(); ++idx)

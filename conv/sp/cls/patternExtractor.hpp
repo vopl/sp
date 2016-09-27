@@ -1,6 +1,7 @@
 #pragma once
 #include "sp/cls/kdTree.hpp"
 #include "sp/complex.hpp"
+#include "sp/math.hpp"
 #include <memory>
 #include <iostream>
 #include <fstream>
@@ -19,11 +20,16 @@ namespace sp { namespace cls
     {
     public:
         using real = typename Shape::real;
+        using complex = typename Shape::complex;
+
+        void pca();
+        void pca2();
 
     public:
         PatternExtractor(std::size_t initialShapes=1, bool withSmoothingWindow = true);
         ~PatternExtractor();
 
+        std::size_t pushBasis(const Shape &shape);
         std::size_t push4Learn(typename Shape::Ptr shape);
 
         void fixLearn(real rate);
@@ -111,7 +117,296 @@ namespace sp { namespace cls
 
 
 
+    template <class Shape>
+    void PatternExtractor<Shape>::pca()
+    {
+        std::sort(_localShapes.begin(), _localShapes.end(), [](const LocalShape &a, const LocalShape &b)->bool{
+            return a._learnedAmount > b._learnedAmount;
+        });
 
+        _localShapes.erase(_localShapes.begin()+_localShapes.size()*0.85, _localShapes.end());
+
+
+        std::vector<LocalShape> x;
+        x.swap(_localShapes);
+
+        std::vector<LocalShape> &as = _localShapes;
+        std::vector<std::vector<real>> bs;
+
+        //normilize x
+        for(std::size_t i(0); i<x.size(); ++i)
+        {
+            x[i].normalize();
+        }
+
+        for(;;)
+        {
+            as.push_back(LocalShape());
+            as.back().randomize();
+            as.back().normalize();
+
+            bs.push_back(std::vector<real>(x.size()));
+            std::vector<real> &b = bs.back();
+
+            Shape &a = as.back();
+
+            for(std::size_t iter(0); iter<200; ++iter)
+            {
+
+                //b
+                {
+                    Summator<real> denom = 0;
+                    for(std::size_t j(0); j<Shape::_valuesAmount*2; ++j)
+                    {
+                        denom += a.rawdata()[j] * a.rawdata()[j];
+                    }
+
+                    for(std::size_t i(0); i<b.size(); ++i)
+                    {
+                        Summator<real> nom = 0;
+
+                        for(std::size_t j(0); j<Shape::_valuesAmount*2; ++j)
+                        {
+                            nom += x[i].rawdata()[j] * a.rawdata()[j];
+                        }
+
+                        b[i] = nom/denom;
+                    }
+                }
+
+                //a
+                {
+                    Summator<real> denom = 0;
+                    for(std::size_t i(0); i<b.size(); ++i)
+                    {
+                        denom += b[i] * b[i];
+                    }
+
+                    for(std::size_t j(0); j<Shape::_valuesAmount*2; ++j)
+                    {
+                        Summator<real> nom = 0;
+
+                        for(std::size_t i(0); i<b.size(); ++i)
+                        {
+                            nom += b[i] * x[i].rawdata()[j];
+                        }
+
+                        a.rawdata()[j] = nom/denom;
+                    }
+                    a.normalize();
+                }
+            }
+
+            //sub
+            for(std::size_t i(0); i<b.size(); ++i)
+            {
+                for(std::size_t j(0); j<Shape::_valuesAmount*2; ++j)
+                {
+                    x[i].rawdata()[j] -= a.rawdata()[j] * b[i];
+                }
+                x[i].normalize();
+            }
+
+            save("pca.iter.as");
+
+            x.swap(_localShapes);
+            save("pca.iter.x");
+
+            x.swap(_localShapes);
+        }
+
+
+        _kdTreePtr.reset(new KDTree<LocalShape>(-1, _localShapes));
+    }
+
+
+    template <class Shape>
+    void PatternExtractor<Shape>::pca2()
+    {
+        std::sort(_localShapes.begin(), _localShapes.end(), [](const LocalShape &a, const LocalShape &b)->bool{
+            return a._learnedAmount > b._learnedAmount;
+        });
+
+//        save("pca.init");
+//        exit(0);
+
+
+        std::vector<LocalShape> x;
+        x.swap(_localShapes);
+
+        std::vector<LocalShape> &as = _localShapes;
+        std::vector<std::vector<complex>> bs;
+
+        {
+            //normilize x
+            Summator<complex> vSum;
+            for(std::size_t i(0); i<x.size(); ++i)
+            {
+                for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+                {
+                    vSum += x[i].data()[j];
+                }
+            }
+            complex vMean = vSum.v() / (real(x.size()) * Shape::_valuesAmount);
+            Summator<real> aSum;
+            for(std::size_t i(0); i<x.size(); ++i)
+            {
+                for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+                {
+                    x[i].data()[j] -= vMean;
+                    aSum += x[i].data()[j].a();
+                }
+            }
+            real aMean = aSum.v() / (real(x.size()) * Shape::_valuesAmount);
+            for(std::size_t i(0); i<x.size(); ++i)
+            {
+                for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+                {
+                    x[i].data()[j] /= aMean;
+                }
+            }
+        }
+
+        for(;;)
+        {
+            as.push_back(LocalShape());
+            as.back().randomize();
+            as.back().normalize();
+
+            bs.push_back(std::vector<complex>(x.size()));
+            std::vector<complex> &b = bs.back();
+
+            Shape &a = as.back();
+
+            complex prevF = 0;
+
+            for(std::size_t iter(0); iter<500; ++iter)
+            {
+                //F
+                {
+                    Summator<complex> F;
+
+                    for(std::size_t i(0); i<b.size(); ++i)
+                    {
+                        for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+                        {
+                            F += x[i].data()[j];
+                            F += -b[i]*a.data()[j];
+                        }
+                    }
+
+                    if(F.v().a() < 1e-40)
+                    {
+                        std::cout<<iter<<", "<<F.v().a()<<", "<<"unk"<<std::endl;
+                        break;
+                    }
+
+                    complex dFdF = (F.v()-prevF)/F.v();
+                    std::cout<<iter<<", "<<F.v().a()<<", "<<dFdF.a()<<std::endl;
+
+                    prevF = F;
+
+                    if(dFdF.a() < 1e-10)
+                    {
+                        break;
+                    }
+                }
+
+
+                //b
+                {
+                    Summator<complex> denom;
+                    for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+                    {
+                        denom += a.data()[j] * a.data()[j];
+                    }
+
+                    for(std::size_t i(0); i<b.size(); ++i)
+                    {
+                        Summator<complex> nom;
+
+                        for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+                        {
+                            nom += x[i].data()[j] * a.data()[j];
+                        }
+
+                        b[i] = nom.v()/denom.v();
+                    }
+                }
+
+                //a
+                {
+                    Summator<complex> denom;
+                    for(std::size_t i(0); i<b.size(); ++i)
+                    {
+                        denom += b[i] * b[i];
+                    }
+
+                    for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+                    {
+                        Summator<complex> nom;
+
+                        for(std::size_t i(0); i<b.size(); ++i)
+                        {
+                            nom += b[i] * x[i].data()[j];// * sqrt(x[i].w());
+                        }
+
+                        a.data()[j] = nom.v()/denom.v();
+                    }
+                    a.normalize(false);
+                }
+            }
+
+            //sub
+            for(std::size_t i(0); i<b.size(); ++i)
+            {
+                for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+                {
+                    x[i].data()[j] -= a.data()[j] * b[i];
+                }
+            }
+
+            {
+                //normilize x
+                Summator<complex> vSum;
+                for(std::size_t i(0); i<x.size(); ++i)
+                {
+                    for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+                    {
+                        vSum += x[i].data()[j];
+                    }
+                }
+                complex vMean = vSum.v() / (real(x.size()) * Shape::_valuesAmount);
+                Summator<real> aSum;
+                for(std::size_t i(0); i<x.size(); ++i)
+                {
+                    for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+                    {
+                        x[i].data()[j] -= vMean;
+                        aSum += x[i].data()[j].a();
+                    }
+                }
+                real aMean = aSum.v() / (real(x.size()) * Shape::_valuesAmount);
+                for(std::size_t i(0); i<x.size(); ++i)
+                {
+                    for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+                    {
+                        x[i].data()[j] /= aMean;
+                    }
+                }
+            }
+
+            save("pca.iter.as2");
+
+            x.swap(_localShapes);
+            save("pca.iter.x2");
+
+            x.swap(_localShapes);
+        }
+
+
+        _kdTreePtr.reset(new KDTree<LocalShape>(-1, _localShapes));
+    }
 
     template <class Shape>
     PatternExtractor<Shape>::PatternExtractor(std::size_t initialShapes, bool withSmoothingWindow)
@@ -127,6 +422,7 @@ namespace sp { namespace cls
             }
         }
 
+        _localShapes.reserve(1000*1000*60);
         for(std::size_t i(0); i<initialShapes; ++i)
         {
             _localShapes.push_back(LocalShape());
@@ -144,8 +440,20 @@ namespace sp { namespace cls
     }
 
     template <class Shape>
+    std::size_t PatternExtractor<Shape>::pushBasis(const Shape &shape)
+    {
+        _localShapes.resize(_localShapes.size() + 1);
+        static_cast<Shape&>(_localShapes.back()) = shape;
+        _localShapes.back()._learnedAmount = 0;
+
+        return _localShapes.size();
+    }
+
+    template <class Shape>
     std::size_t PatternExtractor<Shape>::push4Learn(typename Shape::Ptr shape)
     {
+        *shape *= _window;
+        //shape->centrate();
         shape->normalize();
 
         std::vector<std::size_t> indices(20);
@@ -205,9 +513,9 @@ namespace sp { namespace cls
         }
         _shapesInLearn.clear();
 
-//        std::sort(_localShapes.begin(), _localShapes.end(), [](const LocalShape &a, const LocalShape &b)->bool{
-//            return a._learnedAmount > b._learnedAmount;
-//        });
+        std::sort(_localShapes.begin(), _localShapes.end(), [](const LocalShape &a, const LocalShape &b)->bool{
+            return a._learnedAmount > b._learnedAmount;
+        });
 
         _kdTreePtr.reset(new KDTree<LocalShape>(-1, _localShapes));
 
@@ -296,14 +604,17 @@ namespace sp { namespace cls
                     for(std::size_t i(0); i<Shape::_valuesAmount; ++i)
                     {
                         target.data()[i] += same.data()[i];
+                        same.data()[i] = 0;
                     }
                     target.normalize();
                     target._learnedAmount += same._learnedAmount;
                     target._learnedAmount /= 2;
 
-                    same.randomize();
-                    same *= _window;
-                    same._learnedAmount = 0;
+                    std::swap(same, _localShapes.back());
+                    _localShapes.erase(_localShapes.end()-1);
+//                    same.randomize();
+//                    same *= _window;
+//                    same._learnedAmount = 0;
 
                     _kdTreePtr.reset(new KDTree<LocalShape>(-1, _localShapes));
 
@@ -340,11 +651,12 @@ namespace sp { namespace cls
     template <class Shape>
     void PatternExtractor<Shape>::save(const std::string &prefix)
     {
+        if(0)
         {
             std::ofstream ofs(prefix+"/pe.ser.tmp");
             if(!ofs)
             {
-                std::cerr<<"unable to create file "<<prefix+"/pe.ser.tmp";
+                std::cerr<<"unable to create file "<<prefix+"/pe.ser.tmp"<<std::endl;
                 return;
             }
 
@@ -360,16 +672,18 @@ namespace sp { namespace cls
 
         //images
         {
+            std::size_t imagesAmount = std::min(std::size_t(10000), _localShapes.size());
+
             real learnedAmountMax = std::numeric_limits<typename Shape::real>::min();
-            for(std::size_t localShapeIndex(0); localShapeIndex<_localShapes.size(); ++localShapeIndex)
+            for(std::size_t localShapeIndex(0); localShapeIndex<imagesAmount; ++localShapeIndex)
             {
                 LocalShape &localShape = _localShapes[localShapeIndex];
                 learnedAmountMax = std::max(learnedAmountMax, localShape._learnedAmount);
             }
 
-            std::size_t cols = sqrt(real(_localShapes.size()))*3/2+0.5;
-            std::size_t rows = _localShapes.size()/cols;
-            while(cols*rows < _localShapes.size())
+            std::size_t cols = sqrt(real(imagesAmount))*3/2+0.5;
+            std::size_t rows = imagesAmount/cols;
+            while(cols*rows < imagesAmount)
             {
                 rows++;
             }
@@ -383,7 +697,7 @@ namespace sp { namespace cls
             imgIm.fill(QColor::fromRgb(255,255,255));
             imgA .fill(QColor::fromRgb(255,255,255));
 
-            for(std::size_t localShapeIndex(0); localShapeIndex<_localShapes.size(); ++localShapeIndex)
+            for(std::size_t localShapeIndex(0); localShapeIndex<imagesAmount; ++localShapeIndex)
             {
                 LocalShape &localShape = _localShapes[localShapeIndex];
 
