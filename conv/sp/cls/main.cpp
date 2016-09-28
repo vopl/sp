@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
 
         std::cout<<frameCounters[0]<<", pe1: "<<pushed1<<std::endl;
 
-        if(pushed1 > 1000*1000*50)
+        if(pushed1 > 1000*1000*40)
         {
             pe1.pca2();
             //pe1.fixLearn(1e10);

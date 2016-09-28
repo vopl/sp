@@ -256,6 +256,7 @@ namespace sp { namespace cls
 
 //                QColor color = QColor::fromRgbF(gray, gray, gray);
                 real accent = std::min(weight/4+gray, real(1));
+                accent = std::min(accent, real(1));
                 accent = std::max(accent, real(0));
 
                 QColor color = QColor::fromRgbF(gray, gray, accent);
