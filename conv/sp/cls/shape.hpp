@@ -103,7 +103,7 @@ namespace sp { namespace cls
 
         void normalize(bool withPhase = true)
         {
-            //выровнять амплитуду на 1 и фазу на 0
+            //выравнять амплитуду на 1 и фазу на 0
             Summator<complex> middleSum;
             Summator<real> middleASum = 0;
             for(const complex &v : _values)

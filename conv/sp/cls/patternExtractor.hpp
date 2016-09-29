@@ -223,9 +223,9 @@ namespace sp { namespace cls
     template <class Shape>
     void PatternExtractor<Shape>::pca2()
     {
-        std::sort(_localShapes.begin(), _localShapes.end(), [](const LocalShape &a, const LocalShape &b)->bool{
-            return a._learnedAmount > b._learnedAmount;
-        });
+//        std::sort(_localShapes.begin(), _localShapes.end(), [](const LocalShape &a, const LocalShape &b)->bool{
+//            return a._learnedAmount > b._learnedAmount;
+//        });
 
 //        save("pca.init");
 //        exit(0);
@@ -293,6 +293,8 @@ namespace sp { namespace cls
             std::vector<complex> &b = bs.back();
 
             Shape &a = as.back();
+            real aNorma = 0;
+            real aNum = 0;
 
             complex prevF = 0;
 
@@ -301,6 +303,7 @@ namespace sp { namespace cls
 
                 save("pca.iter.as2");
 
+                real bNorma;
                 //b
                 {
                     Summator<complex> denom;
@@ -309,6 +312,7 @@ namespace sp { namespace cls
                         denom += a.data()[j].sqr();
                     }
 
+                    Summator<complex> bNormaSum;
                     for(std::size_t i(0); i<b.size(); ++i)
                     {
                         Summator<complex> nom;
@@ -319,7 +323,10 @@ namespace sp { namespace cls
                         }
 
                         b[i] = nom.v()/denom.v();
+                        bNormaSum +=b[i].sqr();
                     }
+
+                    bNorma = sqrt(bNormaSum.v().a());
                 }
 
                 //F
@@ -349,7 +356,7 @@ namespace sp { namespace cls
 
                     prevF = F;
 
-                    if(dF.a() < 1e-25)
+                    if(dF.a() < 1e-17)
                     {
                         break;
                     }
@@ -401,8 +408,20 @@ namespace sp { namespace cls
                     }
 
                     a.normalize(true);
+
+                    Summator<complex> aNormaSum;
+                    for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+                    {
+                        aNormaSum += a.data()[j].sqr();
+                    }
+
+                    aNorma = sqrt(aNormaSum.v().a());
+
+                    aNum = aNorma * bNorma;
                 }
             }
+
+            std::cout<<"a "<<aCount<<" ready, aNum: "<<aNum<<std::endl;
 
             //sub
 //            for(std::size_t i(0); i<b.size(); ++i)
@@ -503,7 +522,7 @@ namespace sp { namespace cls
             }
         }
 
-        _localShapes.reserve(1000*1000*60);
+        //_localShapes.reserve(1000*1000*60);
         for(std::size_t i(0); i<initialShapes; ++i)
         {
             _localShapes.push_back(LocalShape());

@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
             }
     }
 
-    using Shape = sp::cls::Shape<5, 5, long double>;
+    using Shape = sp::cls::Shape<5, 5, double>;
 
     std::vector<SpectrFetcher<Shape::real>*> sfs;
     std::vector<std::size_t> frameCounters;
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 
     frameCounters.resize(sfs.size());
 
-    load("frameCounters", frameCounters);
+    //load("frameCounters", frameCounters);
 
 
 
@@ -122,19 +122,22 @@ int main(int argc, char *argv[])
     {
         std::size_t pushed1 = 0;
 
-        for(std::size_t periodOffset(0); periodOffset<periodsAmount-Shape::rows; ++periodOffset)
+        for(std::size_t idx(0); idx<sfs.size(); ++idx)
         {
-            for(std::size_t idx(0); idx<sfs.size(); ++idx)
+            std::size_t &frameCounter = frameCounters[idx];
+            auto &sf = *sfs[idx];
+
+            for(std::size_t periodOffset(0); periodOffset<periodsAmount-Shape::rows; ++periodOffset)
             {
-                std::size_t &frameCounter = frameCounters[idx];
-                auto &sf = *sfs[idx];
                 Shape shape;
 
                 if(!sf.fetchRect(shape.data(), frameCounter, Shape::cols, periodOffset, Shape::rows))
                 {
                     frameCounter = 0;
-                    sf.fetchRect(shape.data(), frameCounter, Shape::cols, periodOffset, Shape::rows);
+                    break;
                 }
+
+                //std::cerr<<frameCounter<<", "<<periodOffset<<std::endl;
 
                 //shape1->smooth();
                 pushed1 = pe1.pushBasis(shape);
