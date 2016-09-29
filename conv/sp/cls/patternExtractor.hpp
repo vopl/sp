@@ -275,7 +275,7 @@ namespace sp { namespace cls
             xw[i] = x[i].w();
         }
 
-        for(std::size_t iterInf(0); ; ++iterInf)
+        for(std::size_t aCount(0); aCount<Shape::_valuesAmount; ++aCount)
         {
             as.push_back(LocalShape());
             as.back().randomize();
@@ -296,7 +296,7 @@ namespace sp { namespace cls
 
             complex prevF = 0;
 
-            for(std::size_t iter(0); iter<1000; ++iter)
+            for(std::size_t iter(0); ; ++iter)
             {
 
                 save("pca.iter.as2");
@@ -315,7 +315,7 @@ namespace sp { namespace cls
 
                         for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
                         {
-                            nom += x[i].data()[j] * a.data()[j]/* * xw[i]*/;
+                            nom += x[i].data()[j] * a.data()[j];
                         }
 
                         b[i] = nom.v()/denom.v();
@@ -331,12 +331,12 @@ namespace sp { namespace cls
                     {
                         for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
                         {
-                            FSum += x[i].data()[j];
-                            FSum += -b[i]*a.data()[j];
+                            complex f = (x[i].data()[j] - b[i]*a.data()[j]).sqr();
+                            FSum += f;
                         }
                     }
 
-                    complex F = FSum.v() / (real(b.size()) * Shape::_valuesAmount);
+                    complex F = FSum.v() / (real(b.size()));
 
                     if(F.a() < 1e-40)
                     {
@@ -344,17 +344,21 @@ namespace sp { namespace cls
                         break;
                     }
 
-                    complex dFdF = (F-prevF)/F;
-                    std::cout<<iter<<", "<<F.a()<<", "<<dFdF.a()<<std::endl;
+                    complex dF = (F-prevF);///F;
+                    std::cout<<iter<<", "<<F.a()<<", "<<dF.a()<<std::endl;
 
                     prevF = F;
 
-                    if(dFdF.a() < 1e-10)
+                    if(dF.a() < 1e-25)
                     {
                         break;
                     }
                 }
 
+                if(iter>10000)
+                {
+                    break;
+                }
 
                 //a
                 {
@@ -370,7 +374,7 @@ namespace sp { namespace cls
 
                         for(std::size_t i(0); i<b.size(); ++i)
                         {
-                            nom += b[i] * x[i].data()[j]/* * xw[i]*/;
+                            nom += b[i] * x[i].data()[j];
                         }
 
                         a.data()[j] = nom.v()/denom.v();
@@ -395,18 +399,47 @@ namespace sp { namespace cls
                             a.data()[j] -= am.data()[j]*k;
                         }
                     }
+
+                    a.normalize(true);
                 }
             }
 
             //sub
-            for(std::size_t i(0); i<b.size(); ++i)
+//            for(std::size_t i(0); i<b.size(); ++i)
+//            {
+//                for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+//                {
+//                    x[i].data()[j] -= a.data()[j] * b[i];
+//                }
+//                //x[i].normalize();
+//            }
+
+            for(std::size_t i(0); i<x.size(); ++i)
             {
-                for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+                for(std::size_t ai(0); ai<as.size(); ++ai)
                 {
-                    x[i].data()[j] -= a.data()[j] * b[i];
+                    const Shape &a = as[ai];
+                    complex b;
+                    {
+                        Summator<complex> denom;
+                        Summator<complex> nom;
+
+                        for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+                        {
+                            denom += a.data()[j].sqr();
+                            nom += x[i].data()[j] * a.data()[j];
+                        }
+
+                        b = nom.v()/denom.v();
+                    }
+
+                    for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+                    {
+                        x[i].data()[j] -= a.data()[j] * b;
+                    }
                 }
-                //x[i].normalize();
             }
+
 
 //            {
 //                //normilize x

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sp/complex.hpp"
+#include "sp/math.hpp"
 #include "sp/serialization.hpp"
 #include <limits>
 #include <memory>
@@ -103,15 +104,15 @@ namespace sp { namespace cls
         void normalize(bool withPhase = true)
         {
             //выровнять амплитуду на 1 и фазу на 0
-            complex middle;
-            real middleA = 0;
+            Summator<complex> middleSum;
+            Summator<real> middleASum = 0;
             for(const complex &v : _values)
             {
-                middle += v;
-                middleA += v.a();
+                middleSum += v;
+                middleASum += v.a();
             }
-            middleA /= _valuesAmount;
-            middle /= _valuesAmount;
+            real middleA = middleASum.v();
+            complex middle = middleSum.v();
 
             if(!middleA)
             {
@@ -126,6 +127,8 @@ namespace sp { namespace cls
             {
                 middle = middleA;
             }
+
+            middle /= _valuesAmount;
 
             for(complex &v : _values)
             {
