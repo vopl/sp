@@ -81,17 +81,17 @@ int main(int argc, char *argv[])
             }
     }
 
-    using Shape = sp::cls::Shape<5, 5, double>;
+    using Shape = sp::cls::Shape<5, 5, long double>;
 
     std::vector<SpectrFetcher<Shape::real>*> sfs;
     std::vector<std::size_t> frameCounters;
 
-//    sfs.push_back(new SpectrFetcher<Shape::real>("/home/vopl/work/tmp/sp_run/med_100_4/out"));
+    sfs.push_back(new SpectrFetcher<Shape::real>("/home/vopl/work/tmp/sp_run/med_100_4/out"));
 //    sfs.push_back(new SpectrFetcher<Shape::real>("/home/vopl/work/tmp/sp_run/med_100_6/out"));
 
 //    sfs.push_back(new SpectrFetcher<Shape::real>("/home/vopl/work/tmp/sp_run/pod_100_4/out"));
 //    sfs.push_back(new SpectrFetcher<Shape::real>("/home/vopl/work/tmp/sp_run/pod_100_8/out"));
-    sfs.push_back(new SpectrFetcher<Shape::real>("/home/vopl/work/tmp/sp_run/pod_100_12/out"));
+//    sfs.push_back(new SpectrFetcher<Shape::real>("/home/vopl/work/tmp/sp_run/pod_100_12/out"));
 
     frameCounters.resize(sfs.size());
 
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
             {
                 Shape shape;
 
-                if(!sf.fetchRect(shape.data(), frameCounter, Shape::cols, periodOffset, Shape::rows))
+                if(!sf.fetchRect(shape.data(), frameCounter, Shape::cols, 1, periodOffset, Shape::rows, 1))
                 {
                     frameCounter = 0;
                     break;
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 
         std::cout<<frameCounters[0]<<", pe1: "<<pushed1<<std::endl;
 
-        if(pushed1 > 1000*1000*4)
+        if(pushed1 > 1000*1000)
         {
             pe1.pca2();
             //pe1.fixLearn(1e10);
@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
 
         for(std::size_t idx(0); idx<sfs.size(); ++idx)
         {
-            frameCounters[idx]++;
+            frameCounters[idx] += 20;
         }
     }
 

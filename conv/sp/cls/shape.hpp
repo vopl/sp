@@ -105,30 +105,28 @@ namespace sp { namespace cls
         {
             //выравнять амплитуду на 1 и фазу на 0
             Summator<complex> middleSum;
-            Summator<real> middleASum = 0;
+            Summator<complex> normaSum;
             for(const complex &v : _values)
             {
                 middleSum += v;
-                middleASum += v.a();
+                normaSum += v.sqr();
             }
-            real middleA = middleASum.v();
-            complex middle = middleSum.v();
+            real norma = sqrt(normaSum.v().a());
+            complex middle = middleSum.v() / real(_valuesAmount);
 
-            if(!middleA)
+            if(norma < std::numeric_limits<real>::epsilon())
             {
                 return;
             }
 
-            if(withPhase)
+            if(withPhase && middle.a()>std::numeric_limits<real>::epsilon())
             {
-                middle = middle*middleA/middle.a();
+                middle = middle*norma/middle.a();
             }
             else
             {
-                middle = middleA;
+                middle = norma;
             }
-
-            middle /= _valuesAmount;
 
             for(complex &v : _values)
             {
@@ -231,7 +229,7 @@ namespace sp { namespace cls
             {
                 maxa = std::max(maxa, v.a());
             }
-            maxa = 2;
+            //maxa = 2;
 
             for(std::size_t idx(0); idx<_valuesAmount; ++idx)
             {

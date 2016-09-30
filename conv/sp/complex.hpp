@@ -31,6 +31,7 @@ namespace sp
         const real &operator[](std::size_t idx) const;
 
         real a() const;
+        real a2() const;
         real p() const;
 
         complex_tmpl conj() const;
@@ -152,7 +153,14 @@ namespace sp
     template <class real>
     real complex_tmpl<real>::a() const
     {
-        return sqrt(_re*_re + _im*_im);
+        return sqrt(a2());
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    template <class real>
+    real complex_tmpl<real>::a2() const
+    {
+        return (_re*_re + _im*_im);
     }
 
     //////////////////////////////////////////////////////////////////////////
