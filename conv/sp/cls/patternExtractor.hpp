@@ -281,12 +281,12 @@ namespace sp { namespace cls
             as.back().randomize();
             as.back().normalize();
 
-            {
-                x.swap(_localShapes);
-                save("pca.iter.x2");
+//            {
+//                x.swap(_localShapes);
+//                save("pca.iter.x2");
 
-                x.swap(_localShapes);
-            }
+//                x.swap(_localShapes);
+//            }
 
 
             bs.push_back(std::vector<complex>(x.size()));
@@ -300,8 +300,6 @@ namespace sp { namespace cls
 
             for(std::size_t iter(0); ; ++iter)
             {
-
-                save("pca.iter.as2");
 
                 real bNorma;
                 //b
@@ -356,7 +354,7 @@ namespace sp { namespace cls
 
                     prevF = F;
 
-                    if(dF.a() < 1e-17)
+                    if(dF.a() < std::numeric_limits<real>::epsilon())
                     {
                         break;
                     }
@@ -423,6 +421,9 @@ namespace sp { namespace cls
 
             std::cout<<"a "<<aCount<<" ready, aNum: "<<aNum<<std::endl;
 
+            save("pca.iter.as2");
+
+
             //sub
 //            for(std::size_t i(0); i<b.size(); ++i)
 //            {
@@ -462,31 +463,22 @@ namespace sp { namespace cls
 
 //            {
 //                //normilize x
-//                Summator<complex> vSum;
-//                for(std::size_t i(0); i<x.size(); ++i)
-//                {
-//                    for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
-//                    {
-//                        vSum += x[i].data()[j];
-//                    }
-//                }
-//                complex vMean = vSum.v() / (real(x.size()) * Shape::_valuesAmount);
+//                //Summator<complex> vSum;
+//                //for(std::size_t i(0); i<x.size(); ++i)
+//                //{
+//                //    for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
+//                //    {
+//                //        vSum += x[i].data()[j];
+//                //    }
+//                //}
+//                //complex vMean = vSum.v() / (real(x.size()) * Shape::_valuesAmount);
 //                Summator<real> aSum;
-//                real maxXValue = 0;
 //                for(std::size_t i(0); i<x.size(); ++i)
 //                {
-//                    real maxXSum = 0;
 //                    for(std::size_t j(0); j<Shape::_valuesAmount; ++j)
 //                    {
-//                        x[i].data()[j] -= vMean;
+//                        //x[i].data()[j] -= vMean;
 //                        aSum += x[i].data()[j].a();
-//                        maxXSum += x[i].data()[j].a();
-//                    }
-
-//                    if(maxXSum > maxXValue)
-//                    {
-//                        maxXValue = maxXSum;
-//                        maxXIndex = i;
 //                    }
 //                }
 //                real aMean = aSum.v() / (real(x.size()) * Shape::_valuesAmount);
@@ -496,8 +488,11 @@ namespace sp { namespace cls
 //                    {
 //                        x[i].data()[j] /= aMean;
 //                    }
+//                    //x[i].normalize();
 //                }
 //            }
+
+
             for(std::size_t i(0); i<x.size(); ++i)
             {
                 xw[i] = x[i].w();

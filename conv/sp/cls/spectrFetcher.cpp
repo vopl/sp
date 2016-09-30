@@ -55,12 +55,14 @@ namespace sp { namespace cls
 
     template <class real>
     bool SpectrFetcher<real>::fetchRect(complex_tmpl<real> *rect,
-                   std::size_t frame0, std::size_t framesAmount,
-                   std::size_t period0, std::size_t periodsAmount)
+                                        std::size_t frame0, std::size_t framesAmount, std::size_t framesStride,
+                                        std::size_t period0, std::size_t periodsAmount, std::size_t periodsStride)
     {
-        for(std::size_t frame(0); frame<framesAmount; ++frame)
+        for(std::size_t frameIndex(0); frameIndex<framesAmount; ++frameIndex)
         {
-            if(!fetchRectColumn(&rect[frame*periodsAmount], frame + frame0, period0, periodsAmount))
+            if(!fetchRectColumn(&rect[frameIndex*periodsAmount],
+                                frame0 + frameIndex*framesStride,
+                                period0, periodsAmount, periodsStride))
             {
                 return false;
             }
@@ -70,7 +72,7 @@ namespace sp { namespace cls
     }
 
     template <class real>
-    bool SpectrFetcher<real>::fetchRectColumn(complex_tmpl<real> *col, std::size_t frame, std::size_t period0, std::size_t periodsAmount)
+    bool SpectrFetcher<real>::fetchRectColumn(complex_tmpl<real> *col, std::size_t frame, std::size_t period0, std::size_t periodsAmount, std::size_t periodsStride)
     {
         if(!prefetch(frame))
         {
@@ -87,7 +89,15 @@ namespace sp { namespace cls
             return false;
         }
 
-        std::copy(prefetchedFrame.begin()+period0, prefetchedFrame.begin()+period0+periodsAmount, col);
+        for(std::size_t periodIndex(0); periodIndex<periodsAmount; ++periodIndex)
+        {
+            if(period0 + periodIndex*periodsStride >= prefetchedFrame.size())
+            {
+                return false;
+            }
+            col[periodIndex] = prefetchedFrame[period0 + periodIndex*periodsStride];
+        }
+
         return true;
     }
 
@@ -227,7 +237,7 @@ namespace sp { namespace cls
         std::istringstream inRe(linebufRe);
         std::istringstream inIm(linebufIm);
 
-        real x = frame*0.001;//HARDCODED frameStep
+        real x = frame*real(0.001);//HARDCODED frameStep
 
         for(std::size_t periodIndex(0); periodIndex<_periodGrid.size(); ++periodIndex)
         {

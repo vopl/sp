@@ -17,11 +17,11 @@ namespace sp { namespace cls
         const std::vector<real> &periodGrid();
 
         bool fetchRect(complex_tmpl<real> *rect,
-                       std::size_t frame0, std::size_t framesAmount,
-                       std::size_t period0, std::size_t periodsAmount);
+                       std::size_t frame0, std::size_t framesAmount, std::size_t framesStride,
+                       std::size_t period0, std::size_t periodsAmount, std::size_t periodsStride);
 
     private:
-        bool fetchRectColumn(complex_tmpl<real> *col, std::size_t frame, std::size_t period0, std::size_t periodsAmount);
+        bool fetchRectColumn(complex_tmpl<real> *col, std::size_t frame, std::size_t period0, std::size_t periodsAmount, std::size_t periodsStride);
 
         bool prefetch(std::size_t frame);
 
