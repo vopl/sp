@@ -1,4 +1,4 @@
-#include "wavStore.hpp"
+#include "sp/utils/wavStore.hpp"
 
 namespace sp { namespace utils
 {
@@ -47,12 +47,12 @@ namespace sp { namespace utils
     {
     }
 
-    bool WavStore::good()
+    bool WavStore::good() const
     {
         return _good;
     }
 
-    WavStore::operator bool()
+    WavStore::operator bool() const
     {
         return good();
     }
@@ -125,7 +125,7 @@ namespace sp { namespace utils
 
         _header._bitness = hdr.bitsPerSample;
         _header._align = hdr.blockAlign;
-        _header._samples = hdr.Subchunk2Size/hdr.blockAlign;
+        _header._samplesAmount = hdr.Subchunk2Size/hdr.blockAlign;
 
         _good = true;
         return good();
@@ -136,7 +136,7 @@ namespace sp { namespace utils
         assert(0);
     }
 
-    WavStore::Header &WavStore::header()
+    const WavStore::Header &WavStore::header() const
     {
         return _header;
     }
@@ -151,7 +151,7 @@ namespace sp { namespace utils
         if(_read)
         {
             _pos = pos;
-            if(!_file.seekg(pos * _header._align))
+            if(!_file.seekg(sizeof(WAV_HEADER) + pos * _header._align))
             {
                 _pos = _file.tellg()/_header._align;
                 return false;
@@ -164,7 +164,7 @@ namespace sp { namespace utils
         assert(0);
     }
 
-    std::size_t WavStore::tell()
+    std::size_t WavStore::tell() const
     {
         return _pos;
     }
@@ -177,7 +177,7 @@ namespace sp { namespace utils
             return false;
         }
 
-        if(_pos + size > _header._samples)
+        if(_pos + size > _header._samplesAmount)
         {
             std::cerr<<"too small wav file for read such size: "<<size<<std::endl;
             return false;

@@ -1,4 +1,4 @@
-#include "sp/cls/spectrFetcher.hpp"
+#include "sp/utils/spectrStore.hpp"
 
 #include "sp/cls/shape.hpp"
 #include "sp/cls/patternExtractor.hpp"
@@ -83,17 +83,12 @@ int main(int argc, char *argv[])
 
     using Shape = sp::cls::Shape<5, 5, long double>;
 
-    std::vector<SpectrFetcher<Shape::real>*> sfs;
+    std::vector<utils::SpectrStore*> sStores;
     std::vector<std::size_t> frameCounters;
 
-    sfs.push_back(new SpectrFetcher<Shape::real>("/home/vopl/work/tmp/sp_run/med_100_4/out"));
-//    sfs.push_back(new SpectrFetcher<Shape::real>("/home/vopl/work/tmp/sp_run/med_100_6/out"));
+    sStores.push_back(new utils::SpectrStore("/home/vopl/projects/sp/conv/bin/out/spectr", false));
 
-//    sfs.push_back(new SpectrFetcher<Shape::real>("/home/vopl/work/tmp/sp_run/pod_100_4/out"));
-//    sfs.push_back(new SpectrFetcher<Shape::real>("/home/vopl/work/tmp/sp_run/pod_100_8/out"));
-//    sfs.push_back(new SpectrFetcher<Shape::real>("/home/vopl/work/tmp/sp_run/pod_100_12/out"));
-
-    frameCounters.resize(sfs.size());
+    frameCounters.resize(sStores.size());
 
     //load("frameCounters", frameCounters);
 
@@ -116,22 +111,22 @@ int main(int argc, char *argv[])
     //pe2.save("pe2");
 
 
-    std::size_t periodsAmount = sfs[0]->periodGrid().size();
+    std::size_t periodsAmount = sStores[0]->header()._periods.size();
 
     for(;;)
     {
         std::size_t pushed1 = 0;
 
-        for(std::size_t idx(0); idx<sfs.size(); ++idx)
+        for(std::size_t idx(0); idx<sStores.size(); ++idx)
         {
             std::size_t &frameCounter = frameCounters[idx];
-            auto &sf = *sfs[idx];
+            auto &sStore = *sStores[idx];
 
             for(std::size_t periodOffset(0); periodOffset<periodsAmount-Shape::rows; ++periodOffset)
             {
                 Shape shape;
 
-                if(!sf.fetchRect(shape.data(), frameCounter, Shape::cols, 1, periodOffset, Shape::rows, 1))
+                if(!sStore.readRect(shape.data(), frameCounter, Shape::cols, 1, periodOffset, Shape::rows, 1))
                 {
                     frameCounter = 0;
                     break;
@@ -185,7 +180,7 @@ int main(int argc, char *argv[])
 //            }
         }
 
-        for(std::size_t idx(0); idx<sfs.size(); ++idx)
+        for(std::size_t idx(0); idx<sStores.size(); ++idx)
         {
             frameCounters[idx] += 20;
         }

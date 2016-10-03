@@ -13,12 +13,6 @@ set(SRC
     prony.cpp
     inv.cpp
 
-    loadWav.hpp
-    loadWav.cpp
-
-    spectrStore.hpp
-    spectrStore.cpp
-
     periodGrid.hpp
     periodGrid.cpp
 
