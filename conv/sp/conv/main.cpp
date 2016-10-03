@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 
             ("in-file", po::value<std::string>()->default_value("in.wav"), "input wav file name")
 
-            ("out-dir", po::value<std::string>()->default_value("out"), "output directory")
+            ("out-file", po::value<std::string>()->default_value("out.spectr"), "output spectr file name")
 
             ("inititersmax", po::value<std::size_t>()->default_value(15), "maximum initial iterations for lsq")
             ("itersmax", po::value<std::size_t>()->default_value(1), "maximum iterations for lsq")
@@ -256,15 +256,6 @@ int main(int argc, char *argv[])
           <<sp::real(wavStore.header()._samplesAmount)/wavStore.header()._frequency<<" sec)"<<endl;
     }
 
-    boost::system::error_code ec;
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    fs::path outDir(vars["out-dir"].as<std::string>());
-    if(!fs::is_directory(outDir, ec) && !fs::create_directories(outDir, ec))
-    {
-        cerr<<"unable to create output directory: "<<outDir<<endl;
-        return EXIT_FAILURE;
-    }
-
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     sp::real framesPerSecond = vars["fps"].as<sp::real>();
     cout<<"fps: "<<framesPerSecond<<endl;
@@ -280,18 +271,18 @@ int main(int argc, char *argv[])
     cout<<"framesAmount: "<<framesAmount<<endl;
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    //utils::SpectrStore echoStore((outDir/"echo").string(), echoPeriods);
-    utils::SpectrStore spectrStore((outDir/"spectr").string().c_str(), true);
+    std::string outFile = vars["out-file"].as<std::string>();
+    utils::SpectrStore spectrStore(outFile.c_str(), true);
     if(spectrStore)
     {
         if(spectrStore.header()._periods != spectrPeriods)
         {
-            cerr<<"spectrStore period grid mismatch: "<<(outDir/"spectr").string()<<endl;
+            cerr<<"spectrStore period grid mismatch: "<<outFile<<endl;
             return EXIT_FAILURE;
         }
         if(spectrStore.header()._samplesPerSecond != framesPerSecond)
         {
-            cerr<<"spectrStore fps mismatch: "<<(outDir/"spectr").string()<<endl;
+            cerr<<"spectrStore fps mismatch: "<<outFile<<endl;
             return EXIT_FAILURE;
         }
     }
@@ -305,11 +296,11 @@ int main(int argc, char *argv[])
         header._periods = spectrPeriods;
         header._samplesAmount = 0;
 
-        spectrStore.create((outDir/"spectr").string().c_str(), header);
+        spectrStore.create(outFile.c_str(), header);
 
         if(!spectrStore)
         {
-            cerr<<"unable to create spectrStore: "<<(outDir/"spectr").string()<<endl;
+            cerr<<"unable to create spectrStore: "<<outFile<<endl;
             return EXIT_FAILURE;
         }
     }
