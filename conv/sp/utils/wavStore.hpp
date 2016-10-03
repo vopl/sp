@@ -13,7 +13,7 @@ namespace sp { namespace utils
             std::size_t _frequency = 0;
             std::size_t _align = 0;
             std::size_t _bitness = 0;
-            std::size_t _samples = 0;
+            std::size_t _samplesAmount = 0;
         };
 
         using Sample = real;
@@ -24,16 +24,16 @@ namespace sp { namespace utils
         WavStore(const char *fname, const Header &header);//create
         ~WavStore();
 
-        bool good();
-        operator bool();
+        bool good() const;
+        operator bool() const;
 
         bool open(const char *fName);
         bool create(const char *fName, const Header &header);
 
-        Header &header();
+        const Header &header() const;
 
         bool seek(std::size_t pos);
-        std::size_t tell();
+        std::size_t tell() const;
 
         bool read(Sample *data, std::size_t size);
         bool write(const Sample *data, std::size_t size);
