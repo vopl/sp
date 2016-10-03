@@ -10,7 +10,9 @@
 #include "sp/conv/periodGrid.hpp"
 #include "sp/conv/signalConvolver.hpp"
 
-#include "sp/conv/loadWav.hpp"
+//#include "sp/conv/loadWav.hpp"
+#include "sp/utils/wavStore.hpp"
+
 #include "sp/conv/spectrStore.hpp"
 
 using namespace std;
@@ -115,7 +117,6 @@ int main(int argc, char *argv[])
             ("fps", po::value<sp::real>()->default_value(1000), "frames per second")
 
             ("in-file", po::value<std::string>()->default_value("in.wav"), "input wav file name")
-            ("calibrate", po::value<std::size_t>()->default_value(0), "simulate calibration harminics, N-step in spectr grid")
 
             ("out-dir", po::value<std::string>()->default_value("out"), "output directory")
 
@@ -237,44 +238,21 @@ int main(int argc, char *argv[])
         <<endl;
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    TVReal samples;
-    uint32_t sps=0;
+    utils::WavStore wavStore;
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     if(vars.count("in-file"))
     {
-        if(!loadWav(vars["in-file"].as<std::string>(), samples, sps))
+        if(!wavStore.open(vars["in-file"].as<std::string>().c_str()))
         {
-            cerr<<"unable to load wav file"<<endl;
+            cerr<<"unable to read wav file"<<endl;
             return -1;
         }
 
-        cout<<"wav loaded: "<<samples.size()<<" samples at "<<sps<<"Hz ("<<sp::real(samples.size())/sps<<" sec)"<<endl;
-    }
-
-    {
-        std::size_t calibrate = vars["calibrate"].as<std::size_t>();
-        if(calibrate)
-        {
-            cout<<"generate calibration signal...";
-            cout.flush();
-
-            sp::real sampleStep = sp::real(1)/sps;
-            for(size_t index(0); index<samples.size(); ++index)
-            {
-                sp::real x = index * sampleStep;
-
-                samples[index] = 0;
-
-                for(std::size_t k(calibrate); k<=spectrPeriods.size()-calibrate; k+=calibrate)
-                {
-                    sp::real t = spectrPeriods[k];
-                    samples[index] += sp::sin(x*sp::g_2pi/t);
-                }
-            }
-
-            cout<<"done"<<std::endl;
-        }
+        cout<<"input wav: "
+           <<wavStore.header()._samples<<" samples at "
+           <<wavStore.header()._frequency<<"Hz ("
+          <<sp::real(wavStore.header()._samples)/wavStore.header()._frequency<<" sec)"<<endl;
     }
 
     boost::system::error_code ec;
@@ -302,13 +280,13 @@ int main(int argc, char *argv[])
     sp::real framesPerSecond = vars["fps"].as<sp::real>();
     cout<<"fps: "<<framesPerSecond<<endl;
 
-    const sp::real samplesPerFrame = sps/framesPerSecond;
+    const sp::real samplesPerFrame = wavStore.header()._frequency/framesPerSecond;
     cout<<"samplesPerFrame: "<<samplesPerFrame<<endl;
 
     static const std::size_t extraSamples4Push = 2;//2 extra samples for poly signal approximator
 
-    const size_t framesAmount = samples.size() > 3 ?
-                                    std::size_t((samples.size()-1-extraSamples4Push)/samplesPerFrame) :
+    const size_t framesAmount = wavStore.header()._samples > 1+extraSamples4Push ?
+                                    std::size_t((wavStore.header()._samples-1-extraSamples4Push)/samplesPerFrame) :
                                     0;
     cout<<"framesAmount: "<<framesAmount<<endl;
 
@@ -319,7 +297,7 @@ int main(int argc, char *argv[])
     convolver.setup(
             vars["ppw"].as<sp::real>(),
             echoPeriods,
-            sp::real(1)/sps,
+            sp::real(1)/wavStore.header()._frequency,
             vars["splp"].as<std::size_t>(),
             vars["cpo"].as<std::size_t>(),
             SignalApproxType::poly6p5o32x);
@@ -370,10 +348,18 @@ int main(int argc, char *argv[])
 
 
         std::size_t needSampleIndex = std::size_t(samplesPerFrame*(frameIndex+1))+extraSamples4Push;
-        convolver.pushSignal(&samples[sampleIndex], needSampleIndex - sampleIndex);
+
+        TVReal samples(needSampleIndex - sampleIndex);
+        if(!wavStore.read(&samples[0], samples.size()))
+        {
+            std::cerr<<"unable to read wav file"<<std::endl;
+            abort();
+        }
+
+        convolver.pushSignal(&samples[0], samples.size());
         sampleIndex = needSampleIndex;
 
-        cout<<"frame "<<frameIndex<<"/"<<framesAmount<<" ("<<sp::real(frameIndex*100)/framesAmount<<"%, "<<sp::real(sampleIndex-extraSamples4Push)/sps<<" sec) ";
+        cout<<"frame "<<frameIndex<<"/"<<framesAmount<<" ("<<sp::real(frameIndex*100)/framesAmount<<"%, "<<sp::real(sampleIndex-extraSamples4Push)/wavStore.header()._frequency<<" sec) ";
         cout.flush();
 
         cout<<"c..";
