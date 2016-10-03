@@ -61,6 +61,7 @@ include_directories(${LEVMAR_DIR})
 add_subdirectory(${LEVMAR_DIR})
 add_subdirectory(lapack_part)
 
+add_subdirectory(sp/utils)
 add_subdirectory(sp/conv)
 add_subdirectory(sp/cls)
 
