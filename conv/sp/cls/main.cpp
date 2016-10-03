@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
             }
     }
 
-    using Shape = sp::cls::Shape<5, 5, long double>;
+    using Shape = sp::cls::Shape<16, 16, double>;
 
     std::vector<utils::SpectrStore*> sStores;
     std::vector<std::size_t> frameCounters;
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 
 
 
-    PatternExtractor<Shape> pe1(0, false);
+    PatternExtractor<Shape> pe1(20*20, false);
 //    PatternExtractor<Shape> pe2(150*150, false);
 
     //pe1.load("pe1");
@@ -115,6 +115,11 @@ int main(int argc, char *argv[])
 
     for(;;)
     {
+        for(std::size_t idx(0); idx<sStores.size(); ++idx)
+        {
+            frameCounters[idx] += 1;
+        }
+
         std::size_t pushed1 = 0;
 
         for(std::size_t idx(0); idx<sStores.size(); ++idx)
@@ -135,21 +140,22 @@ int main(int argc, char *argv[])
                 //std::cerr<<frameCounter<<", "<<periodOffset<<std::endl;
 
                 //shape1->smooth();
-                pushed1 = pe1.pushBasis(shape);
+                pushed1 = pe1.push4Learn(typename Shape::Ptr(new Shape(shape)));
             }
         }
 
 
         std::cout<<frameCounters[0]<<", pe1: "<<pushed1<<std::endl;
 
-        if(pushed1 > 1000*1000)
+        if(!frameCounters[0])
         {
-            pe1.pca2();
-            //pe1.fixLearn(1e10);
+            //pe1.pca2();
+            //exit(0);
+
+            pe1.fixLearn(1e10);
             //pe1.mergeSames(0.005);
-            exit(0);
             pe1.save("pe1");
-            save("frameCounters", frameCounters);
+            exit(0);
 
 //            std::vector<Shape> learnedShapes1(2000);
 //            pe1.export_(learnedShapes1);
@@ -178,11 +184,6 @@ int main(int argc, char *argv[])
 
 //                save("frameCounters", frameCounters);
 //            }
-        }
-
-        for(std::size_t idx(0); idx<sStores.size(); ++idx)
-        {
-            frameCounters[idx] += 20;
         }
     }
 
