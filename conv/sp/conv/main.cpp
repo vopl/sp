@@ -10,8 +10,11 @@
 #include "sp/conv/periodGrid.hpp"
 #include "sp/conv/signalConvolver.hpp"
 
-#include "sp/conv/loadWav.hpp"
-#include "sp/conv/spectrStore.hpp"
+//#include "sp/conv/loadWav.hpp"
+#include "sp/utils/wavStore.hpp"
+#include "sp/utils/spectrStore.hpp"
+
+//#include "sp/conv/spectrStore.hpp"
 
 using namespace std;
 using namespace sp;
@@ -105,19 +108,18 @@ int main(int argc, char *argv[])
 
             ("efmin", po::value<sp::real>()->default_value(0.2), "echo frequency grid minimum")
             ("efmax", po::value<sp::real>()->default_value(20000), "echo frequency grid maximum")
-            ("efcount", po::value<std::size_t>()->default_value(1000), "echo frequency grid size")
+            ("efcount", po::value<std::size_t>()->default_value(8000), "echo frequency grid size")
             ("eftype", po::value<std::string>()->default_value("flog"), "echo frequency grid type (plin|plog|flin|flog)")
 
             ("sfminmult", po::value<sp::real>()->default_value(100), "spectr frequency minimum value part")
             ("sfmaxmult", po::value<sp::real>()->default_value(1), "spectr frequency maximum value part")
-            ("sfcountmult", po::value<std::size_t>()->default_value(1), "spectr frequency count mult")
+            ("sfcountmult", po::value<std::size_t>()->default_value(8), "spectr frequency count mult")
 
             ("fps", po::value<sp::real>()->default_value(1000), "frames per second")
 
             ("in-file", po::value<std::string>()->default_value("in.wav"), "input wav file name")
-            ("calibrate", po::value<std::size_t>()->default_value(0), "simulate calibration harminics, N-step in spectr grid")
 
-            ("out-dir", po::value<std::string>()->default_value("out"), "output directory")
+            ("out-file", po::value<std::string>()->default_value("out.spectr"), "output spectr file name")
 
             ("inititersmax", po::value<std::size_t>()->default_value(15), "maximum initial iterations for lsq")
             ("itersmax", po::value<std::size_t>()->default_value(1), "maximum iterations for lsq")
@@ -237,89 +239,81 @@ int main(int argc, char *argv[])
         <<endl;
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    TVReal samples;
-    uint32_t sps=0;
+    utils::WavStore wavStore;
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     if(vars.count("in-file"))
     {
-        if(!loadWav(vars["in-file"].as<std::string>(), samples, sps))
+        if(!wavStore.open(vars["in-file"].as<std::string>().c_str()))
         {
-            cerr<<"unable to load wav file"<<endl;
+            cerr<<"unable to read wav file"<<endl;
             return -1;
         }
 
-        cout<<"wav loaded: "<<samples.size()<<" samples at "<<sps<<"Hz ("<<sp::real(samples.size())/sps<<" sec)"<<endl;
-    }
-
-    {
-        std::size_t calibrate = vars["calibrate"].as<std::size_t>();
-        if(calibrate)
-        {
-            cout<<"generate calibration signal...";
-            cout.flush();
-
-            sp::real sampleStep = sp::real(1)/sps;
-            for(size_t index(0); index<samples.size(); ++index)
-            {
-                sp::real x = index * sampleStep;
-
-                samples[index] = 0;
-
-                for(std::size_t k(calibrate); k<=spectrPeriods.size()-calibrate; k+=calibrate)
-                {
-                    sp::real t = spectrPeriods[k];
-                    samples[index] += sp::sin(x*sp::g_2pi/t);
-                }
-            }
-
-            cout<<"done"<<std::endl;
-        }
-    }
-
-    boost::system::error_code ec;
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    fs::path outDir(vars["out-dir"].as<std::string>());
-    if(!fs::is_directory(outDir, ec) && !fs::create_directories(outDir, ec))
-    {
-        cerr<<"unable to create output directory: "<<outDir<<endl;
-        return EXIT_FAILURE;
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    SpectrStore echoStore((outDir/"echo").string(), echoPeriods);
-    SpectrStore spectrStore((outDir/"spectr").string(), spectrPeriods);
-
-    if(
-       echoStore.framesPushed() == std::size_t(-1) ||
-       echoStore.framesPushed() != spectrStore.framesPushed())
-    {
-        cerr<<"spectr stores are inconsistent: "<<echoStore.framesPushed()<<" vs "<<spectrStore.framesPushed()<<endl;
-        return EXIT_FAILURE;
+        cout<<"input wav: "
+           <<wavStore.header()._samplesAmount<<" samples at "
+           <<wavStore.header()._frequency<<"Hz ("
+          <<sp::real(wavStore.header()._samplesAmount)/wavStore.header()._frequency<<" sec)"<<endl;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     sp::real framesPerSecond = vars["fps"].as<sp::real>();
     cout<<"fps: "<<framesPerSecond<<endl;
 
-    const sp::real samplesPerFrame = sps/framesPerSecond;
+    const sp::real samplesPerFrame = wavStore.header()._frequency/framesPerSecond;
     cout<<"samplesPerFrame: "<<samplesPerFrame<<endl;
 
     static const std::size_t extraSamples4Push = 2;//2 extra samples for poly signal approximator
 
-    const size_t framesAmount = samples.size() > 3 ?
-                                    std::size_t((samples.size()-1-extraSamples4Push)/samplesPerFrame) :
+    const size_t framesAmount = wavStore.header()._samplesAmount > 1+extraSamples4Push ?
+                                    std::size_t((wavStore.header()._samplesAmount-1-extraSamples4Push)/samplesPerFrame) :
                                     0;
     cout<<"framesAmount: "<<framesAmount<<endl;
 
-    size_t frameIndex = echoStore.framesPushed();
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    std::string outFile = vars["out-file"].as<std::string>();
+    utils::SpectrStore spectrStore(outFile.c_str(), true);
+    if(spectrStore)
+    {
+        if(spectrStore.header()._periods != spectrPeriods)
+        {
+            cerr<<"spectrStore period grid mismatch: "<<outFile<<endl;
+            return EXIT_FAILURE;
+        }
+        if(spectrStore.header()._samplesPerSecond != framesPerSecond)
+        {
+            cerr<<"spectrStore fps mismatch: "<<outFile<<endl;
+            return EXIT_FAILURE;
+        }
+    }
+
+    if(!spectrStore)
+    {
+        utils::SpectrStore::Header header;
+
+        header._realBittness = sizeof(sp::real)*8;
+        header._samplesPerSecond = framesPerSecond;
+        header._periods = spectrPeriods;
+        header._samplesAmount = 0;
+
+        spectrStore.create(outFile.c_str(), header);
+
+        if(!spectrStore)
+        {
+            cerr<<"unable to create spectrStore: "<<outFile<<endl;
+            return EXIT_FAILURE;
+        }
+    }
+
+
+    size_t frameIndex = spectrStore.header()._samplesAmount;
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     SignalConvolver convolver;
     convolver.setup(
             vars["ppw"].as<sp::real>(),
             echoPeriods,
-            sp::real(1)/sps,
+            sp::real(1)/wavStore.header()._frequency,
             vars["splp"].as<std::size_t>(),
             vars["cpo"].as<std::size_t>(),
             SignalApproxType::poly6p5o32x);
@@ -370,10 +364,18 @@ int main(int argc, char *argv[])
 
 
         std::size_t needSampleIndex = std::size_t(samplesPerFrame*(frameIndex+1))+extraSamples4Push;
-        convolver.pushSignal(&samples[sampleIndex], needSampleIndex - sampleIndex);
+
+        TVReal samples(needSampleIndex - sampleIndex);
+        if(!wavStore.read(&samples[0], samples.size()))
+        {
+            std::cerr<<"unable to read wav file"<<std::endl;
+            abort();
+        }
+
+        convolver.pushSignal(&samples[0], samples.size());
         sampleIndex = needSampleIndex;
 
-        cout<<"frame "<<frameIndex<<"/"<<framesAmount<<" ("<<sp::real(frameIndex*100)/framesAmount<<"%, "<<sp::real(sampleIndex-extraSamples4Push)/sps<<" sec) ";
+        cout<<"frame "<<frameIndex<<"/"<<framesAmount<<" ("<<sp::real(frameIndex*100)/framesAmount<<"%, "<<sp::real(sampleIndex-extraSamples4Push)/wavStore.header()._frequency<<" sec) ";
         cout.flush();
 
         cout<<"c..";
@@ -412,8 +414,11 @@ int main(int argc, char *argv[])
         //std::cerr<<"upd: "<<spectr[270].re()<<", "<<spectr[270].im()<<std::endl;
 
         g_stopBlocked = true;
-        echoStore.pushFrames(echo);
-        spectrStore.pushFrames(spectr);
+        if(!spectrStore.write(&spectr, 1))
+        {
+            std::cerr<<"unable to write spectrStore"<<std::endl;
+            break;
+        }
         g_stopBlocked = false;
 
         if(g_stop)
