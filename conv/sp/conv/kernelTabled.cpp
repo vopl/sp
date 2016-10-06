@@ -24,10 +24,7 @@ namespace sp { namespace conv
 
     KernelTabled::~KernelTabled()
     {
-        if(_addedValuesAmount)
-        {
-            save();
-        }
+        flush();
     }
 
     complex KernelTabled::eval(real t, real st, const complex &sv)
@@ -214,6 +211,14 @@ namespace sp { namespace conv
         error1 = levmarInfo[1];
     }
 
+    void KernelTabled::flush()
+    {
+        if(_addedValuesAmount)
+        {
+            save();
+        }
+    }
+
     namespace
     {
         complex approxCos(const TVReal &ys)
@@ -308,16 +313,16 @@ namespace sp { namespace conv
 
             if(fabs(iter->first/t-1) > maxDelta)
             {
-                std::cerr<<"add kernel value "<<t<<", "<<_valuesByPeriod.size()<<"...";
-                std::cerr.flush();
+                //std::cerr<<"add kernel value "<<t<<", "<<_valuesByPeriod.size()<<"...";
+                //std::cerr.flush();
 
                 Value v;
                 buildValue(t, v._re, v._im);
                 iter = _valuesByPeriod.insert(std::make_pair(t, v)).first;
 
-                std::cerr<<"ok"<<std::endl;
+                //std::cerr<<"ok"<<std::endl;
 
-                if(++_addedValuesAmount >= 1000)
+                if(++_addedValuesAmount >= 100000)
                 {
                     save();
                 }

@@ -366,27 +366,27 @@ namespace sp { namespace conv
         series.push_back(serie0);
 
 
-        ///////////////////////////////
-        Serie serie1 = serie0;
-        for(std::size_t i(0); i<3; ++i)
-        {
-            series.push_back(serie1 = dif(serie1));
-        }
+//        ///////////////////////////////
+//        Serie serie1 = serie0;
+//        for(std::size_t i(0); i<3; ++i)
+//        {
+//            series.push_back(serie1 = dif(serie1));
+//        }
 
 
-        ///////////////////////////////
-        serie1 = serie0;
-        for(std::size_t i(0); i<3; ++i)
-        {
-            series.push_back(serie1 = int_(serie1));
-        }
+//        ///////////////////////////////
+//        serie1 = serie0;
+//        for(std::size_t i(0); i<3; ++i)
+//        {
+//            series.push_back(serie1 = int_(serie1));
+//        }
 
 
-        std::size_t resultSamples = _samplesPerPeriod;
-        for(std::size_t i(0); i<series.size(); ++i)
-        {
-            resultSamples = std::min(resultSamples, finalize(series[i]));
-        }
+//        std::size_t resultSamples = _samplesPerPeriod;
+//        for(std::size_t i(0); i<series.size(); ++i)
+//        {
+//            resultSamples = std::min(resultSamples, finalize(series[i]));
+//        }
     }
 
     SignalConvolverLevel::Serie SignalConvolverLevel::int_(const Serie &src)
@@ -784,7 +784,7 @@ namespace sp { namespace conv
 
         Summator<complex> res;
 
-        for(std::size_t mult(1); mult<=16; mult+=1)
+        for(std::size_t mult(1); mult<=1; mult+=1)
         {
             real step01 = real(mult)/_samplesPerPeriod;
 
