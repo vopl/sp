@@ -24,6 +24,7 @@ set(SRC
 
     kernelTabled.hpp
     kernelTabled.cpp
+    kernelTabled_deconvolve2.cpp
 )
 
 
