@@ -66,7 +66,7 @@ void inv()
     PeriodGrid echoPeriodsGrid(
         minT,
         maxT,
-        10000,
+        20000,
         PeriodGridType::frequencyLog);
 
     TVReal echoPeriods = echoPeriodsGrid.grid();
@@ -85,10 +85,10 @@ void inv()
         TVReal::const_iterator sfEnd = std::lower_bound(echoPeriods.begin(), echoPeriods.end(), echoPeriods.back()/100);
 
 
-        std::size_t sfCountMult = 5;
+        std::size_t sfCountMult = 10;
 
         spectrPeriods.clear();
-        spectrPeriods.resize((sfEnd-sfBegin)/sfCountMult);
+        spectrPeriods.resize(std::size_t(sp::real(sfEnd-sfBegin)/sfCountMult+0.5));
         auto sfIter = sfBegin;
         for(std::size_t idx(0); idx<spectrPeriods.size(); ++idx)
         {
@@ -202,8 +202,8 @@ void inv()
 
     for(size_t i(0); i<echoPeriods.size(); ++i)
     {
-        //for(size_t k(10); k<spectrPeriods.size(); k+=10)
-        size_t k(spectrPeriods.size()/2);
+        for(size_t k(20); k<spectrPeriods.size(); k+=20)
+        //size_t k(spectrPeriods.size()/2);
         {
             echo[i] += kt.eval(
                 echoPeriods[i],
@@ -215,6 +215,7 @@ void inv()
 
     TVComplex spectr(spectrPeriods.size());
 
+    //fetch spectr tail
     for(size_t i(0); i<echoPeriods.size(); ++i)
     {
         sp::complex ev = echo[i];
@@ -237,11 +238,14 @@ void inv()
         }
     }
 
-    for(size_t k(0); k<spectrPeriods.size(); ++k)
+    //dump spectr
     {
-        cout<<spectr[k].re()<<" "<<spectr[k].im()<<endl;
+        std::ofstream out("sp");
+        for(size_t i(0); i<spectr.size(); ++i)
+        {
+            out<<spectr[i].re()<<" "<<spectr[i].im()<<endl;
+        }
     }
-
 
 
 #endif
