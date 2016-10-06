@@ -3,7 +3,7 @@
 
 namespace sp { namespace conv
 {
-    PeriodGrid::PeriodGrid(real periodMin, real periodMax, std::size_t steps, PeriodGridType type)
+    PeriodGrid::PeriodGrid(real periodMin, real periodMax, std::size_t steps, PeriodGridType type, bool exactMax)
     {
         _grid.resize(steps);
 
@@ -13,7 +13,7 @@ namespace sp { namespace conv
             {
                 real min = periodMin;
                 real max = periodMax;
-                real step = (max - min) / (steps);
+                real step = (max - min) / (steps - (exactMax?1:0));
 
                 for(std::size_t k(0); k<steps; k++)
                 {
@@ -25,7 +25,7 @@ namespace sp { namespace conv
             {
                 real min = 1.0/periodMax;
                 real max = 1.0/periodMin;
-                real step = (max - min) / (steps);
+                real step = (max - min) / (steps - (exactMax?1:0));
 
                 for(std::size_t k(0); k<steps; k++)
                 {
@@ -37,7 +37,7 @@ namespace sp { namespace conv
             {
                 real min = log(periodMin);
                 real max = log(periodMax);
-                real step = (max - min) / (steps);
+                real step = (max - min) / (steps - (exactMax?1:0));
 
                 for(std::size_t k(0); k<steps; k++)
                 {
@@ -49,7 +49,7 @@ namespace sp { namespace conv
             {
                 real min = -log(periodMax);
                 real max = -log(periodMin);
-                real step = (max - min) / (steps);
+                real step = (max - min) / (steps - (exactMax?1:0));
 
                 for(std::size_t k(0); k<steps; k++)
                 {

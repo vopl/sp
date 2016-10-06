@@ -15,7 +15,7 @@ namespace sp { namespace conv
     class PeriodGrid
     {
     public:
-        PeriodGrid(real periodMin, real periodMax, std::size_t steps, PeriodGridType type);
+        PeriodGrid(real periodMin, real periodMax, std::size_t steps, PeriodGridType type, bool exactMax = false);
         ~PeriodGrid();
 
         const TVReal &grid() const;

@@ -24,6 +24,8 @@ namespace sp { namespace conv
             real &error0,
             real &error1);
 
+        void flush();
+
     public:
         void evalKernel(real t, real &rr, real &ri, real &ir, real &ii);
 
