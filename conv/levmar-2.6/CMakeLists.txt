@@ -37,7 +37,7 @@ set_source_files_properties(${LEVMAR_SRC_INC} PROPERTIES HEADER_FILE_ONLY TRUE)
 
 
 
-add_library(levmar STATIC ${LEVMAR_SRC} ${LEVMAR_INC})
+add_library(levmar STATIC ${LEVMAR_SRC} ${LEVMAR_SRC_INC})
 
 set_property(TARGET levmar PROPERTY CXX_STANDARD 14)
 set_property(TARGET levmar PROPERTY CXX_STANDARD_REQUIRED ON)

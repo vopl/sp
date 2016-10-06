@@ -24,6 +24,14 @@ namespace sp { namespace conv
             real &error0,
             real &error1);
 
+        void deconvolve2(
+            size_t esize, const real *et, const complex *ev,//отклик
+            size_t ssize, const real *st,       complex *sv,//спектр
+            size_t &iters,//макс итераций
+            real initialMu,
+            real &error0,
+            real &error1);
+
         void flush();
 
     public:

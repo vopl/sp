@@ -63,7 +63,7 @@ int test()
 
 
 
-#define POW 2.0
+#define POW 1.0
 
     std::size_t splp = 100;
     std::size_t cpo = 0;
@@ -80,59 +80,62 @@ int test()
 
 
 
-        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        std::cerr<<"make signal"<<std::endl;
-        TVReal signal;
+//        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+//        std::cerr<<"make signal"<<std::endl;
+//        TVReal signal;
 
-        signal.resize(std::size_t(tMax*POW*1.2/sampleStep+1));//чтобы уместился максимальный период
-        for(size_t index(0); index<signal.size(); ++index)
-        {
-            sp::real x = index * sampleStep;
-            sp::real xTarget = (signal.size()-2)*sampleStep;
+//        signal.resize(std::size_t(tMax*POW*1.2/sampleStep+1));//чтобы уместился максимальный период
+//        for(size_t index(0); index<signal.size(); ++index)
+//        {
+//            sp::real x = index * sampleStep;
+//            sp::real xTarget = (signal.size()-2)*sampleStep;
 
-            signal[index] = 0;
+//            signal[index] = 0;
 
-            sp::real a = x/xTarget;
+//            sp::real a = x/xTarget;
 
-            //std::size_t k = spectrPeriods.grid().size()/2;
-            for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=5)
-            {
-                sp::real t = spectrPeriods.grid()[k];
-                signal[index] += a*sp::sin((x-xTarget)*sp::g_2pi/t);
-            }
+//            //std::size_t k = spectrPeriods.grid().size()/2;
+//            for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=5)
+//            {
+//                sp::real t = spectrPeriods.grid()[k];
+//                signal[index] += a*sp::sin((x-xTarget)*sp::g_2pi/t);
+//            }
 
 
-            //cout << x<<","<<signal[index]<< endl;
+//            //cout << x<<","<<signal[index]<< endl;
 
-        }
+//        }
 
 
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
         SignalConvolver c;
-        c.setup(POW, echoPeriods.grid(), sampleStep, splp, cpo, SignalApproxType::poly6p5o32x);
+//        c.setup(POW, echoPeriods.grid(), sampleStep, splp, cpo, SignalApproxType::poly6p5o32x);
 
-        std::cerr<<"push signal"<<std::endl;
-        c.pushSignal(&signal[0], signal.size());
+//        std::cerr<<"push signal"<<std::endl;
+//        c.pushSignal(&signal[0], signal.size());
 
-        std::cerr<<"convolve signal"<<std::endl;
-        response = c.convolve();
-
-
+//        std::cerr<<"convolve signal"<<std::endl;
+//        response = c.convolve();
 
 
-//        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-//        for(size_t i(0); i<echoPeriods.grid().size(); ++i)
-//        {
-//            //std::cerr<<"mk echo #"<<i<<std::endl;
 
-//            response[i] = 0;
-//            std::size_t k = 500;
-//            //for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
-//            {
-//                //std::cerr<<(echoPeriods.grid()[i]/echoPeriods.grid()[k])<<std::endl;
-//                response[i] += kt.eval(echoPeriods.grid()[i], echoPeriods.grid()[k], complex(1,0));
-//            }
-//        }
+
+        /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+        for(size_t i(0); i<echoPeriods.grid().size(); ++i)
+        {
+            //std::cerr<<"mk echo #"<<i<<std::endl;
+
+            response[i] = 0;
+            std::size_t k = 500;
+            //for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
+            {
+                //std::cerr<<(echoPeriods.grid()[i]/echoPeriods.grid()[k])<<std::endl;
+                response[i] += kt.eval(
+                            (echoPeriods.grid()[i] + echoPeriods.grid()[i])/2,
+                            spectrPeriods.grid()[k],
+                            sp::complex(1,0));
+            }
+        }
 
 //        for(size_t i(0); i<echoPeriods.grid().size(); ++i)
 //        {
@@ -151,7 +154,7 @@ int test()
             std::size_t iters = 10;
             sp::real error0 = 0;
             sp::real error1 = 0;
-            kt.deconvolve(
+            kt.deconvolve2(
                     response.size(), &echoPeriods.grid()[0], &response[0],
                     spectr.size(), &spectrPeriods.grid()[0], &spectr[0],
                     iters,
