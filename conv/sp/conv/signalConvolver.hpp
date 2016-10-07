@@ -21,9 +21,9 @@ namespace sp { namespace conv
         ~SignalConvolver();
 
 
-        void setup(real ppw, std::size_t samplesPerPeriod, std::size_t polyOrder);
+        void setup(real ppw, std::size_t samplesPerPeriod);
         void setupSignal(real sampleStep, real maxPeriod, SignalApproxType sat = SignalApproxType::linear);
-        void setup(real ppw, const TVReal &periods, real sampleStep, std::size_t samplesPerPeriod, std::size_t polyOrder, SignalApproxType sat = SignalApproxType::linear);
+        void setup(real ppw, const TVReal &periods, real sampleStep, std::size_t samplesPerPeriod, SignalApproxType sat = SignalApproxType::linear);
 
         void pushSignal(const real *samples, std::size_t amount);
 
@@ -39,7 +39,6 @@ namespace sp { namespace conv
         real                            _signalSampleStep = 0;
         std::size_t                     _signalSamplesPushed = 0;
         std::size_t                     _samplesPerPeriod = 0;
-        std::size_t                     _polyOrder = 0;
         TVReal                          _signal;
 
         using LevelPtr = std::unique_ptr<SignalConvolverLevel>;
