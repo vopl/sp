@@ -114,10 +114,8 @@ void inv()
 #define POW 1.0
 
     size_t splp = 1000;
-    size_t cpo = 0;
 
-
-    KernelTabled kt(POW, splp, cpo);
+    KernelTabled kt(POW, splp);
 
     using namespace Eigen;
 

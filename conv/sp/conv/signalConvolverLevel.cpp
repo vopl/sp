@@ -13,79 +13,18 @@
 namespace sp { namespace conv
 {
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    SignalConvolverLevel::SignalConvolverLevel(real ppw, real period, real signalSampleStep, std::size_t samplesPerPeriod, std::size_t polyOrder)
+    SignalConvolverLevel::SignalConvolverLevel(real ppw, real period, real signalSampleStep, std::size_t samplesPerPeriod)
         : _ppw(ppw)
         , _period(period)
         , _signalSampleStep(signalSampleStep)
         , _samplesPerPeriod(samplesPerPeriod)
         , _sampleStep(_period/samplesPerPeriod)
-        , _polyOrder(polyOrder)
     {
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     SignalConvolverLevel::~SignalConvolverLevel()
     {
-    }
-
-    namespace
-    {
-        real ermit(real t, real y0, real y1, real dy0, real dy1)
-        {
-            real t2 = t*t;
-            real t3 = t2*t;
-
-            return
-                    ( 2*t3 - 3*t2 + 0*t + 1)*y0 +
-                    ( 1*t3 - 2*t2 + 1*t + 0)*dy0 +
-                    (-2*t3 + 3*t2 + 0*t + 0)*y1 +
-                    ( 1*t3 - 1*t2 + 0*t + 0)*dy1;
-        }
-
-        real iermit(real tStart, real tStop, real y0, real y1, real dy0, real dy1)
-        {
-            real tStart2 = tStart*tStart;
-            real tStop2 = tStop*tStop;
-
-            real tStart3 = tStart2*tStart;
-            real tStop3 = tStop2*tStop;
-
-            real tStart4 = tStart3*tStart;
-            real tStop4 = tStop3*tStop;
-
-            return
-                    ((6*tStart4-12*tStart3)*y1+(-6*tStart4+12*tStart3-12*tStart)*y0+(-3*dy1-3*dy0)*tStart4+(4*dy1+8*dy0)*tStart3-6*dy0*tStart2)/12-
-                    ((6*tStop4-12*tStop3)*y1+(-6*tStop4+12*tStop3-12*tStop)*y0+(-3*dy1-3*dy0)*tStop4+(4*dy1+8*dy0)*tStop3-6*dy0*tStop2)/12;
-        }
-
-        real iermit(real y0, real y1, real dy0, real dy1)
-        {
-            return
-                    (6*y1+6*y0-dy1+dy0)/12;
-        }
-
-
-        real integrateErmitSpline01_(real xStart, real xStop, const real *ys)
-        {
-            real y0 = ys[1];
-            real y1 = ys[2];
-
-            real dy0 = (ys[2]-ys[0])/2;
-            real dy1 = (ys[3]-ys[1])/2;
-
-            return iermit(xStart, xStop, y0, y1, dy0, dy1);
-        }
-
-        real integrateErmitSpline01_(const real *ys)
-        {
-            real y0 = ys[1];
-            real y1 = ys[2];
-
-            real dy0 = (ys[2]-ys[0])/2;
-            real dy1 = (ys[3]-ys[1])/2;
-
-            return iermit(y0, y1, dy0, dy1);
-        }
     }
 
     namespace
@@ -349,139 +288,6 @@ namespace sp { namespace conv
         }
     }
 
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolverLevel::filtrate(const TVReal &values, std::vector<Serie> &series)
-    {
-        series.clear();
-
-        ///////////////////////////////
-        Serie serie0;
-
-        serie0._dp = 0;
-        serie0._points.resize(values.size());
-        for(std::size_t index(0); index<values.size(); ++index)
-        {
-            serie0._points[index] = values[index];
-        }
-        series.push_back(serie0);
-
-
-//        ///////////////////////////////
-//        Serie serie1 = serie0;
-//        for(std::size_t i(0); i<3; ++i)
-//        {
-//            series.push_back(serie1 = dif(serie1));
-//        }
-
-
-//        ///////////////////////////////
-//        serie1 = serie0;
-//        for(std::size_t i(0); i<3; ++i)
-//        {
-//            series.push_back(serie1 = int_(serie1));
-//        }
-
-
-//        std::size_t resultSamples = _samplesPerPeriod;
-//        for(std::size_t i(0); i<series.size(); ++i)
-//        {
-//            resultSamples = std::min(resultSamples, finalize(series[i]));
-//        }
-    }
-
-    SignalConvolverLevel::Serie SignalConvolverLevel::int_(const Serie &src)
-    {
-        Serie res;
-        res._dp = src._dp + g_pi/2 - g_2pi/_samplesPerPeriod;
-
-        res._points.resize(src._points.size());
-
-        Summator<real> sum, sum2;
-        for(std::size_t index(0); index<res._points.size(); ++index)
-        {
-            sum += src._points[index];
-            res._points[index] = sum.v()*g_2pi/_samplesPerPeriod;
-            sum2 += res._points[index];
-        }
-
-        for(std::size_t index(0); index<res._points.size(); ++index)
-        {
-            res._points[index] += -sum2.v()/res._points.size();
-        }
-
-
-        return res;
-    }
-
-    SignalConvolverLevel::Serie SignalConvolverLevel::dif(const Serie &src)
-    {
-        Serie res;
-        res._dp = src._dp - g_pi/2 - g_2pi/_samplesPerPeriod/2;
-
-        res._points.resize(src._points.size()-1);
-
-        for(std::size_t index(0); index<res._points.size(); ++index)
-        {
-            res._points[index] = (src._points[index+1]-src._points[index])*_samplesPerPeriod/g_2pi;
-        }
-
-        return res;
-    }
-
-    std::size_t SignalConvolverLevel::finalize(Serie &src)
-    {
-        std::size_t r = (src._points.size()/_samplesPerPeriod)*_samplesPerPeriod;
-        std::size_t res =
-                r == src._points.size() ?
-                    _samplesPerPeriod :
-                    src._points.size() - r;
-
-        TVReal dst(_samplesPerPeriod);
-        for(std::size_t i(0); i<src._points.size(); ++i)
-        {
-            dst[i % _samplesPerPeriod] += src._points[i];
-        }
-
-        dst.resize(res);
-        src._points.swap(dst);
-
-        return res;
-
-
-//        std::size_t samplesPerPeriodDiv4 = _samplesPerPeriod/4;
-
-//        std::size_t r = (src._points.size()/samplesPerPeriodDiv4)*samplesPerPeriodDiv4;
-//        std::size_t res =
-//                r == src._points.size() ?
-//                    samplesPerPeriodDiv4 :
-//                    src._points.size() - r;
-
-//        std::size_t extra =
-//                r == src._points.size() ?
-//                    0 :
-//                    (r+samplesPerPeriodDiv4) - src._points.size();
-
-
-//        for(std::size_t index(0); index<res; ++index)
-//        {
-//            std::size_t idx;
-
-//            idx = samplesPerPeriodDiv4*2-1 -index - extra;
-//            dst[index] +=  dst[idx];
-
-//            idx = samplesPerPeriodDiv4*2   +index;
-//            dst[index] -=  dst[idx];
-
-//            idx = samplesPerPeriodDiv4*4-1 -index - extra;
-//            dst[index] -=  dst[idx];
-//        }
-
-//        dst.resize(res);
-//        src._points.swap(dst);
-
-//        return res;
-    }
-
 
     namespace
     {
@@ -524,229 +330,9 @@ namespace sp { namespace conv
                 im = _14/_3;
             }
 
-
-//            real re2, im2;
-//            {
-//                const real pi = g_pi;
-//                const real pi_p_2 = pi*pi;
-
-//                //TODO упростить
-//                const real _1 =  ( 2*pi*x1 ) ;
-//                const real _3 =  ( 4*pi_p_2*x1-4*pi_p_2*x0 ) ;
-//                const real _0 =  ( 2*pi*t*x1-2*pi*t*x0 ) ;
-//                const real _2 =  ( 2*pi*x0 ) ;
-//                const real _4 =  ( 2*pi*t*x0-2*pi*t*x1 ) ;
-//                const real _6 = cos ( _1/t ) ;
-//                const real _8 = sin ( _2/t ) ;
-//                const real _5 = sin ( _1/t ) ;
-//                const real _7 = cos ( _2/t ) ;
-//                const real _10 =  ( -t_p_2*_6-2*pi*t*_8*x1+2*pi*t*x0*_8+t_p_2*_7 ) ;
-//                const real _9 =  ( _0*_5+t_p_2*_6-t_p_2*_7 ) ;
-//                const real _11 =  ( t_p_2*_5+_4*_6-t_p_2*_8 ) ;
-//                const real _12 =  ( -t_p_2*_5+2*pi*t*_7*x1+t_p_2*_8-2*pi*t*x0*_7 ) ;
-//                const real _13 =  ( _9*y1+_10*y0 ) ;
-//                const real _14 =  ( _11*y1+_12*y0 ) ;
-//                //expr
-
-//                re2 = _13/_3;im2 = _14/_3;
-//            }
-
-//            if(fabs(re-re2) > 1e-12 || fabs(im-im2) > 1e-12)
-//            {
-//                std::cerr<<fabs(re-re2)<<", "<<fabs(im-im2)<<std::endl;
-//                exit(0);
-//            }
-
-
-
             return complex(re, im);
         }
     }
-
-#if 0
-    namespace
-    {
-        complex approxCosPlusPoly(real period, TVReal &ys, std::size_t polyOrder)
-        {
-            real levmarInfo[LM_INFO_SZ];
-
-            static real levmarOpts[LM_OPTS_SZ] =
-            {
-                1e-40,  //LM_INIT_MU,        //mu
-                std::numeric_limits<real>::min(),  //LM_STOP_THRESH,    //stopping thresholds for ||J^T e||_inf,
-                std::numeric_limits<real>::min(),  //LM_STOP_THRESH,    //||Dp||_2 and
-                std::numeric_limits<real>::min(),  //LM_STOP_THRESH,    //||e||_2. Set to NULL for defaults to be used.
-            };
-
-            static TVReal args;
-            args.resize(2+polyOrder+1);
-            std::fill(args.begin(), args.end(), real(0));
-
-            static TVReal work;
-            if(work.size() < LM_DER_WORKSZ(args.size(), ys.size()))
-            {
-                work.resize(LM_DER_WORKSZ(args.size(), ys.size()));
-            }
-
-
-            using bigreal = boost::multiprecision::float128;
-
-            struct Params
-            {
-                real _period;
-                std::vector<std::vector<bigreal>> _bigbasis;
-                std::vector<TVReal> _basis;
-
-                std::vector<bigreal> _ys;
-            };
-
-            static Params params;
-
-            params._ys.assign(ys.begin(), ys.end());
-
-            std::size_t n = ys.size();
-            std::size_t m = args.size();
-            if(
-               period != params._period ||
-               params._bigbasis.size() != n ||
-               (!params._bigbasis.empty() && params._bigbasis[0].size()!=m))
-            {
-                params._period = period;
-
-                using verybigreal = boost::multiprecision::cpp_dec_float_100;
-
-                verybigreal pi = boost::math::constants::pi<verybigreal>();
-                verybigreal pi2 = pi*2;
-
-                params._bigbasis.resize(n);
-                params._basis.resize(n);
-                for(std::size_t i(0); i<n; i++)
-                {
-                    params._bigbasis[i].resize(m);
-                    params._basis[i].resize(m);
-                }
-
-                /////
-                for(std::size_t i(0); i<n; i++)
-                {
-                    verybigreal x = verybigreal(i)/(n);
-                    verybigreal wnd = 1;//rect -- наилучшее пока что
-                    //verybigreal wnd = (0.5 - 0.5*cos(pi2*x));//hann
-                    //verybigreal wnd = 1-(0.5 - 0.5*cos(pi2*x));//rev hann
-                    //verybigreal wnd = (0.54 - 0.46*cos(pi2*x));//hamming
-                    //verybigreal wnd = (cos(pi/2*x-pi/4));//hann half
-                    params._bigbasis[i][0] = verybigreal(cos(pi2*x/params._period)*wnd).convert_to<bigreal>();
-                    params._bigbasis[i][1] = verybigreal(sin(pi2*x/params._period)*wnd).convert_to<bigreal>();
-                }
-
-                /////
-                std::vector<verybigreal> poly(polyOrder+1);
-                for(std::size_t i(0); i<n; i++)
-                {
-                    verybigreal time = verybigreal(i)/(n-1)*2 - 1;
-                    verybigreal time2 = time*2;
-
-                    if(polyOrder == 0)
-                    {
-                        poly[0] = 1;
-                    }
-                    else
-                    {
-                        poly[0] = 1;
-                        poly[1] = time;
-
-                        for(size_t o=2; o<=polyOrder; o++)
-                        {
-                            poly[o] = time2*poly[o-1] - poly[o-2];
-                        }
-                    }
-
-                    for(size_t o=0; o<=polyOrder; o++)
-                    {
-                        params._bigbasis[i][o+2] = poly[o].convert_to<bigreal>();
-                    }
-                }
-
-                /////
-                for(std::size_t i(0); i<n; i++)
-                {
-                    for(std::size_t j(0); j<m; j++)
-                    {
-                        params._basis[i][j] = params._bigbasis[i][j].convert_to<real>();
-                    }
-                }
-            }
-
-
-            int levmarResult = levmar_der(
-                        [](real *p, real *hx, int m, int n, void *_params)->void{
-                            Params &params = *reinterpret_cast<Params*>(_params);
-
-                            for(std::size_t i(0); i<std::size_t(n); i++)
-                            {
-                                //Summator<bigreal> sum(0);
-                                bigreal sum(0);
-
-                                for(std::size_t j(0); j<std::size_t(m); j++)
-                                {
-                                    sum += params._bigbasis[i][j] * p[j];
-                                }
-
-                                hx[i] = bigreal(sum - params._ys[i]).convert_to<real>();
-                            }
-                        },
-                        [](real *p, real *jx, int m, int n, void *_params){
-
-                            Params &params = *reinterpret_cast<Params*>(_params);
-
-                            for(std::size_t i(0); i<std::size_t(n); i++)
-                            {
-                                for(std::size_t j(0); j<std::size_t(m); j++)
-                                {
-                                    jx[i*std::size_t(m)+j] = params._basis[i][j];
-                                }
-                            }
-                        },
-                        &args[0],
-                        NULL, //&dys[0],
-                        args.size(),
-                        ys.size(),
-                        150,
-                        levmarOpts,
-                        levmarInfo,
-                        &work[0],
-                        NULL,
-                        &params);
-
-//            std::cerr<<"result: "<<levmarResult<<std::endl;
-//            std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;
-//            std::cerr<<"||e||_2:"<<levmarInfo[1]<<std::endl;
-//            std::cerr<<"||J^T e||_inf:"<<levmarInfo[2]<<std::endl;
-//            std::cerr<<"||Dp||_2:"<<levmarInfo[3]<<std::endl;
-//            std::cerr<<"\\mu/max[J^T J]_ii:"<<levmarInfo[4]<<std::endl;
-//            std::cerr<<"# iterations:"<<levmarInfo[5]<<std::endl;
-//            std::cerr<<"reason for terminating:";
-//            switch(int(levmarInfo[6]+0.5))
-//            {
-//            case 1: std::cerr<<" - stopped by small gradient J^T e"<<std::endl;break;
-//            case 2: std::cerr<<" - stopped by small Dp"<<std::endl;break;
-//            case 3: std::cerr<<" - stopped by itmax"<<std::endl;break;
-//            case 4: std::cerr<<" - singular matrix. Restart from current p with increased \\mu"<<std::endl;break;
-//            case 5: std::cerr<<" - no further error reduction is possible. Restart with increased mu"<<std::endl;break;
-//            case 6: std::cerr<<" - stopped by small ||e||_2"<<std::endl;break;
-//            case 7: std::cerr<<" - stopped by invalid (i.e. NaN or Inf) \"func\" values; a user error"<<std::endl;break;
-//            }
-//            std::cerr<<"# function evaluations:"<<levmarInfo[7]<<std::endl;
-//            std::cerr<<"# Jacobian evaluations:"<<levmarInfo[8]<<std::endl;
-//            std::cerr<<"# linear systems solved:"<<levmarInfo[9]<<std::endl;
-//            //exit(1);
-
-            return complex(
-                args[0]/*+args[2]+args[4]+args[6]+args[8]+args[10]*/,
-                args[1]/*+args[3]+args[5]+args[7]+args[9]*/);
-        }
-    }
-#endif
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     complex SignalConvolverLevel::convolve(const real *signal, std::size_t signalSize, SignalApproxType sat)
@@ -754,10 +340,7 @@ namespace sp { namespace conv
         TVReal values(std::size_t(_samplesPerPeriod*_ppw + 0.5));
         update(values, signal, signalSize, sat);
 
-        std::vector<Serie> series;
-        filtrate(values, series);
-
-        return convolve(series);
+        return convolve(values);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -766,59 +349,27 @@ namespace sp { namespace conv
         TVReal values(std::size_t(_samplesPerPeriod*_ppw + 0.5));
         updateIdentity(values, period, phase);
 
-        std::vector<Serie> series;
-        filtrate(values, series);
-
-        return convolve(series);
+        return convolve(values);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    complex SignalConvolverLevel::convolve(const std::vector<Serie> &series)
+    complex SignalConvolverLevel::convolve(const TVReal &values)
     {
-        if(_polyOrder)
-        {
-            assert(!"not impl");
-            abort();
-            //return approxCosPlusPoly(real(_valuesFiltered.size())/_samplesPerPeriod, _valuesFiltered, _polyOrder);
-        }
-
         Summator<complex> res;
 
-        for(std::size_t mult(1); mult<=1; mult+=1)
+        real step01 = real(1.0)/_samplesPerPeriod;
+        real x0 = 0;
+        real y0 = values[0];
+
+        for(std::size_t index(1); index<values.size(); ++index)
         {
-            real step01 = real(mult)/_samplesPerPeriod;
+            real x1 = index * step01;
+            real y1 = values[index];
+            res += evalSegment(x0, y0, x1, y1);
 
-            for(std::size_t i(0); i<series.size(); ++i)
-            {
-                //std::cout<<"s "<<i<<std::endl;
-                Summator<complex> res2;
-
-                const TVReal &points = series[i]._points;
-                real x0 = 0;
-                real y0 = points[0];
-
-                for(std::size_t index(1); index<points.size(); ++index)
-                {
-                    real x1 = index * step01;
-                    real y1 = points[index];
-                    res2 += evalSegment(x0, y0, x1, y1);
-
-                    //std::cout<<y0<<std::endl;
-
-                    x0 = x1;
-                    y0 = y1;
-                }
-                //std::cout<<y0<<std::endl;
-
-                //std::cout<<"------ "<<res2.v().re()<<", "<<res2.v().im()<<", "<<res2.v().a()<<", "<<res2.v().p()<<std::endl;
-
-                res += res2.v().rotate(-series[i]._dp)*real(points.size()/_samplesPerPeriod/mult);
-            }
+            x0 = x1;
+            y0 = y1;
         }
-
-        //std::cout<<"------ "<<res.v().re()<<", "<<res.v().im()<<", "<<res.v().a()<<", "<<res.v().p()<<std::endl;
-
-        //exit(0);
 
         return res;
     }

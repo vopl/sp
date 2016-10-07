@@ -14,10 +14,9 @@ static const std::size_t phasesAmountForKernelApproximator = 3;//MAGIC
 
 namespace sp { namespace conv
 {
-    KernelTabled::KernelTabled(real ppw, std::size_t samplesPerLevelPeriod, std::size_t convolverPolyOrder)
+    KernelTabled::KernelTabled(real ppw, std::size_t samplesPerLevelPeriod)
         : _ppw(ppw)
         , _samplesPerLevelPeriod(samplesPerLevelPeriod)
-        , _convolverPolyOrder(convolverPolyOrder)
     {
         load();
     }
@@ -340,13 +339,13 @@ namespace sp { namespace conv
             //std::cerr<<"same1 "<<t<<", "<<iter->first<<", "<<fabs(iter->first - t)<<std::endl;
         }
 
-        if(found)
-        {
-            if(_addedValuesAmount && (++_addedValuesAmount >= 10000))
-            {
-                save();
-            }
-        }
+//        if(found)
+//        {
+//            if(_addedValuesAmount && (++_addedValuesAmount >= 10000))
+//            {
+//                save();
+//            }
+//        }
 
         Value &v = iter->second;
 
@@ -394,9 +393,8 @@ namespace sp { namespace conv
     std::string KernelTabled::stateFileName()
     {
         char tmp[4096];
-        sprintf(tmp, "kt_state_PPW%0.2f_CPO%zd_SPLP%zd.bin",
+        sprintf(tmp, "kt_state_PPW%0.2f_SPLP%zd.bin",
                 double(_ppw),
-                size_t(_convolverPolyOrder),
                 size_t(_samplesPerLevelPeriod));
 
         return tmp;
@@ -493,7 +491,7 @@ namespace sp { namespace conv
         if(!_scp)
         {
             _scp.reset(new SignalConvolver);
-            _scp->setup(_ppw, _samplesPerLevelPeriod, _convolverPolyOrder);
+            _scp->setup(_ppw, _samplesPerLevelPeriod);
         }
 
         return *_scp;

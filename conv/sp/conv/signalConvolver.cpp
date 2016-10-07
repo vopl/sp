@@ -97,11 +97,10 @@ namespace sp { namespace conv
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolver::setup(real ppw, std::size_t samplesPerPeriod, std::size_t polyOrder)
+    void SignalConvolver::setup(real ppw, std::size_t samplesPerPeriod)
     {
         _ppw = ppw;
         _samplesPerPeriod = samplesPerPeriod;
-        _polyOrder = polyOrder;
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -119,9 +118,9 @@ namespace sp { namespace conv
 
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    void SignalConvolver::setup(real ppw, const TVReal &periods, real sampleStep, std::size_t samplesPerPeriod, std::size_t polyOrder, SignalApproxType sat)
+    void SignalConvolver::setup(real ppw, const TVReal &periods, real sampleStep, std::size_t samplesPerPeriod, SignalApproxType sat)
     {
-        setup(ppw, samplesPerPeriod, polyOrder);
+        setup(ppw, samplesPerPeriod);
         setupSignal(periods.back(), sampleStep, sat);
 
         _levels.resize(periods.size());
@@ -130,7 +129,7 @@ namespace sp { namespace conv
         {
             LevelPtr &l = _levels[i];
 
-            l.reset(new SignalConvolverLevel(ppw, periods[i], _signalSampleStep, _samplesPerPeriod, _polyOrder));
+            l.reset(new SignalConvolverLevel(ppw, periods[i], _signalSampleStep, _samplesPerPeriod));
         }
     }
 
@@ -183,14 +182,14 @@ namespace sp { namespace conv
         const real *signal = &_signal[0];
         std::size_t signalSize = _signal.size();
 
-        SignalConvolverLevel level(_ppw, period, _signalSampleStep, _samplesPerPeriod, _polyOrder);
+        SignalConvolverLevel level(_ppw, period, _signalSampleStep, _samplesPerPeriod);
         return level.convolve(signal, signalSize, _sat);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     complex /*echo*/ SignalConvolver::convolveIdentity(real period, real phase)
     {
-        SignalConvolverLevel level(_ppw, period, _signalSampleStep, _samplesPerPeriod, _polyOrder);
+        SignalConvolverLevel level(_ppw, period, _signalSampleStep, _samplesPerPeriod);
         return level.convolveIdentity(period, phase);
     }
 }}

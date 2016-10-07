@@ -32,29 +32,51 @@ int test()
 
     sp::real sampleStep = 1.0L/360000;
 
-    sp::real tMin = 1.0/20000;
-    sp::real tMax = 1.0/0.4;
-    std::size_t tCount = 1000;
+    sp::real minT = 1.0/20000;
+    sp::real maxT = 1.0/0.02;
 
-    PeriodGrid echoPeriods(tMin, tMax, tCount, PeriodGridType::frequencyLog);
-    std::cerr
-          <<"efmin: "<<(1.0/echoPeriods.grid().back())
-          <<", efmax: "<<(1.0/echoPeriods.grid().front())
-          <<", efcount: "<<echoPeriods.grid().size()
-          <<", efstep: "<<(echoPeriods.grid()[1]/echoPeriods.grid()[0])
-          <<std::endl;
 
-    PeriodGrid spectrPeriods = PeriodGrid(
-            echoPeriods.grid()[0],
-            echoPeriods.grid()[600],
-            600,
-            PeriodGridType::frequencyLog);
-    std::cerr
-            <<"sfmin: "<<(1.0/spectrPeriods.grid().back())
-            <<", sfmax: "<<(1.0/spectrPeriods.grid().front())
-            <<", sfcount: "<<spectrPeriods.grid().size()
-            <<", sfstep: "<<(spectrPeriods.grid()[1]/spectrPeriods.grid()[0])
-            <<std::endl;
+    PeriodGrid echoPeriodsGrid(
+        minT,
+        maxT,
+        40000,
+        PeriodGridType::frequencyLog);
+
+    TVReal echoPeriods = echoPeriodsGrid.grid();
+
+    cerr
+        <<"efmin: "<<(sp::real(1)/echoPeriods.back())
+        <<", efmax: "<<(sp::real(1)/echoPeriods.front())
+        <<", efcount: "<<echoPeriods.size()
+        <<", efstep: "<<echoPeriods[1]/echoPeriods[0]
+        <<endl;
+
+    TVReal spectrPeriods;
+    {
+
+        TVReal::const_iterator sfBegin = std::lower_bound(echoPeriods.begin(), echoPeriods.end(), echoPeriods.front());
+        TVReal::const_iterator sfEnd = std::lower_bound(echoPeriods.begin(), echoPeriods.end(), echoPeriods.back()/1000);
+
+
+        std::size_t sfCountMult = 10;
+
+        spectrPeriods.clear();
+        spectrPeriods.resize(std::size_t(sp::real(sfEnd-sfBegin)/sfCountMult+0.5));
+        auto sfIter = sfBegin;
+        for(std::size_t idx(0); idx<spectrPeriods.size(); ++idx)
+        {
+            spectrPeriods[idx] = *sfIter;
+            sfIter += std::ptrdiff_t(sfCountMult);
+        }
+
+    }
+
+    cerr
+        <<"sfmin: "<<(sp::real(1)/spectrPeriods.back())
+        <<", sfmax: "<<(sp::real(1)/spectrPeriods.front())
+        <<", sfcount: "<<spectrPeriods.size()
+        <<", sfstep: "<<spectrPeriods[1]/spectrPeriods[0]
+        <<endl;
 
 
     //exit(0);
@@ -65,14 +87,13 @@ int test()
 
 #define POW 1.0
 
-    std::size_t splp = 100;
-    std::size_t cpo = 0;
+    std::size_t splp = 4000;
 
 
     if(1)
     {
-        TVComplex response(echoPeriods.grid().size());
-        KernelTabled kt(POW, splp, cpo);
+        TVComplex response(echoPeriods.size());
+        KernelTabled kt(POW, splp);
         //sp::Kernel kt(POW);
 
 //        kt.eval(0.75223948756, 1, complex(.23452,1.3456));
@@ -94,10 +115,10 @@ int test()
 
 //            sp::real a = x/xTarget;
 
-//            //std::size_t k = spectrPeriods.grid().size()/2;
-//            for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=5)
+//            //std::size_t k = spectrPeriods.size()/2;
+//            for(std::size_t k(2); k<spectrPeriods.size(); k+=5)
 //            {
-//                sp::real t = spectrPeriods.grid()[k];
+//                sp::real t = spectrPeriods[k];
 //                signal[index] += a*sp::sin((x-xTarget)*sp::g_2pi/t);
 //            }
 
@@ -108,8 +129,8 @@ int test()
 
 
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        SignalConvolver c;
-//        c.setup(POW, echoPeriods.grid(), sampleStep, splp, cpo, SignalApproxType::poly6p5o32x);
+//        SignalConvolver c;
+//        c.setup(POW, echoPeriods, sampleStep, splp, cpo, SignalApproxType::poly6p5o32x);
 
 //        std::cerr<<"push signal"<<std::endl;
 //        c.pushSignal(&signal[0], signal.size());
@@ -121,54 +142,56 @@ int test()
 
 
         /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-        for(size_t i(0); i<echoPeriods.grid().size(); ++i)
+        for(size_t i(0); i<echoPeriods.size(); ++i)
         {
             //std::cerr<<"mk echo #"<<i<<std::endl;
 
             response[i] = 0;
-            std::size_t k = 500;
-            //for(std::size_t k(2); k<spectrPeriods.grid().size(); k+=2)
+            std::size_t k = spectrPeriods.size()/2;
+            //for(std::size_t k(2); k<spectrPeriods.size(); k+=2)
             {
-                //std::cerr<<(echoPeriods.grid()[i]/echoPeriods.grid()[k])<<std::endl;
+                //std::cerr<<(echoPeriods[i]/echoPeriods[k])<<std::endl;
                 response[i] += kt.eval(
-                            (echoPeriods.grid()[i] + echoPeriods.grid()[i])/2,
-                            spectrPeriods.grid()[k],
+                            echoPeriods[i],
+                            (spectrPeriods[k] + spectrPeriods[k+1])/2,
                             sp::complex(1,0));
             }
         }
+        kt.flush();
 
-//        for(size_t i(0); i<echoPeriods.grid().size(); ++i)
+//        for(size_t i(0); i<echoPeriods.size(); ++i)
 //        {
 //            //std::cout<<response[i].re()<<", "<<response[i].im()<<", ";
-//            std::cout<<(echoPeriods.grid()[i]/echoPeriods.grid()[500])<<", "<<response[i].re()<<", "<<response[i].im();
+//            std::cout<<(echoPeriods[i]/echoPeriods[500])<<", "<<response[i].re()<<", "<<response[i].im();
 //            std::cout<<std::endl;
 //        }
 
 //        exit(0);
 
         std::cerr<<"deconvolve"<<std::endl;
-        //for(int iters0(1); iters0<20; iters0++)
+        //for(int iters0(1); iters0<200; iters0++)
         {
-            TVComplex spectr(spectrPeriods.grid().size());
+            TVComplex spectr(spectrPeriods.size());
 
-            std::size_t iters = 10;
+            std::size_t iters = 1;
             sp::real error0 = 0;
             sp::real error1 = 0;
             kt.deconvolve2(
-                    response.size(), &echoPeriods.grid()[0], &response[0],
-                    spectr.size(), &spectrPeriods.grid()[0], &spectr[0],
+                    response.size(), &echoPeriods[0], &response[0],
+                    spectr.size(), &spectrPeriods[0], &spectr[0],
                     iters,
                     1e-40,
                     error0,
                     error1);
 
             cerr<<iters<<": "<<error0<<"->"<<error1<<endl;
-            for(size_t i(0); i<spectr.size(); ++i)
-            {
-                sp::complex s = spectr[i];
-                std::cout<<s.re()<<", "<<s.im()<<std::endl;
-            }
+//            for(size_t i(0); i<spectr.size(); ++i)
+//            {
+//                sp::complex s = spectr[i];
+//                std::cout<<s.re()<<", "<<s.im()<<std::endl;
+//            }
         }
+        kt.flush();
     }
 
     return 0;

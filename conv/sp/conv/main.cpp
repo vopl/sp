@@ -63,7 +63,7 @@ void inv();
 int main(int argc, char *argv[])
 {
 //    prony();return 0;
-    test();return 0;
+//    test();return 0;
 //    inv();return 0;
 
 
@@ -103,8 +103,6 @@ int main(int argc, char *argv[])
             ("ppw", po::value<sp::real>()->default_value(1), "periods per analyze window")
 
             ("splp", po::value<std::size_t>()->default_value(100), "samples per level period")
-
-            ("cpo", po::value<std::size_t>()->default_value(0), "convolver polynome order")
 
             ("efmin", po::value<sp::real>()->default_value(0.2), "echo frequency grid minimum")
             ("efmax", po::value<sp::real>()->default_value(20000), "echo frequency grid maximum")
@@ -315,14 +313,12 @@ int main(int argc, char *argv[])
             echoPeriods,
             sp::real(1)/wavStore.header()._frequency,
             vars["splp"].as<std::size_t>(),
-            vars["cpo"].as<std::size_t>(),
             SignalApproxType::poly6p5o32x);
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     KernelTabled k(
             vars["ppw"].as<sp::real>(),
-            vars["splp"].as<std::size_t>(),
-            vars["cpo"].as<std::size_t>());
+            vars["splp"].as<std::size_t>());
 
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -397,7 +393,7 @@ int main(int argc, char *argv[])
 
         sp::real error0 = 0;
         sp::real error1 = 0;
-        k.deconvolve(
+        k.deconvolve2(
             echo.size(), &echoPeriods[0], &echo[0],
             spectr.size(), &spectrPeriods[0], &spectr[0],
             iters,
