@@ -9,6 +9,8 @@ set(SRC
     spectrStore.hpp
     spectrStore.cpp
 
+    spectrDumper.hpp
+    spectrDumper.cpp
 )
 
 

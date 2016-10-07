@@ -140,10 +140,42 @@ namespace sp { namespace conv
             }
         }
 
+#if 1
         Eigen::Map<const Vector> echo(&ev->re(), esize*2, 1);
         Eigen::Map<Vector> spectr(&sv->re(), ssize*2, 1);
 
         spectr = _solver->solve(_kernT * echo);
+
+        error0 = 1;
+        error1 = 1;
+        iters = 1;
+#else
+        Vector echoTail(esize*2);
+        Eigen::Map<Vector> spectr(&sv->re(), ssize*2, 1);
+
+        evalEchoTail(spectr.data(), echoTail.data(), ssize*2, esize*2, &params);
+        error1 = error0 = echoTail.norm();
+
+        std::size_t iter(0);
+        for(; iter < iters; ++iter)
+        {
+            spectr += _solver->solve(_kernT * echoTail);
+
+            evalEchoTail(spectr.data(), echoTail.data(), ssize*2, esize*2, &params);
+            real error = echoTail.norm();
+
+            if(error1 <= error)
+            {
+                error1 = error;
+                break;
+            }
+
+            error1 = error;
+        }
+
+        iters = iter;
+#endif
+
     }
 
     namespace

@@ -13,6 +13,7 @@
 //#include "sp/conv/loadWav.hpp"
 #include "sp/utils/wavStore.hpp"
 #include "sp/utils/spectrStore.hpp"
+#include "sp/utils/spectrDumper.hpp"
 
 //#include "sp/conv/spectrStore.hpp"
 
@@ -118,6 +119,7 @@ int main(int argc, char *argv[])
             ("in-file", po::value<std::string>()->default_value("in.wav"), "input wav file name")
 
             ("out-file", po::value<std::string>()->default_value("out.spectr"), "output spectr file name")
+            ("dump-prefix", po::value<std::string>()/*->default_value("dump/spectr")*/, "spectr text dump files prefix")
 
             ("inititersmax", po::value<std::size_t>()->default_value(15), "maximum initial iterations for lsq")
             ("itersmax", po::value<std::size_t>()->default_value(1), "maximum iterations for lsq")
@@ -303,7 +305,15 @@ int main(int argc, char *argv[])
         }
     }
 
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    std::unique_ptr<utils::SpectrDumper> spectrDumper;
+    if(vars.count("dump-prefix"))
+    {
+        spectrDumper.reset(new utils::SpectrDumper(vars["dump-prefix"].as<std::string>(), spectrPeriods));
+    }
 
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     size_t frameIndex = spectrStore.header()._samplesAmount;
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -410,11 +420,20 @@ int main(int argc, char *argv[])
         //std::cerr<<"upd: "<<spectr[270].re()<<", "<<spectr[270].im()<<std::endl;
 
         g_stopBlocked = true;
+
+        k.flush();
+
         if(!spectrStore.write(&spectr, 1))
         {
             std::cerr<<"unable to write spectrStore"<<std::endl;
             break;
         }
+
+        if(spectrDumper)
+        {
+            spectrDumper->pushFrames(spectr);
+        }
+
         g_stopBlocked = false;
 
         if(g_stop)
