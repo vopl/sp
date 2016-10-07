@@ -95,7 +95,7 @@ namespace sp
 #  pragma GCC push_options
 #  pragma GCC optimize ("O1")
 #endif
-        void operator+=(Value v) //__attribute__((always_inline))
+        void operator+=(Value v) __attribute__((always_inline))
         {
             Value Y = v - _error;
             Value T = _sum + Y;
@@ -105,6 +105,11 @@ namespace sp
 #if defined(__GNUC__)
 #  pragma GCC pop_options
 #endif
+
+//        void operator+=(Value v) __attribute__((always_inline))
+//        {
+//            _sum += v;
+//        }
 
         operator Value() const
         {
