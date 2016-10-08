@@ -335,12 +335,12 @@ namespace sp { namespace conv
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    complex SignalConvolverLevel::convolve(const real *signal, std::size_t signalSize, SignalApproxType sat)
+    complex SignalConvolverLevel::convolve(const real *signal, std::size_t signalSize, SignalApproxType sat, TVReal &valuesWorkArray)
     {
-        TVReal values(std::size_t(_samplesPerPeriod*_ppw + 0.5));
-        update(values, signal, signalSize, sat);
+        assert(valuesWorkArray.size() == std::size_t(_samplesPerPeriod*_ppw + 0.5));
+        update(valuesWorkArray, signal, signalSize, sat);
 
-        return convolve(values);
+        return convolve(valuesWorkArray);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -357,18 +357,20 @@ namespace sp { namespace conv
     {
         Summator<complex> res;
 
-        real step01 = real(1.0)/_samplesPerPeriod;
-        real x0 = 0;
-        real y0 = values[0];
-
-        for(std::size_t index(1); index<values.size(); ++index)
         {
-            real x1 = index * step01;
-            real y1 = values[index];
-            res += evalSegment(x0, y0, x1, y1);
+            real step01 = real(1.0)/_samplesPerPeriod;
+            real x0 = 0;
+            real y0 = values[0];
 
-            x0 = x1;
-            y0 = y1;
+            for(std::size_t index(1); index<values.size(); ++index)
+            {
+                real x1 = index * step01;
+                real y1 = values[index];
+                res += evalSegment(x0, y0, x1, y1);
+
+                x0 = x1;
+                y0 = y1;
+            }
         }
 
         return res;

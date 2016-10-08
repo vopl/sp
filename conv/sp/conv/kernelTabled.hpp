@@ -77,7 +77,7 @@ namespace sp { namespace conv
             : public Eigen::LDLT<Matrix>
         {
             using Base = Eigen::LDLT<Matrix>;
-            static const std::size_t _solverId = 123456;
+            static const std::size_t _solverId = 1;
 
             SolverLDLT();
             SolverLDLT(const Matrix &m);
@@ -91,7 +91,7 @@ namespace sp { namespace conv
             : public Eigen::FullPivHouseholderQR<Matrix>
         {
             using Base = Eigen::FullPivHouseholderQR<Matrix>;
-            static const std::size_t _solverId = 234567;
+            static const std::size_t _solverId = 2;
 
             SolverFullPivHouseholderQR();
             SolverFullPivHouseholderQR(const Matrix &m);
@@ -101,9 +101,24 @@ namespace sp { namespace conv
             bool save(std::ostream &out);
         };
 
+        struct SolverJacobiSVD
+            : public Eigen::JacobiSVD<Matrix, Eigen::ColPivHouseholderQRPreconditioner>
+        {
+            using Base = Eigen::JacobiSVD<Matrix, Eigen::ColPivHouseholderQRPreconditioner>;
+            static const std::size_t _solverId = 3;
 
-        //using Solver = SolverLDLT;
-        using Solver = SolverFullPivHouseholderQR;
+            SolverJacobiSVD();
+            SolverJacobiSVD(const Matrix &m);
+            ~SolverJacobiSVD();
+
+            bool load(std::size_t dim, std::istream &in);
+            bool save(std::ostream &out);
+        };
+
+        using Solver = SolverLDLT;
+        //using Solver = SolverFullPivHouseholderQR;
+        //using Solver = SolverJacobiSVD;
+
         using SolverPtr = std::unique_ptr<Solver>;
 
         Matrix      _kernT;

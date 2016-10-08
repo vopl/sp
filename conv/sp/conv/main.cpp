@@ -323,7 +323,7 @@ int main(int argc, char *argv[])
             echoPeriods,
             sp::real(1)/wavStore.header()._frequency,
             vars["splp"].as<std::size_t>(),
-            SignalApproxType::poly6p5o32x);
+            SignalApproxType::linear);
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     KernelTabled k(
@@ -414,7 +414,8 @@ int main(int argc, char *argv[])
         auto moment1 = std::chrono::high_resolution_clock::now();
 
         sp::real dur = std::chrono::duration<double>(moment1 - moment).count();
-        cout<<"ok, iters: "<<iters<<", error: "<<error1<<"/"<<error0<<"="<<(error1/error0)<<", dur: "<<dur<< std::endl;
+        //cout<<"ok, iters: "<<iters<<", error: "<<error1<<"/"<<error0<<"="<<(error1/error0)<<", dur: "<<dur<< std::endl;
+        cout<<"ok: "<<dur<< std::endl;
         moment = moment1;
 
         //std::cerr<<"upd: "<<spectr[270].re()<<", "<<spectr[270].im()<<std::endl;

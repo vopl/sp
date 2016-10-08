@@ -393,7 +393,7 @@ namespace sp { namespace conv
     std::string KernelTabled::stateFileName()
     {
         char tmp[4096];
-        sprintf(tmp, "kt_state_PPW%0.2f_SPLP%zd.bin",
+        sprintf(tmp, "kt_state_PPW%0.3f_SPLP%zd.bin",
                 double(_ppw),
                 size_t(_samplesPerLevelPeriod));
 

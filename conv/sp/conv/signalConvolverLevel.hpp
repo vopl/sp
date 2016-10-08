@@ -11,7 +11,7 @@ namespace sp { namespace conv
         SignalConvolverLevel(real ppw, real period, real signalSampleStep, std::size_t samplesPerPeriod);
         ~SignalConvolverLevel();
 
-        complex convolve(const real *signal, std::size_t signalSize, SignalApproxType sat);
+        complex convolve(const real *signal, std::size_t signalSize, SignalApproxType sat, TVReal &valuesWorkArray);
         complex convolveIdentity(real period, real phase);
 
     private:
