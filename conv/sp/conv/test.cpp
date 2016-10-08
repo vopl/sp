@@ -15,13 +15,18 @@ using namespace sp::conv;
 
 
 
-
-
-
-
+int testI(std::size_t splp);
 
 int test()
 {
+    testI(370);
+}
+
+
+int testI(std::size_t splp)
+{
+    sp::real ppw = 1.0;
+
     cout.precision(20);
     cout.setf(std::ios::scientific);
 
@@ -33,7 +38,7 @@ int test()
     sp::real sampleStep = 1.0L/360000;
 
     sp::real minT = 1.0/20000;
-    sp::real maxT = 1.0/0.02;
+    sp::real maxT = 1.0/0.1;
 
 
     PeriodGrid echoPeriodsGrid(
@@ -55,10 +60,10 @@ int test()
     {
 
         TVReal::const_iterator sfBegin = std::lower_bound(echoPeriods.begin(), echoPeriods.end(), echoPeriods.front());
-        TVReal::const_iterator sfEnd = std::lower_bound(echoPeriods.begin(), echoPeriods.end(), echoPeriods.back()/1000);
+        TVReal::const_iterator sfEnd = std::lower_bound(echoPeriods.begin(), echoPeriods.end(), echoPeriods.back()/200);
 
 
-        std::size_t sfCountMult = 10;
+        std::size_t sfCountMult = 40;
 
         spectrPeriods.clear();
         spectrPeriods.resize(std::size_t(sp::real(sfEnd-sfBegin)/sfCountMult+0.5));
@@ -85,15 +90,11 @@ int test()
 
 
 
-#define POW 1.0
-
-    std::size_t splp = 4000;
-
 
     if(1)
     {
         TVComplex response(echoPeriods.size());
-        KernelTabled kt(POW, splp);
+        KernelTabled kt(ppw, splp);
         //sp::Kernel kt(POW);
 
 //        kt.eval(0.75223948756, 1, complex(.23452,1.3456));
@@ -165,7 +166,6 @@ int test()
 //            std::cout<<(echoPeriods[i]/echoPeriods[500])<<", "<<response[i].re()<<", "<<response[i].im();
 //            std::cout<<std::endl;
 //        }
-
 //        exit(0);
 
         std::cerr<<"deconvolve"<<std::endl;
@@ -185,11 +185,11 @@ int test()
                     error1);
 
             cerr<<iters<<": "<<error0<<"->"<<error1<<endl;
-//            for(size_t i(0); i<spectr.size(); ++i)
-//            {
-//                sp::complex s = spectr[i];
-//                std::cout<<s.re()<<", "<<s.im()<<std::endl;
-//            }
+            for(size_t i(0); i<spectr.size(); ++i)
+            {
+                sp::complex s = spectr[i];
+                std::cout<<s.re()<<", "<<s.im()<<std::endl;
+            }
         }
         kt.flush();
     }

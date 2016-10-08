@@ -69,7 +69,7 @@ namespace sp { namespace utils
             return false;
         }
 
-        if(_header._realBittness != 32 && _header._realBittness != 64 && _header._realBittness != 80)
+        if(_header._realBittness != sizeof(float)*8 && _header._realBittness != sizeof(double)*8 && _header._realBittness != sizeof(long double)*8)
         {
             std::cerr<<"bad spectr file (header, realBittness): "<<fName<<std::endl;
             return false;
@@ -282,15 +282,19 @@ namespace sp { namespace utils
 
             switch(_header._realBittness)
             {
-            case 32:
+            case sizeof(float)*8:
                 *data = sp::real(*reinterpret_cast<float *>(buf));
                 break;
-            case 64:
+            case sizeof(double)*8:
                 *data = sp::real(*reinterpret_cast<double *>(buf));
                 break;
-            case 80:
+            case sizeof(long double)*8:
                 *data = sp::real(*reinterpret_cast<long double *>(buf));
                 break;
+            default:
+                std::cerr<<"unknown sizeof real in spectr file: "<<_header._realBittness<<std::endl;
+                assert(0);
+                abort();
             }
 
             ++data;

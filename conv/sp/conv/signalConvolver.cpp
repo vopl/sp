@@ -167,11 +167,12 @@ namespace sp { namespace conv
         std::size_t signalSize = _signal.size();
 
         TVComplex res(_levels.size());
+        TVReal valuesWorkArray(std::size_t(_samplesPerPeriod*_ppw + 0.5));
 
         for(std::size_t i(0); i<_levels.size(); ++i)
         {
             //std::cerr<<"convolve level "<<i<<std::endl;
-            res[i] = _levels[i]->convolve(signal, signalSize, _sat);
+            res[i] = _levels[i]->convolve(signal, signalSize, _sat, valuesWorkArray);
         }
 
         return res;
@@ -182,8 +183,10 @@ namespace sp { namespace conv
         const real *signal = &_signal[0];
         std::size_t signalSize = _signal.size();
 
+        TVReal valuesWorkArray(std::size_t(_samplesPerPeriod*_ppw + 0.5));
+
         SignalConvolverLevel level(_ppw, period, _signalSampleStep, _samplesPerPeriod);
-        return level.convolve(signal, signalSize, _sat);
+        return level.convolve(signal, signalSize, _sat, valuesWorkArray);
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
