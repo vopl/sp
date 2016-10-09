@@ -381,7 +381,10 @@ int main(int argc, char *argv[])
         convolver.pushSignal(&samples[0], samples.size());
         sampleIndex = needSampleIndex;
 
-        cout<<"frame "<<frameIndex<<"/"<<framesAmount<<" ("<<sp::real(frameIndex*100)/framesAmount<<"%, "<<sp::real(sampleIndex-extraSamples4Push)/wavStore.header()._frequency<<" sec) ";
+        cout
+                <<"frame "<<(frameIndex+1)<<"/"<<framesAmount
+                <<" ("<<sp::real((frameIndex+1)*100)/framesAmount<<"%, "
+                <<sp::real((sampleIndex+1)-extraSamples4Push)/wavStore.header()._frequency<<" sec) ";
         cout.flush();
 
         cout<<"c..";
