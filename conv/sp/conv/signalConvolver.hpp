@@ -3,6 +3,8 @@
 #include "sp/conv/periodGrid.hpp"
 #include "sp/math.hpp"
 
+#include "Eigen/Dense"
+#include <vector>
 #include <memory>
 
 namespace sp { namespace conv
@@ -12,6 +14,14 @@ namespace sp { namespace conv
         linear,
         poly6p5o32x, //require 2points before, 4points after
     };
+
+    using KernelPoint = Eigen::Matrix<real, 2, 6>;
+
+    using EchoPoint = Eigen::Matrix<real, 6, 1>;
+    using TVEchoPoint = std::vector<EchoPoint, Eigen::aligned_allocator<EchoPoint>>;
+
+    using SpectrPoint = Eigen::Matrix<real, 1, 2>;
+    using TVSpectrPoint = std::vector<SpectrPoint, Eigen::aligned_allocator<SpectrPoint>>;
 
     class SignalConvolverLevel;
     class SignalConvolver
@@ -29,9 +39,9 @@ namespace sp { namespace conv
 
         real getTime() const;
 
-        TVComplex /*echo*/ convolve();
-        complex /*echo*/ convolve(real period);
-        complex /*echo*/ convolveIdentity(real period, real phase);
+        TVEchoPoint convolve();
+        EchoPoint convolve(real period);
+        EchoPoint convolveIdentity(real period, real phase);
 
     private:
         real                            _ppw = 0;

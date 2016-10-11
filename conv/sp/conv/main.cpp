@@ -277,8 +277,13 @@ int main(int argc, char *argv[])
     {
         if(spectrStore.header()._periods != spectrPeriods)
         {
-            cerr<<"spectrStore period grid mismatch: "<<outFile<<endl;
-            return EXIT_FAILURE;
+            cerr<<"spectrStore period grid mismatch (total): "<<outFile<<endl;
+            //return EXIT_FAILURE;
+        }
+        if(spectrStore.header()._periods.size() != spectrPeriods.size())
+        {
+            cerr<<"spectrStore period grid mismatch (size): "<<outFile<<endl;
+            //return EXIT_FAILURE;
         }
         if(spectrStore.header()._samplesPerSecond != framesPerSecond)
         {
@@ -332,8 +337,8 @@ int main(int argc, char *argv[])
 
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    TVComplex echo;
-    TVComplex spectr(spectrPeriods.size());
+    TVEchoPoint echo;
+    TVSpectrPoint spectr(spectrPeriods.size());
 
     size_t sampleIndex = 0;
 
@@ -342,33 +347,6 @@ int main(int argc, char *argv[])
     bool first = true;
     for(; frameIndex<framesAmount; ++frameIndex)
     {
-        //std::fill(spectr.begin(), spectr.end(), sp::complex(0));
-
-        //std::cerr<<"init: "<<spectr[270].re()<<", "<<spectr[270].im()<<std::endl;
-
-        //rotate spectr to new position
-        {
-            sp::real dx = 1/framesPerSecond;
-            for(std::size_t i(0); i<spectr.size(); ++i)
-            {
-                sp::real t = spectrPeriods[i];
-                sp::real dp = dx*sp::g_2pi/t;
-                spectr[i] = spectr[i].rotate(dp);
-            }
-        }
-//        std::cerr<<"rot: "<<spectr[270].re()<<", "<<spectr[270].im()<<std::endl;
-
-//        {
-//            sp::real dx = 1/framesPerSecond;
-//            sp::real t = spectrPeriods[270];
-//            sp::real dp = dx*sp::g_2pi/t;
-
-//            sp::complex r2 = spectr[270].rotate(-dp*2);
-//            std::cerr<<"rot: "<<r2.re()<<", "<<r2.im()<<std::endl;
-//        }
-
-
-
         std::size_t needSampleIndex = std::size_t(samplesPerFrame*(frameIndex+1))+extraSamples4Push;
 
         TVReal samples(needSampleIndex - sampleIndex);
@@ -382,9 +360,9 @@ int main(int argc, char *argv[])
         sampleIndex = needSampleIndex;
 
         cout
-                <<"frame "<<(frameIndex+1)<<"/"<<framesAmount
-                <<" ("<<sp::real((frameIndex+1)*100)/framesAmount<<"%, "
-                <<sp::real((sampleIndex+1)-extraSamples4Push)/wavStore.header()._frequency<<" sec) ";
+                <<"frame "<<frameIndex<<"/"<<framesAmount
+                <<" ("<<sp::real(frameIndex*100)/framesAmount<<"%, "
+                <<sp::real(sampleIndex-extraSamples4Push)/wavStore.header()._frequency<<" sec) ";
         cout.flush();
 
         cout<<"c..";
@@ -421,13 +399,11 @@ int main(int argc, char *argv[])
         cout<<"ok: "<<dur<< std::endl;
         moment = moment1;
 
-        //std::cerr<<"upd: "<<spectr[270].re()<<", "<<spectr[270].im()<<std::endl;
-
         g_stopBlocked = true;
 
         k.flush();
 
-        if(!spectrStore.write(&spectr, 1))
+        if(!spectrStore.write(spectr.front().data()))
         {
             std::cerr<<"unable to write spectrStore"<<std::endl;
             break;
@@ -435,7 +411,7 @@ int main(int argc, char *argv[])
 
         if(spectrDumper)
         {
-            spectrDumper->pushFrames(spectr);
+            spectrDumper->pushFrames(spectr.front().data(), spectr.size()*SpectrPoint::SizeAtCompileTime);
         }
 
         g_stopBlocked = false;

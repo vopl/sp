@@ -289,9 +289,29 @@ namespace sp { namespace conv
     }
 
 
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    EchoPoint SignalConvolverLevel::convolve(const real *signal, std::size_t signalSize, SignalApproxType sat, TVReal &valuesWorkArray)
+    {
+        assert(valuesWorkArray.size() == std::size_t(_samplesPerPeriod*_ppw + 0.5));
+        update(valuesWorkArray, signal, signalSize, sat);
+
+        return convolve(valuesWorkArray);
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+    EchoPoint SignalConvolverLevel::convolveIdentity(real period, real phase)
+    {
+        TVReal values(std::size_t(_samplesPerPeriod*_ppw + 0.5));
+        updateIdentity(values, period, phase);
+
+        return convolve(values);
+    }
+
+    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     namespace
     {
-        complex evalSegment(real x0, real y0, real x1, real y1)
+        template <class MF>
+        std::pair<real, real> evalSegment(real x0, real y0, real x1, real y1, MF mf)
         {
             const real pi2 = g_2pi;
             const real pi2_p_2 = pi2*pi2;
@@ -303,12 +323,16 @@ namespace sp { namespace conv
                 const real _4_1 = x1*pi2;
                 const real _4_2 = x0*pi2;
 
-                const real _6 = cos ( _4_1 ) ;
-                const real _8 = sin ( _4_2 ) ;
-                const real _5 = sin ( _4_1 ) ;
-                const real _7 = cos ( _4_2 ) ;
+                real _5 = sin ( _4_1 ) ;
+                real _6 = cos ( _4_1 ) ;
+                real _7 = cos ( _4_2 ) ;
+                real _8 = sin ( _4_2 ) ;
 
 
+                _5 = mf(_5);
+                _6 = mf(_6);
+                _7 = mf(_7);
+                _8 = mf(_8);
 
 
 
@@ -330,43 +354,44 @@ namespace sp { namespace conv
                 im = _14/_3;
             }
 
-            return complex(re, im);
+            return std::make_pair(re, im);
         }
     }
 
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    complex SignalConvolverLevel::convolve(const real *signal, std::size_t signalSize, SignalApproxType sat, TVReal &valuesWorkArray)
-    {
-        assert(valuesWorkArray.size() == std::size_t(_samplesPerPeriod*_ppw + 0.5));
-        update(valuesWorkArray, signal, signalSize, sat);
-
-        return convolve(valuesWorkArray);
-    }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    complex SignalConvolverLevel::convolveIdentity(real period, real phase)
+    EchoPoint SignalConvolverLevel::convolve(const TVReal &values)
     {
-        TVReal values(std::size_t(_samplesPerPeriod*_ppw + 0.5));
-        updateIdentity(values, period, phase);
+        Summator<EchoPoint> res;
 
-        return convolve(values);
-    }
-
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    complex SignalConvolverLevel::convolve(const TVReal &values)
-    {
-        Summator<complex> res;
+        EchoPoint ep;
+        std::pair<real, real> v2;
 
         {
             real step01 = real(1.0)/_samplesPerPeriod;
+
             real x0 = 0;
             real y0 = values[0];
+
 
             for(std::size_t index(1); index<values.size(); ++index)
             {
                 real x1 = index * step01;
                 real y1 = values[index];
-                res += evalSegment(x0, y0, x1, y1);
+
+                v2 = evalSegment(x0, y0, x1*1.1, y1, [](real v){return pow(v+0.001, 31);});
+                ep(0) = v2.first;
+                ep(1) = v2.second;
+
+                v2 = evalSegment(x0, y0, x1*1.2, y1, [](real v){return pow(2, v+1);});
+                ep(2) = v2.first;
+                ep(3) = v2.second;
+
+                v2 = evalSegment(x0, y0, x1*1.3, y1, [](real v){return 1.0/(v+1.1);});
+                ep(4) = v2.first;
+                ep(5) = v2.second;
+
+                res += ep;
 
                 x0 = x1;
                 y0 = y1;

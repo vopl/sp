@@ -11,8 +11,8 @@ namespace sp { namespace conv
         SignalConvolverLevel(real ppw, real period, real signalSampleStep, std::size_t samplesPerPeriod);
         ~SignalConvolverLevel();
 
-        complex convolve(const real *signal, std::size_t signalSize, SignalApproxType sat, TVReal &valuesWorkArray);
-        complex convolveIdentity(real period, real phase);
+        EchoPoint convolve(const real *signal, std::size_t signalSize, SignalApproxType sat, TVReal &valuesWorkArray);
+        EchoPoint convolveIdentity(real period, real phase);
 
     private:
         real        _ppw;
@@ -29,7 +29,7 @@ namespace sp { namespace conv
         void update(TVReal &values, const real *signal, std::size_t signalSize, SignalApproxType sat);
         void updateIdentity(TVReal &values, real period, real phase);
 
-        complex convolve(const TVReal &values);
+        EchoPoint convolve(const TVReal &values);
     };
 
 }}

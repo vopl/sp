@@ -161,12 +161,12 @@ namespace sp { namespace conv
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    TVComplex /*echo*/ SignalConvolver::convolve()
+    TVEchoPoint SignalConvolver::convolve()
     {
         const real *signal = &_signal[0];
         std::size_t signalSize = _signal.size();
 
-        TVComplex res(_levels.size());
+        TVEchoPoint res(_levels.size());
         TVReal valuesWorkArray(std::size_t(_samplesPerPeriod*_ppw + 0.5));
 
         for(std::size_t i(0); i<_levels.size(); ++i)
@@ -178,7 +178,7 @@ namespace sp { namespace conv
         return res;
     }
 
-    complex /*echo*/ SignalConvolver::convolve(real period)
+    EchoPoint SignalConvolver::convolve(real period)
     {
         const real *signal = &_signal[0];
         std::size_t signalSize = _signal.size();
@@ -190,7 +190,7 @@ namespace sp { namespace conv
     }
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    complex /*echo*/ SignalConvolver::convolveIdentity(real period, real phase)
+    EchoPoint SignalConvolver::convolveIdentity(real period, real phase)
     {
         SignalConvolverLevel level(_ppw, period, _signalSampleStep, _samplesPerPeriod);
         return level.convolveIdentity(period, phase);
