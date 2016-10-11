@@ -15,13 +15,13 @@ namespace sp { namespace conv
         poly6p5o32x, //require 2points before, 4points after
     };
 
-    using KernelPoint = Eigen::Matrix<real, 2, 6>;
-
     using EchoPoint = Eigen::Matrix<real, 6, 1>;
     using TVEchoPoint = std::vector<EchoPoint, Eigen::aligned_allocator<EchoPoint>>;
 
     using SpectrPoint = Eigen::Matrix<real, 1, 2>;
     using TVSpectrPoint = std::vector<SpectrPoint, Eigen::aligned_allocator<SpectrPoint>>;
+
+    using KernelPoint = Eigen::Matrix<real, SpectrPoint::ColsAtCompileTime, EchoPoint::RowsAtCompileTime>;
 
     class SignalConvolverLevel;
     class SignalConvolver

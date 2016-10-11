@@ -368,32 +368,40 @@ namespace sp { namespace conv
         std::pair<real, real> v2;
 
         {
-            real step01 = real(1.0)/_samplesPerPeriod;
+            real step01_0 = real(1.0/1.1)/_samplesPerPeriod;
+            real step01_1 = real(1.0    )/_samplesPerPeriod;
+            real step01_2 = real(1.0*1.1)/_samplesPerPeriod;
 
-            real x0 = 0;
+            real x0_0 = 0;
+            real x0_1 = 0;
+            real x0_2 = 0;
             real y0 = values[0];
 
 
             for(std::size_t index(1); index<values.size(); ++index)
             {
-                real x1 = index * step01;
+                real x1_0 = index * step01_0;
+                real x1_1 = index * step01_1;
+                real x1_2 = index * step01_2;
                 real y1 = values[index];
 
-                v2 = evalSegment(x0, y0, x1*1.1, y1, [](real v){return pow(v+0.001, 31);});
+                v2 = evalSegment(x0_0, y0, x1_0, y1, [](real v){return pow(v, 31);});
                 ep(0) = v2.first;
                 ep(1) = v2.second;
 
-                v2 = evalSegment(x0, y0, x1*1.2, y1, [](real v){return pow(2, v+1);});
+                v2 = evalSegment(x0_1, y0, x1_1, y1, [](real v){return pow(v, 31);});
                 ep(2) = v2.first;
                 ep(3) = v2.second;
 
-                v2 = evalSegment(x0, y0, x1*1.3, y1, [](real v){return 1.0/(v+1.1);});
+                v2 = evalSegment(x0_2, y0, x1_2, y1, [](real v){return pow(v, 31);});
                 ep(4) = v2.first;
                 ep(5) = v2.second;
 
                 res += ep;
 
-                x0 = x1;
+                x0_0 = x1_0;
+                x0_1 = x1_1;
+                x0_2 = x1_2;
                 y0 = y1;
             }
         }
