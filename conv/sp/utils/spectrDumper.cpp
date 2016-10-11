@@ -82,20 +82,20 @@ namespace sp { namespace utils
         return (_re && _im) ? _framesPushed : std::size_t(-1);
     }
 
-    bool SpectrDumper::pushFrames(const TVComplex &frame)
+    bool SpectrDumper::pushFrames(const real *frame, std::size_t size)
     {
-        assert(frame.size() == _periodGrid.size());
+        assert(size/2 == _periodGrid.size());
 
 
-        if(frame.size() != _periodGrid.size() || !_re || !_im)
+        if(size/2 != _periodGrid.size() || !_re || !_im)
         {
             return false;
         }
 
-        for(const complex &v : frame)
+        for(std::size_t i(0); i<size; i+=2)
         {
-            _re<<v.re()<<" ";
-            _im<<v.im()<<" ";
+            _re<<frame[i+0]<<" ";
+            _im<<frame[i+1]<<" ";
         }
 
         _re<<std::endl;

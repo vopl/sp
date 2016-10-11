@@ -12,7 +12,7 @@ namespace sp { namespace utils
         ~SpectrDumper();
 
         std::size_t framesPushed() const;
-        bool pushFrames(const TVComplex &frame);
+        bool pushFrames(const real *frame, std::size_t size);
 
     private:
         TVReal _periodGrid;

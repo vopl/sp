@@ -19,74 +19,66 @@ namespace sp { namespace conv
             //спектра - длина m/2
             const real      *_st;
 
-            //значения отклика, если задано
-            //длина n/2
-            const complex   *_ev;
+//            //значения отклика, если задано
+//            //длина n/2
+//            const EchoPoint *_ev;
 
             KernelTabled    *_kernelTabled;
         };
 
+//        //////////////////////////////////////////////////////////////////////////
+//        //////////////////////////////////////////////////////////////////////////
+//        //////////////////////////////////////////////////////////////////////////
+//        void evalEchoTail(const SpectrPoint *p, EchoPoint *hx, std::size_t m, std::size_t n, void *vparams)
+//        {
+//            Params *params = reinterpret_cast<Params *>(vparams);
+
+//            for(std::size_t i(0); i<n; i++)
+//            {
+//                real et = params->_et[i];
+//                Summator<EchoPoint> res;
+
+//                for(std::size_t j(0); j<m; j++)
+//                {
+//                    real st = params->_st[j];
+
+//                    KernelPoint k;
+//                    params->_kernelTabled->evalKernel(et/st, k);
+
+//                    //assert(std::isfinite(rr) && std::isfinite(ri));
+//                    //assert(std::isfinite(ir) && std::isfinite(ii));
+
+//                    res += p[j] * k;
+//                }
+
+//                //assert(std::isfinite(re) && std::isfinite(im));
+
+//                res += -params->_ev[i];
+
+//                hx[i] = res;
+//            }
+//        }
+
         //////////////////////////////////////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////
-        //////////////////////////////////////////////////////////////////////////
-        void evalEchoTail(const real *p, real *hx, std::size_t m, std::size_t n, void *vparams)
+        void evalKernel(Eigen::Matrix<real, Eigen::Dynamic, Eigen::Dynamic> &jx, std::size_t m, std::size_t n, void *vparams)
         {
             Params *params = reinterpret_cast<Params *>(vparams);
 
-            for(std::size_t i(0); i<n/2; i++)
-            {
-                real et = params->_et[i];
-                Summator<real> re;
-                Summator<real> im;
-
-                for(std::size_t j(0); j<m/2; j++)
-                {
-                    real st = params->_st[j];
-
-                    real rr, ri, ir, ii;
-                    params->_kernelTabled->evalKernel(et/st, rr, ri, ir, ii);
-
-                    //assert(std::isfinite(rr) && std::isfinite(ri));
-                    //assert(std::isfinite(ir) && std::isfinite(ii));
-
-                    real sr = p[j*2+0];
-                    real si = p[j*2+1];
-
-                    re += sr*rr - si*ri;
-                    im += sr*ir - si*ii;
-                }
-
-                //assert(std::isfinite(re) && std::isfinite(im));
-
-                re += -params->_ev[i].re();
-                im += -params->_ev[i].im();
-
-                hx[i*2+0] = -real(re.v());
-                hx[i*2+1] = -real(im.v());
-            }
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-        void evalKernel(real *jx, std::size_t m, std::size_t n, void *vparams)
-        {
-            Params *params = reinterpret_cast<Params *>(vparams);
-
-            for(std::size_t i(0); i<n/2; i++)
+            for(std::size_t i(0); i<n; i++)
             {
                 real et = params->_et[i];
 
-                for(std::size_t j(0); j<m/2; j++)
+                for(std::size_t j(0); j<m; j++)
                 {
                     real st = params->_st[j];
 
-                    real rr,  ri,  ir,  ii;
-                    params->_kernelTabled->evalKernel(et/st, rr, ri, ir, ii);
+                    KernelPoint k;
+                    params->_kernelTabled->evalKernel(et/st, k);
 
-                    jx[(i*2+0)+(j*2+0)*n] = real(rr);
-                    jx[(i*2+0)+(j*2+1)*n] = real(-ri);
+                    jx.block<KernelPoint::ColsAtCompileTime, KernelPoint::RowsAtCompileTime>(
+                                KernelPoint::ColsAtCompileTime*i, KernelPoint::RowsAtCompileTime*j)
 
-                    jx[(i*2+1)+(j*2+0)*n] = real(ir);
-                    jx[(i*2+1)+(j*2+1)*n] = real(-ii);
+                            = k.transpose();
                 }
             }
         }
@@ -94,8 +86,8 @@ namespace sp { namespace conv
 
     //////////////////////////////////////////////////////////////////////////
     void KernelTabled::deconvolve2(
-            size_t esize, const real *et, const complex *ev, //отклик
-            size_t ssize, const real *st,       complex *sv, //спектр
+            size_t esize, const real *et, const EchoPoint   *ev, //отклик
+            size_t ssize, const real *st,       SpectrPoint *sv, //спектр
             size_t &iters, //макс итераций
             real initialMu,
             real &error0,
@@ -103,7 +95,7 @@ namespace sp { namespace conv
     {
         Params params;
         params._et = et;
-        params._ev = ev;
+//        params._ev = ev;
         params._st = st;
         params._kernelTabled = this;
 
@@ -128,8 +120,10 @@ namespace sp { namespace conv
             if(!d2Load())
             {
                 std::cerr<<"build d2...";std::cerr.flush();
-                Matrix kern(esize*2, ssize*2);
-                conv::evalKernel(kern.data(), ssize*2, esize*2, &params);
+
+                Matrix kern(esize*KernelPoint::ColsAtCompileTime, ssize*KernelPoint::RowsAtCompileTime);
+
+                conv::evalKernel(kern, ssize, esize, &params);
                 _kernT = kern.transpose();
                 Matrix kernTKern = _kernT * kern;
 
@@ -141,8 +135,8 @@ namespace sp { namespace conv
         }
 
 #if 1
-        Eigen::Map<const Vector> echo(&ev->re(), esize*2, 1);
-        Eigen::Map<Vector> spectr(&sv->re(), ssize*2, 1);
+        Eigen::Map<const Vector> echo(ev->data(), esize*ev->size(), 1);
+        Eigen::Map<Vector> spectr(sv->data(), ssize*sv->size(), 1);
 
         spectr.noalias() = _solver->solve(_kernT * echo);
 
@@ -256,7 +250,7 @@ namespace sp { namespace conv
             return false;
         }
 
-        _kernT.resize(std::get<7>(_d2Key)*2, std::get<4>(_d2Key)*2);
+        _kernT.resize(std::get<7>(_d2Key)*KernelPoint::RowsAtCompileTime, std::get<4>(_d2Key)*KernelPoint::ColsAtCompileTime);
         in.read( (char *) _kernT.data(), _kernT.rows()*_kernT.cols()*sizeof(typename Matrix::Scalar) );
         if(!in)
         {

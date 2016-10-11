@@ -227,43 +227,35 @@ namespace sp { namespace utils
     }
 
 
-    bool SpectrStore::read(Sample *data, std::size_t size)
+    bool SpectrStore::read(Sample sample)
     {
         if(!_good)
         {
             return false;
         }
 
-        while(size--)
+        if(!readReals(sample, _sampleBytes/(_header._realBittness/8)))
         {
-            if(!readReals(&data->front().re(), _sampleBytes/(_header._realBittness/8)))
-            {
-                return false;
-            }
-            seek(_pos+1);
-            data++;
+            return false;
         }
+        seek(_pos+1);
 
         return true;
     }
 
-    bool SpectrStore::write(const Sample *data, std::size_t size)
+    bool SpectrStore::write(const Sample sample)
     {
         if(!_good)
         {
             return false;
         }
 
-        while(size--)
+        if(!writeReals(sample, _sampleBytes/(_header._realBittness/8)))
         {
-            if(!writeReals(&data->front().re(), _sampleBytes/(_header._realBittness/8)))
-            {
-                return false;
-            }
-            _file.flush();
-            seek(_pos+1);
-            data++;
+            return false;
         }
+        _file.flush();
+        seek(_pos+1);
 
         return true;
     }

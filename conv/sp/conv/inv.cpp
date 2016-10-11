@@ -56,7 +56,7 @@ void inv()
     отсмотреть r1, r2, i1, i2
 */
 
-#if 1
+#if 0
 
 
     sp::real minT = 1.0/20000;

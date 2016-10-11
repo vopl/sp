@@ -38,6 +38,7 @@ endif()
 include_directories(${Boost_INCLUDE_DIRS})
 
 
+add_definitions(-DEIGEN_INITIALIZE_MATRICES_BY_ZERO)
 
 ############################################################################
 add_executable(${PROJECT_NAME} ${SRC})

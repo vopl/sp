@@ -17,19 +17,11 @@ namespace sp { namespace conv
         ~KernelTabled();
 
 
-        complex eval(real t, real st, const complex &sv);
-
-        void deconvolve(
-            size_t esize, const real *et, const complex *ev,//отклик
-            size_t ssize, const real *st,       complex *sv,//спектр
-            size_t &iters,//макс итераций
-            real initialMu,
-            real &error0,
-            real &error1);
+        EchoPoint eval(real t, real st, const SpectrPoint &sv);
 
         void deconvolve2(
-            size_t esize, const real *et, const complex *ev,//отклик
-            size_t ssize, const real *st,       complex *sv,//спектр
+            size_t esize, const real *et, const EchoPoint   *ev,//отклик
+            size_t ssize, const real *st,       SpectrPoint *sv,//спектр
             size_t &iters,//макс итераций
             real initialMu,
             real &error0,
@@ -38,10 +30,10 @@ namespace sp { namespace conv
         void flush();
 
     public:
-        void evalKernel(real t, real &rr, real &ri, real &ir, real &ii);
+        void evalKernel(real t, KernelPoint &kv);
 
     private:
-        void buildValue(const real &period, complex &re, complex &im);
+        void buildValue(const real &period, KernelPoint &kv);
 
     private:
         std::string stateFileName();
@@ -58,13 +50,13 @@ namespace sp { namespace conv
         SignalConvolverPtr _scp;
 
     private:
-        struct Value
-        {
-            complex _re;
-            complex _im;
-        };
+        using ValuesByPeriod = std::map<
+            real,
+            KernelPoint,
+            std::less<real>,
+            Eigen::aligned_allocator<std::pair<const real, KernelPoint>>
+        >;
 
-        using ValuesByPeriod = std::map<real, Value>;
         ValuesByPeriod _valuesByPeriod;
         std::size_t _addedValuesAmount = 0;
 

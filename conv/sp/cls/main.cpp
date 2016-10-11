@@ -81,6 +81,7 @@ int main(int argc, char *argv[])
             }
     }
 
+#if 0
     using Shape = sp::cls::Shape<16, 16, double>;
 
     std::vector<utils::SpectrStore*> sStores;
@@ -186,6 +187,6 @@ int main(int argc, char *argv[])
 //            }
         }
     }
-
+#endif
     return 0;
 }

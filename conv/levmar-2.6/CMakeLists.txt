@@ -3,7 +3,7 @@ project(levmar)
 
 ############################################################################
 set(HAVE_LAPACK 1)
-set(LINSOLVERS_RETAIN_MEMORY 1)
+set(LINSOLVERS_RETAIN_MEMORY 0)
 set(LM_EXT_PREC 1)
 set(LM_DBL_PREC 1)
 set(LM_SNGL_PREC 0)
