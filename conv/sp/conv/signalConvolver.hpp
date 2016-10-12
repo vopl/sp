@@ -11,11 +11,12 @@ namespace sp { namespace conv
 {
     enum class SignalApproxType
     {
+        constant,
         linear,
         poly6p5o32x, //require 2points before, 4points after
     };
 
-    using EchoPoint = Eigen::Matrix<real, 6, 1>;
+    using EchoPoint = Eigen::Matrix<real, 8, 1>;
     using TVEchoPoint = std::vector<EchoPoint, Eigen::aligned_allocator<EchoPoint>>;
 
     using SpectrPoint = Eigen::Matrix<real, 1, 2>;

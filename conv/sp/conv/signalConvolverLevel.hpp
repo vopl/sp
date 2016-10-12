@@ -22,6 +22,7 @@ namespace sp { namespace conv
         real        _sampleStep;
 
     private:
+        real updateOneConstant(const real *signal, std::size_t signalStartIdx, std::size_t signalStopIdx);
         real updateOneLinear(const real *signal, std::size_t signalSize, real startTime, real stopTime, std::size_t signalStartIdx, std::size_t signalStopIdx);
         real updateOnePoly(const real *signal, std::size_t signalSize, real startTime, real stopTime, std::size_t signalStartIdx, std::size_t signalStopIdx);
 
