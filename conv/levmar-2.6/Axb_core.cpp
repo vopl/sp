@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Solution of linear systems involved in the Levenberg - Marquardt
 //  minimization algorithm
 //  Copyright (C) 2004  Manolis Lourakis (lourakis at ics forth gr)
@@ -139,7 +139,7 @@ register LM_REAL sum;
 #else
       return 1; /* NOP */
 #endif /* LINSOLVERS_RETAIN_MEMORY */
-   
+
     /* calculate required memory size */
     a_sz=m*m;
     tau_sz=m;
@@ -202,7 +202,7 @@ register LM_REAL sum;
     }
   }
 
-  /* R is stored in the upper triangular part of a; copy it in r so that ORGQR() below won't destroy it */ 
+  /* R is stored in the upper triangular part of a; copy it in r so that ORGQR() below won't destroy it */
   memcpy(r, a, r_sz*sizeof(LM_REAL));
 
   /* compute Q using the elementary reflectors computed by the above decomposition */
@@ -285,7 +285,7 @@ int a_sz, tau_sz, r_sz, tot_sz;
 register int i, j;
 int info, worksz, nrhs=1;
 register LM_REAL sum;
-   
+
     if(!A)
 #ifdef LINSOLVERS_RETAIN_MEMORY
     {
@@ -298,12 +298,12 @@ register LM_REAL sum;
 #else
       return 1; /* NOP */
 #endif /* LINSOLVERS_RETAIN_MEMORY */
-   
+
     if(m<n){
       fprintf(stderr, RCAT("Normal equations require that the number of rows is greater than number of columns in ", AX_EQ_B_QRLS) "() [%d x %d]! -- try transposing\n", m, n);
       exit(1);
     }
-      
+
     /* calculate required memory size */
     a_sz=m*n;
     tau_sz=n;
@@ -453,7 +453,7 @@ __STATIC__ int buf_sz=0;
 LM_REAL *a;
 int a_sz, tot_sz;
 int info, nrhs=1;
-   
+
     if(!A)
 #ifdef LINSOLVERS_RETAIN_MEMORY
     {
@@ -466,7 +466,7 @@ int info, nrhs=1;
 #else
       return 1; /* NOP */
 #endif /* LINSOLVERS_RETAIN_MEMORY */
-   
+
     /* calculate required memory size */
     a_sz=m*m;
     tot_sz=a_sz;
@@ -500,8 +500,11 @@ int info, nrhs=1;
   memcpy(x, B, m*sizeof(LM_REAL));
 
   /* Cholesky decomposition of A */
-  //POTF2("L", (int *)&m, a, (int *)&m, (int *)&info);
-  POTRF("L", (int *)&m, a, (int *)&m, (int *)&info);
+  {
+    //POTF2("L", (int *)&m, a, (int *)&m, (int *)&info);
+    char mode[2] = "L";
+    POTRF(mode, (int *)&m, a, (int *)&m, (int *)&info);
+  }
   /* error treatment */
   if(info!=0){
     if(info<0){
@@ -521,7 +524,10 @@ int info, nrhs=1;
   }
 
   /* solve using the computed Cholesky in one lapack call */
-  POTRS("L", (int *)&m, (int *)&nrhs, a, (int *)&m, x, (int *)&m, &info);
+  {
+      char mode[2] = "L";
+    POTRS(mode, (int *)&m, (int *)&nrhs, a, (int *)&m, x, (int *)&m, &info);
+  }
   if(info<0){
     fprintf(stderr, RCAT(RCAT("LAPACK error: illegal value for argument %d of ", POTRS) " in ", AX_EQ_B_CHOL) "()\n", -info);
     exit(1);
@@ -693,7 +699,7 @@ int info, nrhs=1;
     PLASMA_Init(PLASMA_ncores);
     fprintf(stderr, RCAT("\n", AX_EQ_B_PLASMA_CHOL) "(): PLASMA is running on %d cores.\n\n", PLASMA_ncores);
   }
-  
+
   /* Solve the linear system */
   info=PLASMA_POSV(PlasmaLower, m, 1, a, m, x, m);
   /* error treatment */
@@ -748,7 +754,7 @@ int a_sz, ipiv_sz, tot_sz;
 register int i, j;
 int info, *ipiv, nrhs=1;
 LM_REAL *a;
-   
+
     if(!A)
 #ifdef LINSOLVERS_RETAIN_MEMORY
     {
@@ -761,7 +767,7 @@ LM_REAL *a;
 #else
       return 1; /* NOP */
 #endif /* LINSOLVERS_RETAIN_MEMORY */
-   
+
     /* calculate required memory size */
     ipiv_sz=m;
     a_sz=m*m;
@@ -868,7 +874,7 @@ int a_sz, u_sz, s_sz, vt_sz, tot_sz;
 LM_REAL thresh, one_over_denom;
 register LM_REAL sum;
 int info, rank, worksz, *iwork, iworksz;
-   
+
     if(!A)
 #ifdef LINSOLVERS_RETAIN_MEMORY
     {
@@ -881,7 +887,7 @@ int info, rank, worksz, *iwork, iworksz;
 #else
       return 1; /* NOP */
 #endif /* LINSOLVERS_RETAIN_MEMORY */
-   
+
   /* calculate required memory size */
 #if 1 /* use optimal size */
   worksz=-1; // workspace query. Keep in mind that GESDD requires more memory than GESVD
@@ -1010,7 +1016,7 @@ __STATIC__ int buf_sz=0, nb=0;
 LM_REAL *a, *work;
 int a_sz, ipiv_sz, work_sz, tot_sz;
 int info, *ipiv, nrhs=1;
-   
+
   if(!A)
 #ifdef LINSOLVERS_RETAIN_MEMORY
   {
@@ -1131,7 +1137,7 @@ int info, *ipiv, nrhs=1;
 /*
  * This function returns the solution of Ax = b
  *
- * The function employs LU decomposition followed by forward/back substitution (see 
+ * The function employs LU decomposition followed by forward/back substitution (see
  * also the LAPACK-based LU solver above)
  *
  * A is mxm, b is mx1
@@ -1164,7 +1170,7 @@ LM_REAL *a, *work, max, sum, tmp;
 #else
     return 1; /* NOP */
 #endif /* LINSOLVERS_RETAIN_MEMORY */
-   
+
   /* calculate required memory size */
   idx_sz=m;
   a_sz=m*m;

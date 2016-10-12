@@ -88,7 +88,11 @@ LM_REAL alpha=LM_CNST(1.0), beta=LM_CNST(0.0);
    * therefore BLAS computes a*a^T with a and a*a^T in column major, which is equivalent to
    * computing a^T*a in row major!
    */
-  GEMM("N", "T", &m, &m, &n, &alpha, a, &m, a, &m, &beta, b, &m);
+  {
+    char mode1[2] = "N";
+    char mode2[2] = "T";
+    GEMM(mode1, mode2, &m, &m, &n, &alpha, a, &m, a, &m, &beta, b, &m);
+  }
 
 #else /* no LAPACK, use blocking-based multiply */
 
