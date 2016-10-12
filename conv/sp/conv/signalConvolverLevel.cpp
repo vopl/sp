@@ -113,6 +113,20 @@ namespace sp { namespace conv
     }
 
     /////////-/////////-/////////-/////////-/////////-/////////-/////////-/////////-
+    real SignalConvolverLevel::updateOneConstant(const real *signal, std::size_t signalStartIdx, std::size_t signalStopIdx)
+    {
+        Summator<real> sum;
+
+        signalStopIdx += 1;
+        for(std::size_t signalIndex(signalStartIdx); signalIndex<signalStopIdx; ++signalIndex)
+        {
+            sum += signal[signalIndex];
+        }
+
+        return sum.v() / (signalStopIdx - signalStartIdx);
+    }
+
+    /////////-/////////-/////////-/////////-/////////-/////////-/////////-/////////-
     real SignalConvolverLevel::updateOneLinear(const real *signal, std::size_t signalSize, real startTime, real stopTime, std::size_t signalStartIdx, std::size_t signalStopIdx)
     {
         Summator<real> sum;
@@ -224,6 +238,22 @@ namespace sp { namespace conv
     {
         switch(sat)
         {
+        case SignalApproxType::constant:
+            for(std::size_t valueIndex(0); valueIndex<values.size(); ++valueIndex)
+            {
+                real startTime = _sampleStep*valueIndex;
+                real stopTime = startTime+_sampleStep;
+
+                std::size_t signalStartIdx = std::size_t(startTime/_signalSampleStep);
+                std::size_t signalStopIdx = std::size_t(stopTime/_signalSampleStep) + 1;
+
+                assert(signalStartIdx >= 0);
+                assert(signalStopIdx < signalSize-1);
+
+                values[valueIndex] = updateOneConstant(signal, signalStartIdx, signalStopIdx);
+            }
+            break;
+
         case SignalApproxType::linear:
             for(std::size_t valueIndex(0); valueIndex<values.size(); ++valueIndex)
             {
@@ -310,51 +340,39 @@ namespace sp { namespace conv
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     namespace
     {
-        template <class MF>
-        std::pair<real, real> evalSegment(real x0, real y0, real x1, real y1, MF mf)
+        std::pair<real, real> evalSegment(real x0, real y0, real x1, real y1)
         {
-            const real pi2 = g_2pi;
-            const real pi2_p_2 = pi2*pi2;
+            real s0 = sin ( x0 ) ;
+            real s1 = sin ( x1 ) ;
 
-            const real x1_minus_x0 = x1-x0;
+            real c0 = cos ( x0 ) ;
+            real c1 = cos ( x1 ) ;
 
-            real re, im;
-            {
-                const real _4_1 = x1*pi2;
-                const real _4_2 = x0*pi2;
+            return std::make_pair(
+                        s1*y1 - s0*y0,
+                        c1*y1 - c0*y0);
+        }
 
-                real _5 = sin ( _4_1 ) ;
-                real _6 = cos ( _4_1 ) ;
-                real _7 = cos ( _4_2 ) ;
-                real _8 = sin ( _4_2 ) ;
+        TVReal sinTable0;
+        TVReal cosTable0;
+        TVReal sinTable1;
+        TVReal cosTable1;
+        TVReal sinTable2;
+        TVReal cosTable2;
+        TVReal sinTable3;
+        TVReal cosTable3;
 
+        std::pair<real, real> evalSegment(const TVReal &sinTable, const TVReal &cosTable, std::size_t xIdx, real y0, real y1)
+        {
+            real s0 = sinTable[xIdx+0];
+            real s1 = sinTable[xIdx+1];
 
-                _5 = mf(_5);
-                _6 = mf(_6);
-                _7 = mf(_7);
-                _8 = mf(_8);
+            real c0 = cosTable[xIdx+0];
+            real c1 = cosTable[xIdx+1];
 
-
-
-                const real _0 =  pi2 * ( x1_minus_x0 ) ;
-
-                const real _7_2 = (_7-_6);
-                const real _9  =  ( _0*_5 - _7_2 ) ;
-                const real _10 =  ( _8*_0 - _7_2 ) ;
-                const real _13 =  ( _9*y1 - _10*y0 ) ;
-
-                const real _3 =  pi2_p_2 * ( x1_minus_x0 ) ;
-                re = _13/_3;
-
-                const real _9_1 = (_5-_8);
-                const real _11 =  ( _9_1 -_0*_6 ) ;
-                const real _12 =  ( _9_1 -_7*_0 ) ;
-                const real _14 =  ( _11*y1 - _12*y0 ) ;
-
-                im = _14/_3;
-            }
-
-            return std::make_pair(re, im);
+            return std::make_pair(
+                        s1*y1 - s0*y0,
+                        c1*y1 - c0*y0);
         }
     }
 
@@ -362,46 +380,90 @@ namespace sp { namespace conv
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     EchoPoint SignalConvolverLevel::convolve(const TVReal &values)
     {
+
+        if(sinTable0.size() != values.size())
+        {
+            sinTable0.resize(values.size());
+            cosTable0.resize(values.size());
+            sinTable1.resize(values.size());
+            cosTable1.resize(values.size());
+            sinTable2.resize(values.size());
+            cosTable2.resize(values.size());
+            sinTable3.resize(values.size());
+            cosTable3.resize(values.size());
+
+            real step01_0 = real(g_2pi/1.2)/_samplesPerPeriod;
+            real step01_1 = real(g_2pi/1.1)/_samplesPerPeriod;
+            real step01_2 = real(g_2pi*1.1)/_samplesPerPeriod;
+            real step01_3 = real(g_2pi*1.2)/_samplesPerPeriod;
+
+            for(std::size_t index(0); index<values.size(); ++index)
+            {
+                real x_0 = index * step01_0;
+                real x_1 = index * step01_1;
+                real x_2 = index * step01_2;
+                real x_3 = index * step01_3;
+
+                sinTable0[index] = sin(x_0);
+                cosTable0[index] = cos(x_0);
+                sinTable1[index] = sin(x_1);
+                cosTable1[index] = cos(x_1);
+                sinTable2[index] = sin(x_2);
+                cosTable2[index] = cos(x_2);
+                sinTable3[index] = sin(x_3);
+                cosTable3[index] = cos(x_3);
+            }
+        }
+
+
         Summator<EchoPoint> res;
 
         EchoPoint ep;
         std::pair<real, real> v2;
 
         {
-            real step01_0 = real(1.0/1.1)/_samplesPerPeriod;
-            real step01_1 = real(1.0    )/_samplesPerPeriod;
-            real step01_2 = real(1.0*1.1)/_samplesPerPeriod;
+//            real step01_0 = real(g_2pi/1.2)/_samplesPerPeriod;
+//            real step01_1 = real(g_2pi/1.1)/_samplesPerPeriod;
+//            real step01_2 = real(g_2pi*1.1)/_samplesPerPeriod;
+//            real step01_3 = real(g_2pi*1.2)/_samplesPerPeriod;
 
-            real x0_0 = 0;
-            real x0_1 = 0;
-            real x0_2 = 0;
+//            real x0_0 = 0;
+//            real x0_1 = 0;
+//            real x0_2 = 0;
+//            real x0_3 = 0;
             real y0 = values[0];
 
 
             for(std::size_t index(1); index<values.size(); ++index)
             {
-                real x1_0 = index * step01_0;
-                real x1_1 = index * step01_1;
-                real x1_2 = index * step01_2;
+//                real x1_0 = index * step01_0;
+//                real x1_1 = index * step01_1;
+//                real x1_2 = index * step01_2;
+//                real x1_3 = index * step01_3;
                 real y1 = values[index];
 
-                v2 = evalSegment(x0_0, y0, x1_0, y1, [](real v){return pow(v, 31);});
+                v2 = evalSegment(sinTable0, cosTable0, index-1, y0, y1);
                 ep(0) = v2.first;
                 ep(1) = v2.second;
 
-                v2 = evalSegment(x0_1, y0, x1_1, y1, [](real v){return pow(v, 31);});
+                v2 = evalSegment(sinTable1, cosTable1, index-1, y0, y1);
                 ep(2) = v2.first;
                 ep(3) = v2.second;
 
-                v2 = evalSegment(x0_2, y0, x1_2, y1, [](real v){return pow(v, 31);});
+                v2 = evalSegment(sinTable2, cosTable2, index-1, y0, y1);
                 ep(4) = v2.first;
                 ep(5) = v2.second;
 
+                v2 = evalSegment(sinTable3, cosTable3, index-1, y0, y1);
+                ep(6) = v2.first;
+                ep(7) = v2.second;
+
                 res += ep;
 
-                x0_0 = x1_0;
-                x0_1 = x1_1;
-                x0_2 = x1_2;
+//                x0_0 = x1_0;
+//                x0_1 = x1_1;
+//                x0_2 = x1_2;
+//                x0_3 = x1_3;
                 y0 = y1;
             }
         }

@@ -101,18 +101,18 @@ int main(int argc, char *argv[])
     desc.add_options()
             ("help", "produce help message")
 
-            ("ppw", po::value<sp::real>()->default_value(1), "periods per analyze window")
+            ("ppw", po::value<sp::real>()->default_value(0.125), "periods per analyze window")
 
-            ("splp", po::value<std::size_t>()->default_value(100), "samples per level period")
+            ("splp", po::value<std::size_t>()->default_value(2000), "samples per level period")
 
-            ("efmin", po::value<sp::real>()->default_value(0.2), "echo frequency grid minimum")
+            ("efmin", po::value<sp::real>()->default_value(0.01), "echo frequency grid minimum")
             ("efmax", po::value<sp::real>()->default_value(20000), "echo frequency grid maximum")
-            ("efcount", po::value<std::size_t>()->default_value(8000), "echo frequency grid size")
+            ("efcount", po::value<std::size_t>()->default_value(40000), "echo frequency grid size")
             ("eftype", po::value<std::string>()->default_value("flog"), "echo frequency grid type (plin|plog|flin|flog)")
 
-            ("sfminmult", po::value<sp::real>()->default_value(100), "spectr frequency minimum value part")
+            ("sfminmult", po::value<sp::real>()->default_value(2000), "spectr frequency minimum value part")
             ("sfmaxmult", po::value<sp::real>()->default_value(1), "spectr frequency maximum value part")
-            ("sfcountmult", po::value<std::size_t>()->default_value(8), "spectr frequency count mult")
+            ("sfcountmult", po::value<std::size_t>()->default_value(16), "spectr frequency count mult")
 
             ("fps", po::value<sp::real>()->default_value(1000), "frames per second")
 
@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
         if(spectrStore.header()._periods.size() != spectrPeriods.size())
         {
             cerr<<"spectrStore period grid mismatch (size): "<<outFile<<endl;
-            //return EXIT_FAILURE;
+            return EXIT_FAILURE;
         }
         if(spectrStore.header()._samplesPerSecond != framesPerSecond)
         {

@@ -8,7 +8,7 @@
 #include <set>
 
 /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-static const std::size_t phasesAmountForKernelApproximator = 30;//MAGIC
+static const std::size_t phasesAmountForKernelApproximator = 7;//MAGIC
 
 
 

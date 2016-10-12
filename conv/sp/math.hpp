@@ -95,21 +95,21 @@ namespace sp
 //#  pragma GCC push_options
 //#  pragma GCC optimize ("O1")
 //#endif
-        void operator+=(Value v) __attribute__((always_inline)) __attribute__((__optimize__("no-associative-math")))
-        {
-            Value Y = v - _error;
-            Value T = _sum + Y;
-            _error = (T - _sum) - Y;
-            _sum = T;
-        }
+//        void operator+=(Value v) __attribute__((always_inline)) __attribute__((__optimize__("no-associative-math")))
+//        {
+//            Value Y = v - _error;
+//            Value T = _sum + Y;
+//            _error = (T - _sum) - Y;
+//            _sum = T;
+//        }
 //#if defined(__GNUC__)
 //#  pragma GCC pop_options
 //#endif
 
-//        void operator+=(Value v) __attribute__((always_inline))
-//        {
-//            _sum += v;
-//        }
+        void operator+=(Value v) __attribute__((always_inline))
+        {
+            _sum += v;
+        }
 
         operator Value() const
         {
