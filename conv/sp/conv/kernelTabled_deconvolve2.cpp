@@ -60,7 +60,7 @@ namespace sp { namespace conv
 //        }
 
         //////////////////////////////////////////////////////////////////////////
-        void evalKernel(Eigen::Matrix<real, Eigen::Dynamic, Eigen::Dynamic> &jx, std::size_t m, std::size_t n, void *vparams)
+        void evalKernel(real tMult, Eigen::Matrix<real, Eigen::Dynamic, Eigen::Dynamic> &jx, std::size_t m, std::size_t n, void *vparams)
         {
             Params *params = reinterpret_cast<Params *>(vparams);
 
@@ -73,7 +73,7 @@ namespace sp { namespace conv
                     real st = params->_st[j];
 
                     KernelPoint k;
-                    params->_kernelTabled->evalKernel(et/st, k);
+                    params->_kernelTabled->evalKernel(tMult*et/st, k);
 
                     jx.block<KernelPoint::ColsAtCompileTime, KernelPoint::RowsAtCompileTime>(
                                 KernelPoint::ColsAtCompileTime*i, KernelPoint::RowsAtCompileTime*j)
@@ -85,13 +85,9 @@ namespace sp { namespace conv
     }
 
     //////////////////////////////////////////////////////////////////////////
-    void KernelTabled::deconvolve2(
-            size_t esize, const real *et, const EchoPoint   *ev, //отклик
-            size_t ssize, const real *st,       SpectrPoint *sv, //спектр
-            size_t &iters, //макс итераций
-            real initialMu,
-            real &error0,
-            real &error1)
+    void KernelTabled::deconvolve(
+            size_t esize, const real *et, const EchoPoint   *ev,
+            size_t ssize, const real *st,       SpectrPoint *sv)
     {
         Params params;
         params._et = et;
@@ -123,11 +119,15 @@ namespace sp { namespace conv
 
                 Matrix kern(esize*KernelPoint::ColsAtCompileTime, ssize*KernelPoint::RowsAtCompileTime);
 
-                conv::evalKernel(kern, ssize, esize, &params);
+                conv::evalKernel(400, kern, ssize, esize, &params);
                 _kernT = kern.transpose();
                 Matrix kernTKern = _kernT * kern;
 
                 _solver.reset(new Solver(kernTKern));
+
+                conv::evalKernel(1, kern, ssize, esize, &params);
+                _kernT = kern.transpose();
+
 
                 std::cerr<<"ok"<<std::endl;
                 d2Save();
@@ -139,10 +139,6 @@ namespace sp { namespace conv
         Eigen::Map<Vector> spectr(sv->data(), ssize*sv->size(), 1);
 
         spectr.noalias() = _solver->solve(_kernT * echo);
-
-        error0 = 1;
-        error1 = 1;
-        iters = 1;
 #else
         Vector echoTail(esize*2);
         Eigen::Map<Vector> spectr(&sv->re(), ssize*2, 1);

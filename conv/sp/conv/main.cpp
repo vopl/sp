@@ -101,18 +101,18 @@ int main(int argc, char *argv[])
     desc.add_options()
             ("help", "produce help message")
 
-            ("ppw", po::value<sp::real>()->default_value(0.125), "periods per analyze window")
+            ("ppw", po::value<sp::real>()->default_value(1.0), "periods per analyze window")
 
-            ("splp", po::value<std::size_t>()->default_value(2000), "samples per level period")
+            ("splp", po::value<std::size_t>()->default_value(1000), "samples per level period")
 
-            ("efmin", po::value<sp::real>()->default_value(0.01), "echo frequency grid minimum")
-            ("efmax", po::value<sp::real>()->default_value(20000), "echo frequency grid maximum")
-            ("efcount", po::value<std::size_t>()->default_value(40000), "echo frequency grid size")
+            ("efmin", po::value<sp::real>()->default_value(20), "echo frequency grid minimum")
+            ("efmax", po::value<sp::real>()->default_value(20000*1000), "echo frequency grid maximum")
+            ("efcount", po::value<std::size_t>()->default_value(20000), "echo frequency grid size")
             ("eftype", po::value<std::string>()->default_value("flog"), "echo frequency grid type (plin|plog|flin|flog)")
 
-            ("sfminmult", po::value<sp::real>()->default_value(2000), "spectr frequency minimum value part")
-            ("sfmaxmult", po::value<sp::real>()->default_value(1), "spectr frequency maximum value part")
-            ("sfcountmult", po::value<std::size_t>()->default_value(16), "spectr frequency count mult")
+            ("sfminmult", po::value<sp::real>()->default_value(1), "spectr frequency minimum value part")
+            ("sfmaxmult", po::value<sp::real>()->default_value(0.001), "spectr frequency maximum value part")
+            ("sfcountmult", po::value<std::size_t>()->default_value(10), "spectr frequency count mult")
 
             ("fps", po::value<sp::real>()->default_value(1000), "frames per second")
 
@@ -120,9 +120,6 @@ int main(int argc, char *argv[])
 
             ("out-file", po::value<std::string>()->default_value("out.spectr"), "output spectr file name")
             ("dump-prefix", po::value<std::string>()/*->default_value("dump/spectr")*/, "spectr text dump files prefix")
-
-            ("inititersmax", po::value<std::size_t>()->default_value(15), "maximum initial iterations for lsq")
-            ("itersmax", po::value<std::size_t>()->default_value(1), "maximum iterations for lsq")
             ;
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -328,7 +325,7 @@ int main(int argc, char *argv[])
             echoPeriods,
             sp::real(1)/wavStore.header()._frequency,
             vars["splp"].as<std::size_t>(),
-            SignalApproxType::linear);
+            SignalApproxType::constant);
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     KernelTabled k(
@@ -375,27 +372,14 @@ int main(int argc, char *argv[])
 
 
 
-        std::size_t iters = vars["itersmax"].as<std::size_t>();
-        if(first)
-        {
-            iters = vars["inititersmax"].as<std::size_t>();
-            first = false;
-        }
 
-        sp::real error0 = 0;
-        sp::real error1 = 0;
-        k.deconvolve2(
+        k.deconvolve(
             echo.size(), &echoPeriods[0], &echo[0],
-            spectr.size(), &spectrPeriods[0], &spectr[0],
-            iters,
-            0,//1e-80,
-            error0,
-            error1);
+            spectr.size(), &spectrPeriods[0], &spectr[0]);
 
         auto moment1 = std::chrono::high_resolution_clock::now();
 
         sp::real dur = std::chrono::duration<double>(moment1 - moment).count();
-        //cout<<"ok, iters: "<<iters<<", error: "<<error1<<"/"<<error0<<"="<<(error1/error0)<<", dur: "<<dur<< std::endl;
         cout<<"ok: "<<dur<< std::endl;
         moment = moment1;
 
