@@ -19,7 +19,7 @@ int testI(std::size_t splp);
 
 int test()
 {
-    testI(100);
+    testI(3000);
 }
 
 
@@ -44,7 +44,7 @@ int testI(std::size_t splp)
     PeriodGrid echoPeriodsGrid(
         minT,
         maxT,
-        10000,
+        1000,
         PeriodGridType::frequencyLog);
 
     TVReal echoPeriods = echoPeriodsGrid.grid();
@@ -60,10 +60,10 @@ int testI(std::size_t splp)
     {
 
         TVReal::const_iterator sfBegin = std::lower_bound(echoPeriods.begin(), echoPeriods.end(), echoPeriods.front());
-        TVReal::const_iterator sfEnd = std::lower_bound(echoPeriods.begin(), echoPeriods.end(), echoPeriods.back()/1000);
+        TVReal::const_iterator sfEnd = std::lower_bound(echoPeriods.begin(), echoPeriods.end(), echoPeriods.back()/1);
 
 
-        std::size_t sfCountMult = 10;
+        std::size_t sfCountMult = 1;
 
         spectrPeriods.clear();
         spectrPeriods.resize(std::size_t(sp::real(sfEnd-sfBegin)/sfCountMult+0.5));
@@ -163,31 +163,24 @@ int testI(std::size_t splp)
         }
         kt.flush();
 
-//        for(size_t i(0); i<echoPeriods.size(); ++i)
-//        {
-//            conv::EchoPoint ep = echo[i];
-//            std::cout<<(echoPeriods[i]/echoPeriods[spectrPeriods.size()/2])<<", "<<ep(0)<<", "<<ep(1)<<", "<<ep(2)<<", "<<ep(3)<<", "<<ep(4)<<", "<<ep(5);
-//            std::cout<<std::endl;
-//        }
-//        exit(0);
+        for(size_t i(0); i<echoPeriods.size(); ++i)
+        {
+            conv::EchoPoint ep = echo[i];
+            std::cout<<(echoPeriods[i]/spectrPeriods[spectrPeriods.size()/2])<<", "<<ep(0)<<", "<<ep(1);//<<", "<<ep(2)<<", "<<ep(3)<<", "<<ep(4)<<", "<<ep(5);
+            std::cout<<std::endl;
+        }
+        exit(0);
 
         std::cerr<<"deconvolve"<<std::endl;
         //for(int iters0(1); iters0<200; iters0++)
         {
             TVSpectrPoint spectr(spectrPeriods.size());
 
-            std::size_t iters = 1;
-            sp::real error0 = 0;
-            sp::real error1 = 0;
-            kt.deconvolve2(
+            kt.deconvolve(
                     echo.size(), &echoPeriods[0], &echo[0],
-                    spectr.size(), &spectrPeriods[0], &spectr[0],
-                    iters,
-                    1e-40,
-                    error0,
-                    error1);
+                    spectr.size(), &spectrPeriods[0], &spectr[0]);
 
-            cerr<<iters<<": "<<error0<<"->"<<error1<<endl;
+            cerr<<"deconvolved"<<endl;
             for(size_t i(0); i<spectr.size(); ++i)
             {
                 conv::SpectrPoint s = spectr[i];

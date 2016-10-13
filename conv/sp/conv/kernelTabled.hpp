@@ -19,13 +19,10 @@ namespace sp { namespace conv
 
         EchoPoint eval(real t, real st, const SpectrPoint &sv);
 
-        void deconvolve2(
-            size_t esize, const real *et, const EchoPoint   *ev,//отклик
-            size_t ssize, const real *st,       SpectrPoint *sv,//спектр
-            size_t &iters,//макс итераций
-            real initialMu,
-            real &error0,
-            real &error1);
+        void deconvolve(
+            size_t esize, const real *et, const EchoPoint   *ev, //отклик
+            size_t ssize, const real *st,       SpectrPoint *sv//спектр
+        );
 
         void flush();
 

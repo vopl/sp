@@ -95,7 +95,7 @@ namespace sp
 //#  pragma GCC push_options
 //#  pragma GCC optimize ("O1")
 //#endif
-//        void operator+=(Value v) __attribute__((always_inline)) __attribute__((__optimize__("no-associative-math")))
+//        void operator+=(Value v) __attribute__((__optimize__("no-associative-math")))
 //        {
 //            Value Y = v - _error;
 //            Value T = _sum + Y;
