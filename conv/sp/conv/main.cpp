@@ -10,7 +10,7 @@
 #include "sp/conv/periodGrid.hpp"
 #include "sp/conv/signalConvolver.hpp"
 
-//#include "sp/conv/loadWav.hpp"
+#include "sp/conv/solver.hpp"
 #include "sp/utils/wavStore.hpp"
 #include "sp/utils/spectrStore.hpp"
 #include "sp/utils/spectrDumper.hpp"
@@ -101,18 +101,18 @@ int main(int argc, char *argv[])
     desc.add_options()
             ("help", "produce help message")
 
-            ("ppw", po::value<sp::real>()->default_value(1.0), "periods per analyze window")
+            ("ppw", po::value<sp::real>()->default_value(10.0), "periods per analyze window")
 
             ("splp", po::value<std::size_t>()->default_value(1000), "samples per level period")
 
             ("efmin", po::value<sp::real>()->default_value(20), "echo frequency grid minimum")
-            ("efmax", po::value<sp::real>()->default_value(20000*1000), "echo frequency grid maximum")
-            ("efcount", po::value<std::size_t>()->default_value(20000), "echo frequency grid size")
+            ("efmax", po::value<sp::real>()->default_value(20000), "echo frequency grid maximum")
+            ("efcount", po::value<std::size_t>()->default_value(200), "echo frequency grid size")
             ("eftype", po::value<std::string>()->default_value("flog"), "echo frequency grid type (plin|plog|flin|flog)")
 
             ("sfminmult", po::value<sp::real>()->default_value(1), "spectr frequency minimum value part")
-            ("sfmaxmult", po::value<sp::real>()->default_value(0.001), "spectr frequency maximum value part")
-            ("sfcountmult", po::value<std::size_t>()->default_value(10), "spectr frequency count mult")
+            ("sfmaxmult", po::value<sp::real>()->default_value(1), "spectr frequency maximum value part")
+            ("sfcountmult", po::value<std::size_t>()->default_value(1), "spectr frequency count mult")
 
             ("fps", po::value<sp::real>()->default_value(1000), "frames per second")
 
@@ -318,19 +318,38 @@ int main(int argc, char *argv[])
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
     size_t frameIndex = spectrStore.header()._samplesAmount;
 
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    SignalConvolver convolver;
-    convolver.setup(
+//    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+//    SignalConvolver convolver;
+//    convolver.setup(
+//            vars["ppw"].as<sp::real>(),
+//            echoPeriods,
+//            sp::real(1)/wavStore.header()._frequency,
+//            vars["splp"].as<std::size_t>(),
+//            SignalApproxType::constant);
+
+//    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+//    KernelTabled k(
+//            vars["ppw"].as<sp::real>(),
+//            vars["splp"].as<std::size_t>());
+
+
+
+
+
+
+
+
+
+    conv::Solver solver;
+
+    solver.setup(
             vars["ppw"].as<sp::real>(),
             echoPeriods,
             sp::real(1)/wavStore.header()._frequency,
-            vars["splp"].as<std::size_t>(),
-            SignalApproxType::constant);
+            samplesPerFrame);
 
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    KernelTabled k(
-            vars["ppw"].as<sp::real>(),
-            vars["splp"].as<std::size_t>());
+
+
 
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -353,7 +372,8 @@ int main(int argc, char *argv[])
             abort();
         }
 
-        convolver.pushSignal(&samples[0], samples.size());
+        solver.pushSignal(&samples[0]);
+        //convolver.pushSignal(&samples[0], samples.size());
         sampleIndex = needSampleIndex;
 
         cout
@@ -365,7 +385,8 @@ int main(int argc, char *argv[])
         cout<<"c..";
         cout.flush();
 
-        echo = convolver.convolve();
+        //echo = convolver.convolve();
+        solver.update();
 
         cout<<"d..";
         cout.flush();
@@ -373,9 +394,9 @@ int main(int argc, char *argv[])
 
 
 
-        k.deconvolve(
-            echo.size(), &echoPeriods[0], &echo[0],
-            spectr.size(), &spectrPeriods[0], &spectr[0]);
+//        k.deconvolve(
+//            echo.size(), &echoPeriods[0], &echo[0],
+//            spectr.size(), &spectrPeriods[0], &spectr[0]);
 
         auto moment1 = std::chrono::high_resolution_clock::now();
 
@@ -385,7 +406,7 @@ int main(int argc, char *argv[])
 
         g_stopBlocked = true;
 
-        k.flush();
+        //k.flush();
 
         if(!spectrStore.write(spectr.front().data()))
         {

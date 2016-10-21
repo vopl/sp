@@ -25,6 +25,10 @@ set(SRC
     kernelTabled.hpp
     kernelTabled.cpp
     kernelTabled_deconvolve2.cpp
+
+    basis.hpp
+    solver.hpp
+    solver.cpp
 )
 
 
