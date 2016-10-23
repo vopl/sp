@@ -56,7 +56,7 @@
 /* specifies whether double precision routines will be compiled or not */
 #define LM_DBL_PREC
 /* specifies whether single precision routines will be compiled or not */
-/* #undef LM_SNGL_PREC */
+#define LM_SNGL_PREC
 
 /****************** End of configuration options, no changes necessary beyond this point ******************/
 
@@ -160,6 +160,19 @@ extern int slevmar_der(
       void (*jacf)(float *p, float *j, int m, int n, void *adata),
       float *p, float *x, int m, int n, int itmax, float *opts,
       float *info, float *work, float *covar, void *adata);
+
+inline int levmar_der(
+        void (*func)(float *p, float *hx, int m, int n, void *adata),
+        void (*jacf)(float *p, float *j, int m, int n, void *adata),
+        float *p, float *x, int m, int n, int itmax, float *opts,
+        float *info, float *work, float *covar, void *adata)
+{
+    return slevmar_der(
+                func,
+                jacf,
+                p, x, m, n, itmax, opts,
+                info, work, covar, adata);
+}
 
 #endif /* LM_SNGL_PREC */
 

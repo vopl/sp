@@ -53,7 +53,8 @@ namespace sp { namespace conv
 
         for(std::size_t periodIndex(0); periodIndex<_periods.size(); ++periodIndex)
         {
-            _points[periodIndex]._v = 0;
+            _points[periodIndex] = Point();
+            //_points[periodIndex]._v = 0;
         }
 
 
@@ -63,18 +64,27 @@ namespace sp { namespace conv
             fetchEcho(points);
 
             //update covered signal
-            real err = applyEchoPart(points, 0.4);
-            std::cout<<err<<std::endl;
+            real err = applyEchoPart(points);
+            //std::cout<<err<<std::endl;
 
             {
                 std::ofstream out("s2");
 
-                for(std::size_t sampleIndex(0); sampleIndex<_signal.size(); ++sampleIndex)
+                for(std::size_t sampleIndex(_signal.size()-1000); sampleIndex<_signal.size(); ++sampleIndex)
                 {
                     out<<_signal[sampleIndex]<<", "<<_coveredSignal[sampleIndex]<<std::endl;
                 }
             }
 
+
+            {
+                std::ofstream out("spectr");
+
+                for(std::size_t periodIndex(0); periodIndex<_points.size(); ++periodIndex)
+                {
+                    out<<_points[periodIndex]<<std::endl;
+                }
+            }
             int k = 220;
 
         }
@@ -95,13 +105,14 @@ namespace sp { namespace conv
     {
         std::vector<std::size_t> amounts(points.size());
 
-        real xStart = _signalSamplesPushed*_signalSampleStep - _signal.size()*_signalSampleStep;
+        real xStop = _signalSamplesPushed*_signalSampleStep;
+        real xStart = xStop - _signal.size()*_signalSampleStep;
 
         std::size_t minPeriodIndex = _periods.size();
 
         for(std::size_t sampleIndex(0); sampleIndex<_signal.size(); ++sampleIndex)
         {
-            while(minPeriodIndex>0 && sampleIndex > _signal.size() - signalSize4Period(_periods[minPeriodIndex-1]))
+            while(minPeriodIndex>0 && sampleIndex >= _signal.size() - signalSize4Period(_periods[minPeriodIndex-1]))
             {
                 minPeriodIndex--;
             }
@@ -113,9 +124,12 @@ namespace sp { namespace conv
             {
                 real period = _periods[periodIndex];
 
-                real dp = x*g_2pi/period;
+                //real dp = x*g_2pi/period;
+                //points[periodIndex]._v += complex(v).rotate(dp);
 
-                points[periodIndex]._v += complex(v).rotate(dp);
+                real wx = 1.0 - (xStop - x)/period/_ppw;
+                points[periodIndex].accumuleConv(v, period, x, wx);
+
                 amounts[periodIndex]++;
             }
         }
@@ -125,49 +139,88 @@ namespace sp { namespace conv
             std::size_t amount = amounts[periodIndex];
             if(amount)
             {
-                points[periodIndex]._v /= amount;
+                //points[periodIndex]._v /= amount;
+                points[periodIndex].finalizeConv(amount);
             }
         }
 
         int k = 220;
     }
 
-    real Solver::applyEchoPart(TVPoint &points, real part)
+    real Solver::applyEchoPart(TVPoint &echoPoints)
     {
-        real res = 0;
-        for(std::size_t periodIndex(0); periodIndex<_periods.size(); ++periodIndex)
-        {
-            _points[periodIndex]._v += points[periodIndex]._v * part;
-        }
+//        real res = 0;
+//        for(std::size_t periodIndex(0); periodIndex<_periods.size(); ++periodIndex)
+//        {
+//            //_points[periodIndex]._v += points[periodIndex]._v * part;
+//            _points[periodIndex].add(points[periodIndex], part);
+//        }
 
-        real xStart = _signalSamplesPushed*_signalSampleStep - _signal.size()*_signalSampleStep;
+        real wt = 0;
+        real wc = 0;
+        real ws = 0;
+        real wd = 0;
+        TVReal signalFromEcho(_signal.size());
+
+        real xStop = _signalSamplesPushed*_signalSampleStep;
+        real xStart = xStop - _signal.size()*_signalSampleStep;
 
         std::size_t minPeriodIndex = _periods.size();
 
         for(std::size_t sampleIndex(0); sampleIndex<_signal.size(); ++sampleIndex)
         {
-            while(minPeriodIndex>0 && sampleIndex > _signal.size() - signalSize4Period(_periods[minPeriodIndex-1]))
+            while(minPeriodIndex>0 && sampleIndex >= _signal.size() - signalSize4Period(_periods[minPeriodIndex-1]))
             {
                 minPeriodIndex--;
             }
 
             real x = xStart + sampleIndex*_signalSampleStep;
-            real &v = _coveredSignal[sampleIndex];
+            real &v = signalFromEcho[sampleIndex];
             v = 0;
 
             for(std::size_t periodIndex(minPeriodIndex); periodIndex<_periods.size(); ++periodIndex)
             {
                 real period = _periods[periodIndex];
 
-                real dp = x*g_2pi/period;
+                //real dp = x*g_2pi/period;
+                //v += _points[periodIndex]._v.rotate(-dp).re();
 
-                v += _points[periodIndex]._v.rotate(-dp).re();
+                real wx = 1.0 - (xStop - x)/period/_ppw;
+                v += echoPoints[periodIndex].eval(period, x, wx);
             }
 
-            res += fabs(_signal[sampleIndex] - v);
+            wt += sqr(_signal[sampleIndex]);
+            wc += sqr(_coveredSignal[sampleIndex]);
+            ws += sqr(_signal[sampleIndex] - _coveredSignal[sampleIndex]);
+            wd += sqr(signalFromEcho[sampleIndex]);
         }
 
-        return res;
+        wt = sqrt(wt);///_signal.size();
+        wc = sqrt(wc);///_signal.size();
+        ws = sqrt(ws);///_signal.size();
+        wd = sqrt(wd);///_signal.size();
+
+
+
+        ///////////////////////////////////////////////////////////////
+        real part = (ws/wd) * 1.0;
+        //part = std::min(part, 20.7);
+        //part = 0.33;
+
+
+        for(std::size_t periodIndex(0); periodIndex<_periods.size(); ++periodIndex)
+        {
+            _points[periodIndex].add(echoPoints[periodIndex], part);
+        }
+
+        for(std::size_t sampleIndex(0); sampleIndex<_signal.size(); ++sampleIndex)
+        {
+            _coveredSignal[sampleIndex] += signalFromEcho[sampleIndex]*part;
+        }
+
+
+        std::cout<<"part: "<<part<<", wd:"<<wd<<", ws:"<<ws<<", wt:"<<wt<<", wc:"<<wc<<std::endl;
+        return part;
     }
 
 }}
