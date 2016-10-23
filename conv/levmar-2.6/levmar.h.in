@@ -161,6 +161,19 @@ extern int slevmar_der(
       float *p, float *x, int m, int n, int itmax, float *opts,
       float *info, float *work, float *covar, void *adata);
 
+inline int levmar_der(
+        void (*func)(float *p, float *hx, int m, int n, void *adata),
+        void (*jacf)(float *p, float *j, int m, int n, void *adata),
+        float *p, float *x, int m, int n, int itmax, float *opts,
+        float *info, float *work, float *covar, void *adata)
+{
+    return slevmar_der(
+                func,
+                jacf,
+                p, x, m, n, itmax, opts,
+                info, work, covar, adata);
+}
+
 #endif /* LM_SNGL_PREC */
 
 /* linear system solvers */
