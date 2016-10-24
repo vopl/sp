@@ -65,35 +65,36 @@ namespace sp { namespace conv
 
             std::vector<real4deconv> dys(ys.begin(), ys.end());
 
-            int levmarResult = levmar_der(
-                        [](real4deconv *p, real4deconv *hx, int m, int n, void *)->void{
-                            (void)m;
-                            for(int i(0); i<n; i++)
-                            {
-                                hx[i] = real4deconv(p[0]*cos(g_pi*2*i/n) + p[1]*sin(g_pi*2*i/n));
-                            }
-                        },
-                        [](real4deconv *p, real4deconv *jx, int m, int n, void *){
-                            (void)p;
-                            (void)m;
+            assert(0);
+//            int levmarResult = levmar_der(
+//                        [](real4deconv *p, real4deconv *hx, int m, int n, void *)->void{
+//                            (void)m;
+//                            for(int i(0); i<n; i++)
+//                            {
+//                                hx[i] = real4deconv(p[0]*cos(g_pi*2*i/n) + p[1]*sin(g_pi*2*i/n));
+//                            }
+//                        },
+//                        [](real4deconv *p, real4deconv *jx, int m, int n, void *){
+//                            (void)p;
+//                            (void)m;
 
-                            for(int i(0); i<n; i++)
-                            {
-                                jx[i*2+0] = real4deconv(cos(g_pi*2*i/n));
-                                jx[i*2+1] = real4deconv(sin(g_pi*2*i/n));
-                            }
-                        },
-                        &p[0],
-                        &dys[0],
-                        2,
-                        int(ys.size()),
-                        50,
-                        levmarOpts,
-                        levmarInfo,
-                        &work[0],
-                        NULL,
-                        NULL);
-            (void)levmarResult;
+//                            for(int i(0); i<n; i++)
+//                            {
+//                                jx[i*2+0] = real4deconv(cos(g_pi*2*i/n));
+//                                jx[i*2+1] = real4deconv(sin(g_pi*2*i/n));
+//                            }
+//                        },
+//                        &p[0],
+//                        &dys[0],
+//                        2,
+//                        int(ys.size()),
+//                        50,
+//                        levmarOpts,
+//                        levmarInfo,
+//                        &work[0],
+//                        NULL,
+//                        NULL);
+//            (void)levmarResult;
 
 //            std::cerr<<"result: "<<levmarResult<<std::endl;
 //            std::cerr<<"||e||_2 at initial p.:"<<levmarInfo[0]<<std::endl;

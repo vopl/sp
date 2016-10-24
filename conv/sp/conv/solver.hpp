@@ -18,102 +18,140 @@ namespace sp { namespace conv
 
         void accumuleConv(real v, real period, real x, real wx)
         {
+            for(std::size_t ia(0); ia<_amplitudeKAmount; ++ia)
             {
-                real dp0 = x*g_2pi/(period*wx + period*_periodK0*(1.0-wx));
-                _v_0_01 += complex(v).rotate(dp0)*wx;
-                _v_0_10 += complex(v).rotate(dp0)*(real(1.0)-wx);
-            }
+                for(std::size_t ip(0); ip<_periodKAmount; ++ip)
+                {
+                    real dp = x*g_2pi/(period*_periodK0[ip]*wx + period*_periodK1[ip]*(1.0-wx));
 
-            {
-                real dp1 = x*g_2pi/(period*wx + period*_periodK1*(1.0-wx));
-                _v_1_01 += complex(v).rotate(dp1)*wx;
-                _v_1_10 += complex(v).rotate(dp1)*(real(1.0)-wx);
-            }
-
-            {
-                real dp2 = x*g_2pi/(period*wx + period*_periodK2*(1.0-wx));
-                _v_2_01 += complex(v).rotate(dp2)*wx;
-                _v_2_10 += complex(v).rotate(dp2)*(real(1.0)-wx);
+                    _v[ia][ip] +=
+                            complex(v).rotate(dp)*_amplitudeK0[ia]*wx+
+                            complex(v).rotate(dp)*_amplitudeK1[ia]*(real(1.0)-wx);
+                }
             }
         }
 
         void finalizeConv(real amount)
         {
-            _v_0_01 /= amount;
-            _v_0_10 /= amount;
-
-            _v_1_01 /= amount;
-            _v_1_10 /= amount;
-
-            _v_2_01 /= amount;
-            _v_2_10 /= amount;
+            for(std::size_t ia(0); ia<_amplitudeKAmount; ++ia)
+            {
+                for(std::size_t ip(0); ip<_periodKAmount; ++ip)
+                {
+                    _v[ia][ip] /= amount;
+                }
+            }
         }
 
         void add(const Point &p, real mult)
         {
-            _v_0_01 += p._v_0_01 * mult;
-            _v_0_10 += p._v_0_10 * mult;
-
-            _v_1_01 += p._v_1_01 * mult;
-            _v_1_10 += p._v_1_10 * mult;
-
-            _v_2_01 += p._v_2_01 * mult;
-            _v_2_10 += p._v_2_10 * mult;
+            for(std::size_t ia(0); ia<_amplitudeKAmount; ++ia)
+            {
+                for(std::size_t ip(0); ip<_periodKAmount; ++ip)
+                {
+                    _v[ia][ip] += p._v[ia][ip] * mult;
+                }
+            }
         }
 
         real eval(real period, real x, real wx)
         {
-            real dp0 = x*g_2pi/(period*wx + period*_periodK0*(1.0-wx));
-            real dp1 = x*g_2pi/(period*wx + period*_periodK1*(1.0-wx));
-            real dp2 = x*g_2pi/(period*wx + period*_periodK2*(1.0-wx));
+            real res{};
 
-            return
-                    _v_0_01.rotate(-dp0).re() *wx +
-                    _v_0_10.rotate(-dp0).re() *(1.0-wx) +
+            for(std::size_t ia(0); ia<_amplitudeKAmount; ++ia)
+            {
+                for(std::size_t ip(0); ip<_periodKAmount; ++ip)
+                {
+                    real dp = x*g_2pi/(period*_periodK0[ip]*wx + period*_periodK1[ip]*(1.0-wx));
 
-                    _v_1_01.rotate(-dp1).re() *wx +
-                    _v_1_10.rotate(-dp1).re() *(1.0-wx) +
+                    res +=
 
-                    _v_2_01.rotate(-dp2).re() *wx +
-                    _v_2_10.rotate(-dp2).re() *(1.0-wx) +
+                            _v[ia][ip].rotate(-dp).re()*_amplitudeK0[ia]*wx+
+                            _v[ia][ip].rotate(-dp).re()*_amplitudeK1[ia]*(real(1.0)-wx);
+                }
+            }
 
-                    0;
+            return res;
         }
 
 
         friend std::ostream &operator<<(std::ostream &out, const Point &p)
         {
-            out
-                <<p._v_0_01.re()<<", "
-                <<p._v_0_01.im()<<", "
-                <<p._v_0_10.re()<<", "
-                <<p._v_0_10.im()<<", "
-
-                <<p._v_1_01.re()<<", "
-                <<p._v_1_01.im()<<", "
-                <<p._v_1_10.re()<<", "
-                <<p._v_1_10.im()<<", "
-
-                <<p._v_2_01.re()<<", "
-                <<p._v_2_01.im()<<", "
-                <<p._v_2_10.re()<<", "
-                <<p._v_2_10.im();
+            for(std::size_t ia(0); ia<_amplitudeKAmount; ++ia)
+            {
+                for(std::size_t ip(0); ip<_periodKAmount; ++ip)
+                {
+                    out << p._v[ia][ip].re()<<", "<<p._v[ia][ip].im()<<", ";
+                }
+            }
 
             return out;
         }
 
     private:
-        static constexpr real _periodK0 = 0.25;
-        complex _v_0_01;
-        complex _v_0_10;
+        static constexpr std::size_t _amplitudeKAmount = 2;
+        static constexpr real _amplitudeK0[_amplitudeKAmount] = {   real(0.0),  real(1.0)};
+        static constexpr real _amplitudeK1[_amplitudeKAmount] = {   real(1.0),  real(0.0)};
 
-        static constexpr real _periodK1 = 1.0;
-        complex _v_1_01;
-        complex _v_1_10;
+//        static constexpr std::size_t _periodKAmount = 15;
+//        static constexpr real _periodK0[_periodKAmount] = { real(0.79), real(0.82), real(0.85), real(0.88), real(0.91), real(0.94), real(0.97), real(1.00), real(1.03), real(1.06), real(1.09), real(1.12), real(1.15), real(1.18), real(1.21)};
+//        static constexpr real _periodK1[_periodKAmount] = { real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00)};
 
-        static constexpr real _periodK2 = 4.0;
-        complex _v_2_01;
-        complex _v_2_10;
+        static constexpr std::size_t _periodKAmount = 15;
+        static constexpr real _periodK0[_periodKAmount] = {
+            real(0.65),
+            real(0.70),
+            real(0.75),
+            real(0.80),
+            real(0.85),
+            real(0.90),
+            real(0.95),
+            real(1.00),
+            real(1.05),
+            real(1.10),
+            real(1.15),
+            real(1.20),
+            real(1.25),
+            real(1.30),
+            real(1.35),
+        };
+
+//        static constexpr real _periodK1[_periodKAmount] = {
+//            real(1.1627906976744186047),
+//            real(1.1363636363636363636),
+//            real(1.1111111111111111111),
+//            real(1.0869565217391304348),
+//            real(1.0638297872340425532),
+//            real(1.0416666666666666667),
+//            real(1.0204081632653061224),
+//            real(1.00),
+//            real(0.98),
+//            real(0.96),
+//            real(0.94),
+//            real(0.92),
+//            real(0.90),
+//            real(0.88),
+//            real(0.86)};
+
+        static constexpr real _periodK1[_periodKAmount] = {
+            real(1.0),
+            real(1.0),
+            real(1.0),
+            real(1.0),
+            real(1.0),
+            real(1.0),
+            real(1.0),
+            real(1.0),
+            real(1.0),
+            real(1.0),
+            real(1.0),
+            real(1.0),
+            real(1.0),
+            real(1.0),
+            real(1.0),
+        };
+
+
+        complex _v[_amplitudeKAmount][_periodKAmount];
     };
     using TVPoint = std::vector<Point>;
 

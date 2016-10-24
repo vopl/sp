@@ -106,8 +106,8 @@ int main(int argc, char *argv[])
             ("splp", po::value<std::size_t>()->default_value(1000), "samples per level period")
 
             ("efmin", po::value<sp::real>()->default_value(20), "echo frequency grid minimum")
-            ("efmax", po::value<sp::real>()->default_value(20000), "echo frequency grid maximum")
-            ("efcount", po::value<std::size_t>()->default_value(200), "echo frequency grid size")
+            ("efmax", po::value<sp::real>()->default_value(16000), "echo frequency grid maximum")
+            ("efcount", po::value<std::size_t>()->default_value(400), "echo frequency grid size")
             ("eftype", po::value<std::string>()->default_value("flog"), "echo frequency grid type (plin|plog|flin|flog)")
 
             ("sfminmult", po::value<sp::real>()->default_value(1), "spectr frequency minimum value part")
@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
 
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    size_t frameIndex = spectrStore.header()._samplesAmount;
+    size_t frameIndex = 0;//spectrStore.header()._samplesAmount;
 
 //    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
 //    SignalConvolver convolver;
@@ -386,7 +386,10 @@ int main(int argc, char *argv[])
         cout.flush();
 
         //echo = convolver.convolve();
-        solver.update();
+        //if(frameIndex>5)
+        {
+            solver.update();
+        }
 
         cout<<"d..";
         cout.flush();
@@ -408,16 +411,16 @@ int main(int argc, char *argv[])
 
         //k.flush();
 
-        if(!spectrStore.write(spectr.front().data()))
-        {
-            std::cerr<<"unable to write spectrStore"<<std::endl;
-            break;
-        }
+//        if(!spectrStore.write(spectr.front().data()))
+//        {
+//            std::cerr<<"unable to write spectrStore"<<std::endl;
+//            break;
+//        }
 
-        if(spectrDumper)
-        {
-            spectrDumper->pushFrames(spectr.front().data(), spectr.size()*SpectrPoint::SizeAtCompileTime);
-        }
+//        if(spectrDumper)
+//        {
+//            spectrDumper->pushFrames(spectr.front().data(), spectr.size()*SpectrPoint::SizeAtCompileTime);
+//        }
 
         g_stopBlocked = false;
 
