@@ -5,6 +5,14 @@
 
 namespace sp { namespace conv
 {
+    //complex Point::_v[Point::_amplitudeKAmount][Point::_periodKAmount];
+
+    constexpr real Point::_amplitudeK0[Point::_amplitudeKAmount];
+    constexpr real Point::_amplitudeK1[Point::_amplitudeKAmount];
+
+    constexpr real Point::_periodK0[Point::_periodKAmount];
+    constexpr real Point::_periodK1[Point::_periodKAmount];
+
     Solver::Solver()
     {
 
@@ -174,6 +182,7 @@ namespace sp { namespace conv
                 minPeriodIndex--;
             }
 
+
             real x = xStart + sampleIndex*_signalSampleStep;
             real &v = signalFromEcho[sampleIndex];
             v = 0;
@@ -186,25 +195,39 @@ namespace sp { namespace conv
                 //v += _points[periodIndex]._v.rotate(-dp).re();
 
                 real wx = 1.0 - (xStop - x)/period/_ppw;
-                v += echoPoints[periodIndex].eval(period, x, wx);
+                v += echoPoints[periodIndex].eval(period, x, wx)
+                     //* (period)//это вес, для того чтобы усилить низкие частоты
+                     ;
             }
 
-            wt += sqr(_signal[sampleIndex]);
-            wc += sqr(_coveredSignal[sampleIndex]);
-            ws += sqr(_signal[sampleIndex] - _coveredSignal[sampleIndex]);
+
+//            wt += sqr(_signal[sampleIndex]*wAmount_);
+//            wc += sqr(_coveredSignal[sampleIndex]*wAmount_);
+//            ws += sqr((_signal[sampleIndex] - _coveredSignal[sampleIndex])*wAmount_);
+//            wd += sqr(signalFromEcho[sampleIndex]*wAmount_);
+
+            //wt += sqr(_signal[sampleIndex]);
+            //wc += sqr(_coveredSignal[sampleIndex]*wAmount_);
+            ws += sqr((_signal[sampleIndex] - _coveredSignal[sampleIndex]));
             wd += sqr(signalFromEcho[sampleIndex]);
         }
 
-        wt = sqrt(wt);///_signal.size();
-        wc = sqrt(wc);///_signal.size();
-        ws = sqrt(ws);///_signal.size();
-        wd = sqrt(wd);///_signal.size();
+//        wt = sqrt(wt/wAmount);
+//        wc = sqrt(wc/wAmount);
+//        ws = sqrt(ws/wAmount);
+//        wd = sqrt(wd/wAmount);
 
+        //wt = sqrt(wt)/wAmount;
+        //wc = sqrt(wc)/wAmount;
+        ws = sqrt(ws);
+        wd = sqrt(wd);
 
 
         ///////////////////////////////////////////////////////////////
-        real part = (ws/wd) * 1.0;
-        //part = std::min(part, 20.7);
+
+        real part = (ws/wd);
+        //real part2 = 0.0045;
+        //part = std::min(part, real(0.023));
         //part = 0.33;
 
 
