@@ -25,8 +25,8 @@ namespace sp { namespace conv
                     real dp = x*g_2pi/(period*_periodK0[ip]*wx + period*_periodK1[ip]*(1.0-wx));
 
                     _v[ia][ip] +=
-                            complex(v).rotate(dp)*_amplitudeK0[ia]*wx+
-                            complex(v).rotate(dp)*_amplitudeK1[ia]*(real(1.0)-wx);
+                            complex(v).rotate(dp)*_amplitudeK0[ia]*(real(1.0)-wx)+
+                            complex(v).rotate(dp)*_amplitudeK1[ia]*(wx);
                 }
             }
         }
@@ -65,14 +65,69 @@ namespace sp { namespace conv
 
                     res +=
 
-                            _v[ia][ip].rotate(-dp).re()*_amplitudeK0[ia]*wx+
-                            _v[ia][ip].rotate(-dp).re()*_amplitudeK1[ia]*(real(1.0)-wx);
+                            _v[ia][ip].rotate(-dp).re()*_amplitudeK0[ia]*(real(1.0)-wx)+
+                            _v[ia][ip].rotate(-dp).re()*_amplitudeK1[ia]*(wx);
                 }
             }
 
             return res;
         }
 
+        real maxA()
+        {
+            real maxA2 = 0;
+            std::size_t maxIA = 0;
+            std::size_t maxIP = 0;
+
+            for(std::size_t ia(0); ia<_amplitudeKAmount; ++ia)
+            {
+                for(std::size_t ip(0); ip<_periodKAmount; ++ip)
+                {
+                    if(maxA2 < _v[ia][ip].a2())
+                    {
+                        maxA2 = _v[ia][ip].a2();
+                        maxIA = ia;
+                        maxIP = ip;
+                    }
+                }
+            }
+
+            return sqrt(maxA2);
+        }
+
+        Point getMax()
+        {
+            real maxA2 = 0;
+            std::size_t maxIA = 0;
+            std::size_t maxIP = 0;
+
+            for(std::size_t ia(0); ia<_amplitudeKAmount; ++ia)
+            {
+                for(std::size_t ip(0); ip<_periodKAmount; ++ip)
+                {
+                    if(maxA2 < _v[ia][ip].a2())
+                    {
+                        maxA2 = _v[ia][ip].a2();
+                        maxIA = ia;
+                        maxIP = ip;
+                    }
+                }
+            }
+
+            Point res;
+            res._v[maxIA][maxIP] = _v[maxIA][maxIP];
+            return res;
+        }
+
+        real *data()
+        {
+            return &_v[0][0].re();
+        }
+
+        static std::size_t dataSize()
+        {
+            return 2 * _amplitudeKAmount * _periodKAmount;
+        }
 
         friend std::ostream &operator<<(std::ostream &out, const Point &p)
         {
@@ -87,67 +142,49 @@ namespace sp { namespace conv
             return out;
         }
 
-    private:
+    public:
         static constexpr std::size_t _amplitudeKAmount = 2;
         static constexpr real _amplitudeK0[_amplitudeKAmount] = {   real(0.0),  real(1.0)};
         static constexpr real _amplitudeK1[_amplitudeKAmount] = {   real(1.0),  real(0.0)};
 
-//        static constexpr std::size_t _periodKAmount = 15;
-//        static constexpr real _periodK0[_periodKAmount] = { real(0.79), real(0.82), real(0.85), real(0.88), real(0.91), real(0.94), real(0.97), real(1.00), real(1.03), real(1.06), real(1.09), real(1.12), real(1.15), real(1.18), real(1.21)};
-//        static constexpr real _periodK1[_periodKAmount] = { real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00), real(1.00)};
 
         static constexpr std::size_t _periodKAmount = 15;
         static constexpr real _periodK0[_periodKAmount] = {
-            real(0.65),
-            real(0.70),
-            real(0.75),
-            real(0.80),
-            real(0.85),
-            real(0.90),
-            real(0.95),
-            real(1.00),
-            real(1.05),
-            real(1.10),
-            real(1.15),
-            real(1.20),
-            real(1.25),
-            real(1.30),
-            real(1.35),
+            real(0.3),
+            real(0.4),
+            real(0.5),
+            real(0.6),
+            real(0.7),
+            real(0.8),
+            real(0.9),
+            real(1.0),
+            real(1.1),
+            real(1.2),
+            real(1.3),
+            real(1.4),
+            real(1.5),
+            real(1.6),
+            real(1.7),
         };
 
-//        static constexpr real _periodK1[_periodKAmount] = {
-//            real(1.1627906976744186047),
-//            real(1.1363636363636363636),
-//            real(1.1111111111111111111),
-//            real(1.0869565217391304348),
-//            real(1.0638297872340425532),
-//            real(1.0416666666666666667),
-//            real(1.0204081632653061224),
-//            real(1.00),
-//            real(0.98),
-//            real(0.96),
-//            real(0.94),
-//            real(0.92),
-//            real(0.90),
-//            real(0.88),
-//            real(0.86)};
+
 
         static constexpr real _periodK1[_periodKAmount] = {
+            real(1.7),
+            real(1.6),
+            real(1.5),
+            real(1.4),
+            real(1.3),
+            real(1.2),
+            real(1.1),
             real(1.0),
-            real(1.0),
-            real(1.0),
-            real(1.0),
-            real(1.0),
-            real(1.0),
-            real(1.0),
-            real(1.0),
-            real(1.0),
-            real(1.0),
-            real(1.0),
-            real(1.0),
-            real(1.0),
-            real(1.0),
-            real(1.0),
+            real(0.9),
+            real(0.8),
+            real(0.7),
+            real(0.6),
+            real(0.5),
+            real(0.4),
+            real(0.3),
         };
 
 
@@ -170,6 +207,7 @@ namespace sp { namespace conv
         void pushSignal(const real *signalBucketSamples);
 
         void update();
+        void update2();
 
         const TVPoint &points();
 

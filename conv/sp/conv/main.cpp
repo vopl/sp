@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
 
             ("efmin", po::value<sp::real>()->default_value(20), "echo frequency grid minimum")
             ("efmax", po::value<sp::real>()->default_value(16000), "echo frequency grid maximum")
-            ("efcount", po::value<std::size_t>()->default_value(400), "echo frequency grid size")
+            ("efcount", po::value<std::size_t>()->default_value(200), "echo frequency grid size")
             ("eftype", po::value<std::string>()->default_value("flog"), "echo frequency grid type (plin|plog|flin|flog)")
 
             ("sfminmult", po::value<sp::real>()->default_value(1), "spectr frequency minimum value part")
@@ -388,7 +388,7 @@ int main(int argc, char *argv[])
         //echo = convolver.convolve();
         //if(frameIndex>5)
         {
-            solver.update();
+            solver.update2();
         }
 
         cout<<"d..";
