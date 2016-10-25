@@ -196,21 +196,46 @@ namespace sp { namespace conv
 
 
 
+//        //Ax=b lsq
+//        std::cout<<"transpose"<<std::endl;
+//        Matrix kernT = kern.transpose();
 
-        std::cout<<"transpose"<<std::endl;
-        Matrix kernT = kern.transpose();
+//        std::cout<<"mult"<<std::endl;
+//        Matrix kernTKern = kernT * kern;
 
-        std::cout<<"mult"<<std::endl;
-        Matrix kernTKern = kernT * kern;
+//        std::cout<<"solver"<<std::endl;
+//        //Eigen::JacobiSVD<Matrix, Eigen::ColPivHouseholderQRPreconditioner> solver(kernTKern, Eigen::ComputeThinU | Eigen::ComputeThinV);
+//        Eigen::FullPivHouseholderQR<Matrix> solver(kernTKern);
 
+
+//        std::cout<<"solve"<<std::endl;
+//        points = solver.solve(kernT * signal);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        //Ax=b
         std::cout<<"solver"<<std::endl;
-        //Eigen::JacobiSVD<Matrix, Eigen::ColPivHouseholderQRPreconditioner> solver(kernTKern, Eigen::ComputeThinU | Eigen::ComputeThinV);
-        Eigen::FullPivHouseholderQR<Matrix> solver(kernTKern);
+        Eigen::JacobiSVD<Matrix, Eigen::ColPivHouseholderQRPreconditioner> solver(kern, Eigen::ComputeThinU | Eigen::ComputeThinV);
+        //Eigen::FullPivHouseholderQR<Matrix> solver(kern);
 
 
         std::cout<<"solve"<<std::endl;
-        points = solver.solve(kernT * signal);
-
+        points = solver.solve(signal);
 
 
 

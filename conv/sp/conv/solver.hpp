@@ -188,6 +188,18 @@ namespace sp { namespace conv
         };
 
 
+//        static constexpr std::size_t _periodKAmount = 1;
+//        static constexpr real _periodK0[_periodKAmount] = {
+//            real(1.0),
+//        };
+
+
+
+//        static constexpr real _periodK1[_periodKAmount] = {
+//            real(1.0),
+//        };
+
+
         complex _v[_amplitudeKAmount][_periodKAmount];
     };
     using TVPoint = std::vector<Point>;
