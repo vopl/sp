@@ -16,8 +16,8 @@
 namespace sp
 {
 
-    using real = float;
-    //using real = double;
+    //using real = float;
+    using real = double;
     //using real = long double;
     //using real = boost::multiprecision::float128;
     //using real = boost::multiprecision::cpp_bin_float_quad;
