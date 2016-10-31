@@ -26,9 +26,20 @@ set(SRC
     kernelTabled.cpp
     kernelTabled_deconvolve2.cpp
 
+    linearSolver.hpp
+    linearSolver.cpp
+
     basis.hpp
-    solver.hpp
-    solver.cpp
+    basis.cpp
+
+    point.hpp
+    point.cpp
+
+    transformer.hpp
+    transformer.cpp
+
+    drawer.hpp
+    drawer.cpp
 )
 
 
@@ -45,11 +56,16 @@ include_directories(${Boost_INCLUDE_DIRS})
 add_definitions(-DEIGEN_INITIALIZE_MATRICES_BY_ZERO)
 
 ############################################################################
+find_package(Qt5Gui REQUIRED)
+
+
+############################################################################
 add_executable(${PROJECT_NAME} ${SRC})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 
 target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} Qt5::Gui)
 target_link_libraries(${PROJECT_NAME} levmar lapack_part sp-utils)
 target_link_libraries(${PROJECT_NAME} "-Wl,-Bstatic -lquadmath -Wl,-Bdynamic")

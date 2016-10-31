@@ -10,12 +10,12 @@
 #include "sp/conv/periodGrid.hpp"
 #include "sp/conv/signalConvolver.hpp"
 
-#include "sp/conv/solver.hpp"
+#include "sp/conv/transformer.hpp"
+#include "sp/conv/drawer.hpp"
 #include "sp/utils/wavStore.hpp"
 #include "sp/utils/spectrStore.hpp"
 #include "sp/utils/spectrDumper.hpp"
 
-//#include "sp/conv/spectrStore.hpp"
 
 using namespace std;
 using namespace sp;
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
             ("splp", po::value<std::size_t>()->default_value(1000), "samples per level period")
 
             ("efmin", po::value<sp::real>()->default_value(20), "echo frequency grid minimum")
-            ("efmax", po::value<sp::real>()->default_value(16000), "echo frequency grid maximum")
+            ("efmax", po::value<sp::real>()->default_value(20000), "echo frequency grid maximum")
             ("efcount", po::value<std::size_t>()->default_value(200), "echo frequency grid size")
             ("eftype", po::value<std::string>()->default_value("flog"), "echo frequency grid type (plin|plog|flin|flog)")
 
@@ -268,51 +268,51 @@ int main(int argc, char *argv[])
     cout<<"framesAmount: "<<framesAmount<<endl;
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    std::string outFile = vars["out-file"].as<std::string>();
-    utils::SpectrStore spectrStore(outFile.c_str(), true);
-    if(spectrStore)
-    {
-        if(spectrStore.header()._periods != spectrPeriods)
-        {
-            cerr<<"spectrStore period grid mismatch (total): "<<outFile<<endl;
-            //return EXIT_FAILURE;
-        }
-        if(spectrStore.header()._periods.size() != spectrPeriods.size())
-        {
-            cerr<<"spectrStore period grid mismatch (size): "<<outFile<<endl;
-            return EXIT_FAILURE;
-        }
-        if(spectrStore.header()._samplesPerSecond != framesPerSecond)
-        {
-            cerr<<"spectrStore fps mismatch: "<<outFile<<endl;
-            return EXIT_FAILURE;
-        }
-    }
+//    std::string outFile = vars["out-file"].as<std::string>();
+//    utils::SpectrStore spectrStore(outFile.c_str(), true);
+//    if(spectrStore)
+//    {
+//        if(spectrStore.header()._periods != spectrPeriods)
+//        {
+//            cerr<<"spectrStore period grid mismatch (total): "<<outFile<<endl;
+//            //return EXIT_FAILURE;
+//        }
+//        if(spectrStore.header()._periods.size() != spectrPeriods.size())
+//        {
+//            cerr<<"spectrStore period grid mismatch (size): "<<outFile<<endl;
+//            return EXIT_FAILURE;
+//        }
+//        if(spectrStore.header()._samplesPerSecond != framesPerSecond)
+//        {
+//            cerr<<"spectrStore fps mismatch: "<<outFile<<endl;
+//            return EXIT_FAILURE;
+//        }
+//    }
 
-    if(!spectrStore)
-    {
-        utils::SpectrStore::Header header;
+//    if(!spectrStore)
+//    {
+//        utils::SpectrStore::Header header;
 
-        header._realBittness = sizeof(sp::real)*8;
-        header._samplesPerSecond = framesPerSecond;
-        header._periods = spectrPeriods;
-        header._samplesAmount = 0;
+//        header._realBittness = sizeof(sp::real)*8;
+//        header._samplesPerSecond = framesPerSecond;
+//        header._periods = spectrPeriods;
+//        header._samplesAmount = 0;
 
-        spectrStore.create(outFile.c_str(), header);
+//        spectrStore.create(outFile.c_str(), header);
 
-        if(!spectrStore)
-        {
-            cerr<<"unable to create spectrStore: "<<outFile<<endl;
-            return EXIT_FAILURE;
-        }
-    }
+//        if(!spectrStore)
+//        {
+//            cerr<<"unable to create spectrStore: "<<outFile<<endl;
+//            return EXIT_FAILURE;
+//        }
+//    }
 
-    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
-    std::unique_ptr<utils::SpectrDumper> spectrDumper;
-    if(vars.count("dump-prefix"))
-    {
-        spectrDumper.reset(new utils::SpectrDumper(vars["dump-prefix"].as<std::string>(), spectrPeriods));
-    }
+//    /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
+//    std::unique_ptr<utils::SpectrDumper> spectrDumper;
+//    if(vars.count("dump-prefix"))
+//    {
+//        spectrDumper.reset(new utils::SpectrDumper(vars["dump-prefix"].as<std::string>(), spectrPeriods));
+//    }
 
 
     /////////0/////////1/////////2/////////3/////////4/////////5/////////6/////////7
@@ -340,15 +340,21 @@ int main(int argc, char *argv[])
 
 
 
-    conv::Solver solver;
-
-    solver.setup(
+    conv::Transformer transformer;
+    transformer.setup(
             vars["ppw"].as<sp::real>(),
             echoPeriods,
             sp::real(1)/wavStore.header()._frequency,
             samplesPerFrame);
 
 
+
+    conv::Drawer drawer;
+    drawer.setup(
+            vars["ppw"].as<sp::real>(),
+            echoPeriods,
+            sp::real(1)/wavStore.header()._frequency,
+            samplesPerFrame);
 
 
 
@@ -372,55 +378,42 @@ int main(int argc, char *argv[])
             abort();
         }
 
-        solver.pushSignal(&samples[0]);
+        transformer.pushSignal(&samples[0]);
         //convolver.pushSignal(&samples[0], samples.size());
         sampleIndex = needSampleIndex;
+
+        sp::real x = sp::real(sampleIndex-extraSamples4Push)/wavStore.header()._frequency;
 
         cout
                 <<"frame "<<frameIndex<<"/"<<framesAmount
                 <<" ("<<sp::real(frameIndex*100)/framesAmount<<"%, "
-                <<sp::real(sampleIndex-extraSamples4Push)/wavStore.header()._frequency<<" sec) ";
+                <<x<<" sec) ";
         cout.flush();
 
         cout<<"c..";
         cout.flush();
 
         //echo = convolver.convolve();
-        //if(frameIndex>5)
+        //if(frameIndex>10)
         {
-            solver.update2();
+            transformer.update();
+            drawer.push(transformer.points());
         }
 
         cout<<"d..";
         cout.flush();
 
-
-
-
-//        k.deconvolve(
-//            echo.size(), &echoPeriods[0], &echo[0],
-//            spectr.size(), &spectrPeriods[0], &spectr[0]);
+        QImage img = drawer.dump();
 
         auto moment1 = std::chrono::high_resolution_clock::now();
 
-        sp::real dur = std::chrono::duration<double>(moment1 - moment).count();
-        cout<<"ok: "<<dur<< std::endl;
-        moment = moment1;
+        cout<<"s..";
+        cout.flush();
 
         g_stopBlocked = true;
 
-        //k.flush();
-
-//        if(!spectrStore.write(spectr.front().data()))
-//        {
-//            std::cerr<<"unable to write spectrStore"<<std::endl;
-//            break;
-//        }
-
-//        if(spectrDumper)
-//        {
-//            spectrDumper->pushFrames(spectr.front().data(), spectr.size()*SpectrPoint::SizeAtCompileTime);
-//        }
+        img.save("dump.tmp.png");
+        rename("dump.tmp.png", "dump.png");
 
         g_stopBlocked = false;
 
@@ -428,6 +421,11 @@ int main(int argc, char *argv[])
         {
             break;
         }
+
+        sp::real dur = std::chrono::duration<double>(moment1 - moment).count();
+        cout<<"ok: "<<dur<< std::endl;
+        moment = moment1;
+
     }
 
     return EXIT_SUCCESS;

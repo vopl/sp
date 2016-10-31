@@ -2,11 +2,10 @@
 
 #include "sp/math.hpp"
 #include "sp/conv/signalConvolver.hpp"
+#include "sp/conv/linearSolver.hpp"
 #include <string>
 #include <map>
 
-#include "Eigen/SVD"
-#include "Eigen/Dense"
 
 namespace sp { namespace conv
 {
@@ -58,60 +57,9 @@ namespace sp { namespace conv
         std::size_t _addedValuesAmount = 0;
 
     private://deconvolve2
-        using Matrix = Eigen::Matrix<real, Eigen::Dynamic, Eigen::Dynamic>;
-        using Vector = Eigen::Matrix<real, Eigen::Dynamic, 1>;
-        using RowVector = Eigen::Matrix<real, 1, Eigen::Dynamic>;
-
-        struct SolverLDLT
-            : public Eigen::LDLT<Matrix>
-        {
-            using Base = Eigen::LDLT<Matrix>;
-            static const std::size_t _solverId = 1;
-
-            SolverLDLT();
-            SolverLDLT(const Matrix &m);
-            ~SolverLDLT();
-
-            bool load(std::size_t dim, std::istream &in);
-            bool save(std::ostream &out);
-        };
-
-        struct SolverFullPivHouseholderQR
-            : public Eigen::FullPivHouseholderQR<Matrix>
-        {
-            using Base = Eigen::FullPivHouseholderQR<Matrix>;
-            static const std::size_t _solverId = 2;
-
-            SolverFullPivHouseholderQR();
-            SolverFullPivHouseholderQR(const Matrix &m);
-            ~SolverFullPivHouseholderQR();
-
-            bool load(std::size_t dim, std::istream &in);
-            bool save(std::ostream &out);
-        };
-
-        struct SolverJacobiSVD
-            : public Eigen::JacobiSVD<Matrix, Eigen::ColPivHouseholderQRPreconditioner>
-        {
-            using Base = Eigen::JacobiSVD<Matrix, Eigen::ColPivHouseholderQRPreconditioner>;
-            static const std::size_t _solverId = 3;
-
-            SolverJacobiSVD();
-            SolverJacobiSVD(const Matrix &m);
-            ~SolverJacobiSVD();
-
-            bool load(std::size_t dim, std::istream &in);
-            bool save(std::ostream &out);
-        };
-
-        using Solver = SolverLDLT;
-        //using Solver = SolverFullPivHouseholderQR;
-        //using Solver = SolverJacobiSVD;
-
-        using SolverPtr = std::unique_ptr<Solver>;
 
         Matrix      _kernT;
-        SolverPtr   _solver;
+        LinearSolverPtr   _solver;
 
         using D2Key = std::tuple<
             real,       //ppw
